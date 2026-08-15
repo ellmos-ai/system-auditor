@@ -160,3 +160,57 @@ def test_minute_granular_timestamps_still_parse():
         "host: H\narea: a\ncreated: 2026-08-15T10:00\naudit_mode: presence\n"
     )
     assert lock.created.year == 2026
+
+
+# --- Regressionen aus dem Codex-Review 2026-08-15 ---------------------------
+
+def test_an_expired_own_claim_never_wins(tmp_path):
+    """Codex-Fund 2 (kritisch): Der eigene Lock wurde ungeprueft in die
+    Sortierung gesetzt, waehrend Konkurrenten nach Ablauf gefiltert wurden. Ein
+    pausierter Prozess sah sich damit als fruehesten Gewinner -- und der andere
+    Host, der ihn herausfilterte, ebenfalls. Zwei Gewinner ohne jede
+    Sync-Verzoegerung."""
+    now = utcnow()
+    mine = write_lock(
+        tmp_path, "ai-bundles", "H1", MODE_CLAIM, "run-1",
+        compares="a+b", expires_after="1h", created=now - timedelta(hours=3),
+    )
+    write_lock(
+        tmp_path, "ai-bundles", "H2", MODE_CLAIM, "run-2",
+        compares="a+b", created=now,
+    )
+    outcome = resolve_claim(tmp_path, mine, now=now)
+    assert outcome.won is False
+    assert "expired" in outcome.reason
+
+
+def test_equivalent_input_sets_compete_regardless_of_order(tmp_path):
+    """Codex-Fund 3: 'a+b' und 'b+a' bezeichnen dieselbe Menge. Wurden sie
+    bytegenau verglichen, gewannen beide Seiten."""
+    now = utcnow()
+    write_lock(
+        tmp_path, "ai-bundles", "AAA", MODE_CLAIM, "run-1",
+        compares="b+a", created=now - timedelta(seconds=30),
+    )
+    mine = write_lock(
+        tmp_path, "ai-bundles", "ZZZ", MODE_CLAIM, "run-2",
+        compares="a+b", created=now,
+    )
+    outcome = resolve_claim(tmp_path, mine, now=now)
+    assert outcome.won is False
+    assert outcome.winner.host == "AAA"
+
+
+def test_exactly_one_winner_across_a_shared_view(tmp_path):
+    """Die Invariante, die das Verfahren tragen muss: bei gemeinsamer Sicht und
+    gleichem Zeitpunkt sieht sich genau einer als Gewinner."""
+    now = utcnow()
+    locks = []
+    for index, host in enumerate(("H1", "H2", "H3")):
+        locks.append(write_lock(
+            tmp_path, "ai-bundles", host, MODE_CLAIM, f"run-{host}",
+            compares="a+b", created=now - timedelta(seconds=index),
+        ))
+    winners = [lock for lock in locks if resolve_claim(tmp_path, lock, now=now).won]
+    assert len(winners) == 1
+    assert winners[0].host == "H3"  # earliest created

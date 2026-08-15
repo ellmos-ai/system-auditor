@@ -130,3 +130,26 @@ def test_rendering_names_the_direction():
     assert "Zeitreihe" in rendered
     assert "Neu (erstmals" in rendered
     assert "W1 -> W2" in rendered
+
+
+def test_an_uncovered_middle_window_does_not_claim_continuity():
+    """Codex-Fund 5: W1 vorhanden, W2 nicht abgedeckt, W3 vorhanden ergab
+    'persistent' mit der Begruendung 'present in every window' -- eine
+    Behauptung ueber eine Beobachtung, die nie stattfand."""
+    finding = [Finding(PLACE, "drift")]
+    runs = [
+        _run("W1", finding),
+        _run("W2", coverage=["<HOME>/elsewhere"]),
+        _run("W3", finding),
+    ]
+    item = build_timeseries(runs, TIMESERIES).items[0]
+    assert item.classification == PERSISTENT
+    assert item.continuity_verified is False
+    assert "not covered" in item.rationale
+    assert "W2" in item.rationale
+
+
+def test_uninterrupted_series_still_claims_continuity():
+    finding = [Finding(PLACE, "drift")]
+    item = build_timeseries([_run("W1", finding), _run("W2", finding)], TIMESERIES).items[0]
+    assert item.continuity_verified is True

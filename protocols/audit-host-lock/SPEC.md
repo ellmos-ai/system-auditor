@@ -144,7 +144,7 @@ Auflösungsverfahren dazu.
 ```
 1. CLAIM       Lock schreiben: audit_mode: claim, phase: claim,
                compares: <sortierte Eingabemenge>, created = jetzt (UTC, sek.)
-2. QUARANTAENE Warten (Default 120 s, konfigurierbar; > typische Sync-Latenz)
+2. QUARANTAENE Warten (Default 300 s, konfigurierbar)
 3. RECHECK     _locks/ erneut lesen: alle LOCK.audit.<domaene>.*.txt
 4. ENTSCHEID   Teilnehmer sind NUR Locks mit audit_mode: claim UND gleichem
                `compares`. Gewinner = frühestes `created`.
@@ -159,6 +159,21 @@ Teilnehmermengen sind verschiedene Aussagen — sie konkurrieren nicht.
 
 **Determinismus:** Beide Systeme kommen bei gleicher Datenlage zum selben Ergebnis, ohne
 Server, ohne Datenbank, ohne Echtzeitkanal.
+
+**Die Quarantäne ist nicht optional.** Wer Schritt 2 überspringt und sofort auflöst, stellt
+genau das Rennen wieder her, das dieses Verfahren beilegen soll: Bei nicht synchronisierten
+Verzeichnissichten sieht jeder nur seinen eigenen Lock, und beide gewinnen. Der Default von
+300 s ist am oberen Ende der oben genannten Latenzspanne gewählt — eine kürzere Wartezeit
+deckt sie nicht ab, auch wenn sie sich schneller anfühlt.
+
+**Ein abgelaufener eigener Claim gewinnt nie.** Ein Prozess, der über den Ablauf hinaus
+pausiert war, muss neu claimen: Andere Systeme haben seinen Lock längst herausgefiltert,
+sodass er sich sonst als frühester Claimant sähe, während niemand sonst ihn noch sieht —
+zwei Gewinner bei identischer Datenlage, ganz ohne Sync-Verzögerung.
+
+**`compares` wird kanonisiert.** `a+b` und `b+a` bezeichnen dieselbe Menge; die
+Implementierung sortiert und dedupliziert vor dem Vergleich, statt sich auf eine
+Schreibkonvention zu verlassen, die die Schnittstelle nicht erzwingen kann.
 
 **Ehrliche Grenze:** Startet ein zweites System *nach* Ablauf der Quarantäne des ersten,
 aber bevor dessen Lock synchronisiert ist, greift die Regel nicht. Das Restrisiko liegt

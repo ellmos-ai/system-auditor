@@ -123,7 +123,7 @@ def test_meta_filename_is_stable_and_hostless():
     header, not in the name, otherwise every machine would keep its own copy."""
     first = meta_filename("cross-system", ["20260810", "bundles"])
     second = meta_filename("cross-system", ["20260810", "bundles"])
-    assert first == second == "META-cross-system-20260810-bundles.md"
+    assert first == second == "META-cross-system--20260810--bundles.md"
     assert "ASUS" not in first
 
 
@@ -133,14 +133,14 @@ def test_meta_filename_omits_participant_counts():
     the header and the title, never in the file name."""
     two = meta_filename("full-system", ["20260810", "H1"])
     three = meta_filename("full-system", ["20260810", "H1"])
-    assert two == three == "META-full-system-20260810-H1.md"
+    assert two == three == "META-full-system--20260810--H1.md"
     assert "2" not in two.replace("20260810", "")
 
 
 def test_timeseries_filename_carries_no_period():
     """A time series spans windows by design -- it is always "as of now"."""
     name = meta_filename("timeseries", ["H1", "bundles"])
-    assert name == "META-timeseries-H1-bundles.md"
+    assert name == "META-timeseries--H1--bundles.md"
 
 
 def test_meta_report_overwrites_within_the_same_window(tmp_path):
@@ -189,3 +189,61 @@ def test_listing_filters_by_mode(tmp_path):
 def test_non_report_files_are_ignored(tmp_path):
     (tmp_path / "README.md").write_text("not a report", encoding="utf-8")
     assert list_reports(tmp_path) == []
+
+
+def test_different_fixed_keys_never_share_a_filename():
+    """The invariant needs its converse: "same key -> same name" is useless if
+    different keys can also collide. Reproduced by Codex on 2026-08-15 with
+    ['a-b', 'c'] against ['a', 'b-c']."""
+    assert meta_filename("x", ["a-b", "c"]) != meta_filename("x", ["a", "b-c"])
+    assert meta_filename("x", ["ab", "c"]) != meta_filename("x", ["a", "bc"])
+
+
+def test_unicode_domain_survives_the_write_read_roundtrip(tmp_path):
+    """The writer used to keep non-ASCII while the reader only accepted ASCII,
+    so a report vanished from rotation right after being written."""
+    header = _write(tmp_path, "münchen", "H1", auditor="opus")
+    parsed = read_report(header.path)
+    assert parsed is not None
+    assert parsed.domain == "münchen"
+    assert len(list_reports(tmp_path)) == 1
+
+
+def test_a_malformed_neighbour_report_never_aborts_the_listing(tmp_path):
+    """One hostile or truncated foreign file must not stop this host, exactly
+    like the lock parser already behaves."""
+    _write(tmp_path, "bundles", "H1")
+    (tmp_path / "AUDIT-20260810--broken.H9.md").write_text(
+        "---\nfindings: nope\nevidence_level: also-nope\n---\nbody\n", encoding="utf-8"
+    )
+    (tmp_path / "AUDIT-20260810--truncated.H8.md").write_text(
+        "---\nrun_id: x\nfindings: 3\n", encoding="utf-8"  # no closing delimiter
+    )
+    reports = list_reports(tmp_path)
+    assert len(reports) == 3
+    broken = [item for item in reports if item.domain == "broken"][0]
+    assert broken.findings == 0  # fell back instead of raising
+
+
+def test_window_start_drives_chronology_not_the_token(tmp_path):
+    """An explicit period table may use "sprint-10", which sorts before
+    "sprint-9". The token is an identity, not a timestamp."""
+    from system_auditor.compare import AuditRun, Finding
+    from system_auditor.timeseries import build_timeseries
+    from system_auditor.tokens import TIMESERIES
+
+    early = ReportHeader(
+        domain="bundles", system="H1", time_token="sprint-9",
+        window_start_utc=utcnow() - timedelta(days=14), finished_utc=utcnow(),
+        coverage=["/x"],
+    )
+    late = ReportHeader(
+        domain="bundles", system="H1", time_token="sprint-10",
+        window_start_utc=utcnow(), finished_utc=utcnow(), coverage=["/x"],
+    )
+    result = build_timeseries(
+        [AuditRun(late, []), AuditRun(early, [Finding("/x/a.md", "drift")])],
+        TIMESERIES,
+    )
+    assert result.windows == ["sprint-9", "sprint-10"]
+    assert result.items[0].classification == "resolved"  # not "new"

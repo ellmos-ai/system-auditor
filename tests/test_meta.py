@@ -73,7 +73,7 @@ def test_two_machines_in_one_window_make_a_meta_due(tmp_path):
     assert plans[0].action == ACTION_CREATE
     assert plans[0].level == 2
     assert plans[0].participants == ["H1", "H2"]
-    assert plans[0].target == "META-cross-system-20260810-bundles.md"
+    assert plans[0].target == "META-cross-system--20260810--bundles.md"
 
 
 def test_one_machine_is_not_a_bundle(tmp_path):
@@ -141,11 +141,11 @@ def test_full_system_bundles_all_domains_and_raters_of_one_machine(tmp_path):
     plans = plan_metas(tmp_path, aggregation=FULL_SYSTEM, time_token=WINDOW)
     by_key = {plan.target: plan for plan in plans}
 
-    h1 = by_key["META-full-system-20260810-H1.md"]
+    h1 = by_key["META-full-system--20260810--H1.md"]
     assert h1.level == 3  # bundles/opus, skills/opus, bundles/sonnet
     assert h1.counts == {"domain": 2, "auditor": 2}
     assert h1.inputs == ["r1", "r2", "r3"]
-    assert "META-full-system-20260810-H2.md" not in by_key  # only one participant
+    assert "META-full-system--20260810--H2.md" not in by_key  # only one participant
 
 
 def test_full_system_title_carries_the_counts_the_filename_omits(tmp_path):
@@ -158,7 +158,7 @@ def test_full_system_title_carries_the_counts_the_filename_omits(tmp_path):
     title = plan.title()
     assert "2 auditor" in title and "2 domain" in title
     assert "H1" in title
-    assert plan.target == "META-full-system-20260810-H1.md"
+    assert plan.target == "META-full-system--20260810--H1.md"
 
 
 # --- interrater and cross-domain -------------------------------------------
@@ -170,7 +170,7 @@ def test_interrater_bundle_is_found_on_one_machine(tmp_path):
     plans = plan_metas(tmp_path, aggregation=INTERRATER, time_token=WINDOW)
     assert len(plans) == 1
     assert plans[0].participants == ["opus", "sonnet"]
-    assert plans[0].target == "META-interrater-20260810-bundles-H1.md"
+    assert plans[0].target == "META-interrater--20260810--bundles--H1.md"
 
 
 def test_cross_domain_holds_machine_and_model_constant(tmp_path):
@@ -182,7 +182,7 @@ def test_cross_domain_holds_machine_and_model_constant(tmp_path):
     plans = plan_metas(tmp_path, aggregation=CROSS_DOMAIN, time_token=WINDOW)
     assert len(plans) == 1
     assert plans[0].participants == ["bundles", "skills"]
-    assert plans[0].target == "META-cross-domain-20260810-H1-opus.md"
+    assert plans[0].target == "META-cross-domain--20260810--H1--opus.md"
 
 
 def test_separate_domains_get_separate_cross_system_metas(tmp_path):
@@ -192,8 +192,8 @@ def test_separate_domains_get_separate_cross_system_metas(tmp_path):
 
     plans = plan_metas(tmp_path, time_token=WINDOW)
     assert {plan.target for plan in plans} == {
-        "META-cross-system-20260810-bundles.md",
-        "META-cross-system-20260810-skills.md",
+        "META-cross-system--20260810--bundles.md",
+        "META-cross-system--20260810--skills.md",
     }
 
 
@@ -210,7 +210,7 @@ def test_timeseries_spans_windows_and_ignores_the_window_filter(tmp_path):
     assert len(plans) == 1
     assert plans[0].level == 3
     assert plans[0].participants == ["20260803", "20260810", "20260817"]
-    assert plans[0].target == "META-timeseries-H1-bundles.md"
+    assert plans[0].target == "META-timeseries--H1--bundles.md"
 
 
 def test_timeseries_rater_pins_one_model(tmp_path):
@@ -221,8 +221,8 @@ def test_timeseries_rater_pins_one_model(tmp_path):
 
     plans = plan_metas(tmp_path, aggregation=TIMESERIES_RATER)
     targets = {plan.target for plan in plans}
-    assert "META-timeseries-rater-H1-bundles-opus.md" in targets
-    assert "META-timeseries-rater-H1-bundles-sonnet.md" not in targets  # one window only
+    assert "META-timeseries-rater--H1--bundles--opus.md" in targets
+    assert "META-timeseries-rater--H1--bundles--sonnet.md" not in targets  # one window only
 
 
 def test_timeseries_keeps_no_period_in_its_name(tmp_path):

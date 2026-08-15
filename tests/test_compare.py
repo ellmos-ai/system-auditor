@@ -190,3 +190,35 @@ def test_headings_follow_the_axis():
     rendered = render_markdown(build_meta(runs, INTERRATER), "modules-memory")
     assert "Uebereinstimmung" in rendered
     assert "Systemweit" not in rendered
+
+
+# --- Regressionen aus dem Codex-Review 2026-08-15 ---------------------------
+
+def test_coverage_respects_path_segments(tmp_path):
+    """Codex-Fund 4: 'startswith' liess die Abdeckung /repo/foo den Ort
+    /repo/foobar/AGENTS.md verschlucken -- und Abdeckung entscheidet zwischen
+    'geprueft, nichts gefunden' und 'nie hingeschaut'."""
+    runs = [
+        _run("H1", [Finding("/repo/foobar/AGENTS.md", "drift")], coverage=["/repo"]),
+        _run("H2", [], coverage=["/repo/foo"]),
+    ]
+    item = build_meta(runs, CROSS_SYSTEM).items[0]
+    assert item.classification == UNVERIFIABLE
+    assert item.unknown_on == ["H2"]
+
+
+def test_case_is_preserved_on_case_sensitive_paths():
+    """Codex-Fund 10: Globales Kleinschreiben machte /srv/Repo/X und
+    /srv/repo/x gleich -- auf Linux zwei verschiedene Dateien."""
+    assert normalize_locator("/srv/Repo/X") != normalize_locator("/srv/repo/x")
+    # Windows-Namensraeume bleiben case-insensitiv
+    assert normalize_locator(r"C:\Users\lukas\A.md") == normalize_locator("C:/USERS/LUKAS/a.md")
+
+
+def test_unc_and_posix_paths_stay_distinct():
+    """Codex-Fund 10: Das Zusammenziehen von '//' machte aus dem UNC-Pfad
+    denselben String wie aus dem POSIX-Pfad -- zwei verschiedene Namensraeume."""
+    backslash = chr(92)
+    unc = backslash * 2 + "server" + backslash + "share" + backslash + "x"
+    assert normalize_locator(unc) != normalize_locator("/server/share/x")
+    assert normalize_locator(unc).startswith("unc:")

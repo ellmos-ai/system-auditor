@@ -3,6 +3,56 @@
 Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [SemVer](https://semver.org/lang/de/).
 
+## [0.3.1] - 2026-08-15
+
+Behebt die Funde eines externen Reviews (Codex, `_review/CODEX-REVIEW_2026-08-15.md`:
+12 Funde, davon 2 kritisch). Alle Fixes sind durch Regressionstests abgesichert.
+
+### Behoben -- kritisch
+
+- **Die dokumentierte Claim-Quarantaene wurde vom CLI uebersprungen.** `claim` schrieb den
+  Lock und loeste sofort auf -- genau das Rennen, das SPEC-Abschnitt 6 beilegen soll: Bei
+  nicht synchronisierten Verzeichnissichten sieht jeder nur seinen eigenen Lock, beide
+  gewinnen. Jetzt wartet `claim` tatsaechlich (`--quarantine`, Default 300 s statt 120 s,
+  weil die Spec selbst 30 s - 5 min Latenz nennt) oder gibt mit `--no-wait` an das neue
+  Kommando `claim-resolve` ab.
+- **Ein abgelaufener eigener Claim konnte gewinnen.** Konkurrenten wurden nach Ablauf
+  gefiltert, der eigene Lock aber ungeprueft in die Sortierung gesetzt. Ein pausierter
+  Prozess sah sich als fruehesten Claimant, der Gegenhost hatte ihn laengst herausgefiltert
+  -- zwei Gewinner bei identischer Datenlage, ganz ohne Sync-Verzoegerung.
+
+### Behoben -- wichtig
+
+- `compares` wird kanonisiert: `a+b` und `b+a` bezeichnen dieselbe Menge und konkurrieren
+  jetzt auch, statt beide zu gewinnen.
+- **Abdeckung respektiert Pfadsegmente.** `startswith` liess `/repo/foo` den Ort
+  `/repo/foobar/AGENTS.md` verschlucken -- und Abdeckung entscheidet zwischen `host_specific`
+  und `unverifiable` beziehungsweise `resolved` und `unverifiable`.
+- **Eine nicht abgedeckte Zwischenperiode behauptet keine Kontinuitaet mehr.** W1 vorhanden,
+  W2 ungeprueft, W3 vorhanden ergab `persistent` mit der Begruendung "present in every
+  window". Neues Feld `continuity_verified` und ehrliche Begruendung.
+- **Chronologie folgt `window_start_utc`, nicht dem Token.** Bei expliziten Zeittabellen
+  sortiert "sprint-10" vor "sprint-9"; ein alter Befund wurde dadurch als `new` gefuehrt.
+- **Die Dateinamensabbildung ist jetzt injektiv.** Komponenten werden mit `--` verbunden,
+  Einzelbindestriche bleiben erhalten: `["a-b","c"]` und `["a","b-c"]` ergaben denselben
+  Namen und ueberschrieben sich still.
+- **Unicode-Tokens ueberleben den Roundtrip.** Der Writer behielt Nicht-ASCII, der Reader
+  akzeptierte nur ASCII -- ein Bericht verschwand direkt nach dem Schreiben aus Rotation
+  und Buendelung.
+- **Ein kaputter Fremdbericht bricht das Listing nicht mehr ab.** `findings: nope` warf
+  einen `ValueError` durch `list_reports()`. Fehlt der schliessende Frontmatter-Delimiter,
+  gilt der Block nicht mehr als Frontmatter.
+- **Pfadsemantiken werden nicht mehr vermischt.** Kleinschreibung nur noch fuer
+  case-insensitive Namensraeume (Laufwerk, UNC, gefaltetes `<HOME>`); UNC bleibt von POSIX
+  unterscheidbar. Nicht aufgeloest und ausdruecklich dokumentiert: Symlinks, `..`, `~`, WSL.
+- **Naive Zeitstempel gelten als UTC** statt als lokale Zeit -- sonst leiten zwei Maschinen
+  mit identischer Konfiguration verschiedene Tokens ab.
+
+### Behoben -- klein
+
+- Zu grosse Perioden werden beim Anlegen des Rasters abgewiesen statt beim ersten
+  Token-Abruf mit `OverflowError`.
+
 ## [0.3.0] - 2026-08-15
 
 Vollstaendige Aggregations-Systematik plus eine Bau-Politik, damit sie nicht in

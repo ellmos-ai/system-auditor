@@ -42,6 +42,9 @@ TREND_CLASSES = (NEW, PERSISTENT, RECURRING, RESOLVED, UNVERIFIABLE)
 class TrendFinding:
     finding: Finding
     classification: str
+    #: False when a window between the first sighting and now was not covered.
+    #: "Present in every window" would then be a claim without observation.
+    continuity_verified: bool = True
     windows_present: list[str] = field(default_factory=list)
     windows_absent: list[str] = field(default_factory=list)
     windows_unknown: list[str] = field(default_factory=list)
@@ -82,6 +85,19 @@ class TimeseriesResult:
         return tally.get(NEW, 0) + tally.get(RECURRING, 0) - tally.get(RESOLVED, 0)
 
 
+def _chronology(run: AuditRun):
+    """Order windows by real time, falling back to the token.
+
+    The token is an identity, not a timestamp -- with an explicit period table
+    "sprint-10" sorts before "sprint-9", which would make an old finding look
+    new. ``window_start_utc`` carries the actual order when it is present.
+    """
+    header = run.header
+    if header.window_start_utc is not None:
+        return (0, header.window_start_utc.isoformat(), "")
+    return (1, "", header.time_token)
+
+
 def build_timeseries(
     runs: list[AuditRun], aggregation: Aggregation
 ) -> TimeseriesResult:
@@ -91,7 +107,7 @@ def build_timeseries(
     auditor dimension is uncontrolled); a finding counts as present in a window
     when *any* run of that window reported it.
     """
-    ordered = sorted(runs, key=lambda run: run.header.time_token)
+    ordered = sorted(runs, key=_chronology)
     windows: list[str] = []
     for run in ordered:
         if run.header.time_token not in windows:
@@ -162,10 +178,11 @@ def _classify_trend(
     first_seen = present[0] if present else ""
     last_seen = present[-1] if present else ""
 
-    def _make(classification: str, rationale: str) -> TrendFinding:
+    def _make(classification: str, rationale: str, continuity: bool = True) -> TrendFinding:
         return TrendFinding(
             finding=finding,
             classification=classification,
+            continuity_verified=continuity,
             windows_present=present,
             windows_absent=absent,
             windows_unknown=unknown,
@@ -197,6 +214,17 @@ def _classify_trend(
         return _make(
             RECURRING,
             f"first seen {first_seen}, absent in {', '.join(interrupted)}, back in {latest}",
+        )
+
+    # An *unknown* window in between is not an absence -- but it is also not an
+    # observation, so continuity must not be asserted as if it were one.
+    unobserved = [window for window in since_first if window in unknown]
+    if unobserved:
+        return _make(
+            PERSISTENT,
+            f"seen in every covered window since {first_seen}, but "
+            f"{', '.join(unobserved)} was not covered -- continuity is not established",
+            continuity=False,
         )
     return _make(
         PERSISTENT,

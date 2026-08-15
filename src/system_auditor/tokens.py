@@ -86,6 +86,19 @@ KIND_SNAPSHOT = "snapshot"
 KIND_TIMESERIES = "timeseries"
 
 
+def as_utc(moment: datetime) -> datetime:
+    """Treat a naive timestamp as UTC instead of as local time.
+
+    ``astimezone()`` interprets a naive value in the host's zone, so the same
+    naive ``2026-01-05 00:30`` became the previous day's window in Berlin and
+    the correct one on a UTC host. Two machines with identical configuration
+    would derive different tokens -- exactly what the grid exists to prevent.
+    """
+    if moment.tzinfo is None:
+        return moment.replace(tzinfo=timezone.utc)
+    return moment.astimezone(timezone.utc)
+
+
 def parse_period(raw: str) -> timedelta:
     match = _PERIOD_RE.match(raw or "")
     if not match:
@@ -118,9 +131,16 @@ class TimeGrid:
             raise ValueError("period must be positive")
         if self.anchor.tzinfo is None:
             self.anchor = self.anchor.replace(tzinfo=timezone.utc)
+        # Reject at construction rather than at the first token lookup: a
+        # formally valid but absurd period ("999999999d") otherwise passes
+        # config validation and aborts every later audit run with OverflowError.
+        try:
+            self.anchor + self.length
+        except OverflowError as exc:
+            raise ValueError(f"period {self.period!r} is too large to represent") from exc
 
     def index(self, moment: datetime) -> int:
-        delta = moment.astimezone(timezone.utc) - self.anchor
+        delta = as_utc(moment) - self.anchor
         return int(delta.total_seconds() // self.length.total_seconds())
 
     def window(self, moment: datetime) -> tuple[datetime, datetime]:
@@ -147,7 +167,7 @@ class TimeTable:
     entries: list[dict] = field(default_factory=list)
 
     def token(self, moment: datetime) -> str | None:
-        target = moment.astimezone(timezone.utc)
+        target = as_utc(moment)
         for entry in self.entries:
             start = _parse_iso(str(entry.get("from", "")))
             end = _parse_iso(str(entry.get("to", "")))

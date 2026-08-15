@@ -60,16 +60,56 @@ _HOME_PATTERNS = (
 )
 
 
+#: UNC paths (``\\server\share``) are a different namespace from POSIX
+#: ``/server/share``. Collapsing both to one string made them compare equal.
+_UNC_PREFIX = "//"
+
+
 def normalize_locator(raw: str) -> str:
-    """Machine-neutral, comparable form of a path-ish locator."""
+    """Machine-neutral, comparable form of a path-ish locator.
+
+    Case folding is applied only to paths that came from a case-insensitive
+    namespace (drive letters, UNC, an already-folded ``<HOME>``). On a
+    case-sensitive filesystem ``/srv/Repo/X`` and ``/srv/repo/x`` are two
+    different files and must not compare equal.
+
+    **Known limits, deliberately not guessed at:** symlinks, ``..`` segments,
+    ``~`` and WSL aliases (``/mnt/c/...``) are not resolved -- that needs the
+    filesystem of the machine that produced the locator, which a comparing host
+    does not have. Producers should emit resolved paths.
+    """
     text = (raw or "").strip().replace("\\", "/")
+    is_unc = text.startswith(_UNC_PREFIX)
     while "//" in text:
         text = text.replace("//", "/")
+    if is_unc:
+        text = "unc:" + text.lstrip("/")
+
+    folded_home = False
     for pattern in _HOME_PATTERNS:
         if pattern.match(text):
             text = pattern.sub("<HOME>", text, count=1)
+            folded_home = True
             break
-    return text.rstrip("/").lower()
+
+    text = text.rstrip("/")
+    has_drive = len(text) > 1 and text[1] == ":" and text[0].isalpha()
+    if folded_home or is_unc or has_drive:
+        return text.lower()
+    return text
+
+
+def _is_under(target: str, prefix: str) -> bool:
+    """Path containment, not string prefix.
+
+    ``startswith`` alone made the coverage ``/repo/foo`` swallow the locator
+    ``/repo/foobar/AGENTS.md`` -- and coverage is exactly what decides between
+    "checked and found nothing" and "never looked". A plain character prefix is
+    not an ancestor relation.
+    """
+    if not prefix:
+        return False
+    return target == prefix or target.startswith(prefix.rstrip("/") + "/")
 
 
 @dataclass
@@ -108,7 +148,7 @@ class AuditRun:
     def covers(self, locator: str) -> bool:
         target = normalize_locator(locator)
         return any(
-            target.startswith(normalize_locator(prefix))
+            _is_under(target, normalize_locator(prefix))
             for prefix in self.header.coverage
         )
 

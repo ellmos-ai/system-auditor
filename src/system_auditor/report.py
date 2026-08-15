@@ -34,6 +34,7 @@ Legacy ``SIG-TU-*.md`` reports without front matter are still read and flagged.
 from __future__ import annotations
 
 import re
+import unicodedata
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -42,8 +43,8 @@ from .audit_lock import format_ts, parse_ts
 from .tokens import AuditIdentity
 
 SELF_FILENAME_RE = re.compile(
-    r"^AUDIT-(?P<time>[A-Za-z0-9]+)-(?P<domain>[A-Za-z0-9_-]+)"
-    r"\.(?P<system>[A-Za-z0-9_-]+)(?:\.(?P<auditor>[A-Za-z0-9_.-]+?))?\.md$"
+    r"^AUDIT-(?P<time>[A-Za-z0-9_-]+?)--(?P<domain>[A-Za-z0-9_-]+?)"
+    r"\.(?P<system>[A-Za-z0-9_-]+?)(?:\.(?P<auditor>[A-Za-z0-9_.-]+?))?\.md$"
 )
 #: The aggregation name itself may contain hyphens ("timeseries-rater"), so the
 #: file name is only recognised as *a* meta artefact here; which aggregation it
@@ -89,6 +90,10 @@ def parse_front_matter(text: str) -> dict:
     lines = text.splitlines()
     if not lines or lines[0].strip() != "---":
         return {}
+    # Without a closing delimiter the block is not front matter: reading on
+    # would let body text overwrite header fields that already parsed fine.
+    if "---" not in [line.strip() for line in lines[1:]]:
+        return {}
     data: dict = {}
     current_key: str | None = None
     for line in lines[1:]:
@@ -113,9 +118,28 @@ def parse_front_matter(text: str) -> dict:
     return data
 
 
+#: File-name components are joined with a DOUBLE hyphen while single hyphens
+#: inside a component survive. Without that separation ``["a-b", "c"]`` and
+#: ``["a", "b-c"]`` produce the same name and silently overwrite each other --
+#: the invariant "same fixed key, same file" needs its converse to hold too.
+_KEY_SEPARATOR = "--"
+
+
 def _slug(text: str) -> str:
-    keep = [char if (char.isalnum() or char in "-_") else "-" for char in str(text)]
-    return "".join(keep).strip("-") or "x"
+    """ASCII, filename-safe, and never containing the component separator.
+
+    Folded to ASCII on purpose: ``_slug`` used to keep every character for which
+    ``isalnum()`` is true, so a domain "muenchen" written with an umlaut
+    produced a file the ASCII-only recognition regex could no longer read. The
+    writer and the reader must speak the same language.
+    """
+    normalized = unicodedata.normalize("NFKD", str(text))
+    ascii_only = normalized.encode("ascii", "ignore").decode("ascii")
+    keep = [char if (char.isalnum() or char in "-_") else "-" for char in ascii_only]
+    slug = "".join(keep).strip("-")
+    while "--" in slug:  # collapse, so "--" only ever appears as separator
+        slug = slug.replace("--", "-")
+    return slug or "x"
 
 
 @dataclass
@@ -125,6 +149,10 @@ class ReportHeader:
     system: str
     time_token: str = ""
     auditor: str = UNSPECIFIED_AUDITOR
+    #: Start of the audit window in UTC. The token is an identity, not a
+    #: timestamp: an explicit TimeTable may use "sprint-10", which sorts before
+    #: "sprint-9". Chronology therefore follows this field, never the token.
+    window_start_utc: datetime | None = None
     # --- run data --------------------------------------------------------
     run_id: str = ""
     audit_mode: str = MODE_SELF
@@ -179,6 +207,8 @@ class ReportHeader:
             lines.append(f"started_utc: {format_ts(self.started_utc)}")
         if self.finished_utc:
             lines.append(f"finished_utc: {format_ts(self.finished_utc)}")
+        if self.window_start_utc:
+            lines.append(f"window_start_utc: {format_ts(self.window_start_utc)}")
         if self.audit_mode == MODE_META:
             lines.append(f"aggregation: {self.aggregation}")
             lines.append(f"meta_level: {self.meta_level}")
@@ -198,7 +228,11 @@ class ReportHeader:
     def filename(self) -> str:
         if self.audit_mode == MODE_META:
             return meta_filename(self.aggregation, self.scope)
-        name = f"AUDIT-{_slug(self.time_token)}-{_slug(self.domain)}.{_slug(self.system)}"
+        name = (
+            "AUDIT-"
+            + _KEY_SEPARATOR.join((_slug(self.time_token), _slug(self.domain)))
+            + f".{_slug(self.system)}"
+        )
         if self.auditor and self.auditor != UNSPECIFIED_AUDITOR:
             name += f".{_slug(self.auditor)}"
         return name + ".md"
@@ -217,9 +251,29 @@ def meta_filename(aggregation: str, key: list[str]) -> str:
     Deliberately **without a host token**: otherwise every machine would keep
     its own copy of the one answer.
     """
-    parts = [f"META-{_slug(aggregation)}"]
+    parts = [_slug(aggregation)]
     parts.extend(_slug(item) for item in key if item)
-    return "-".join(parts) + ".md"
+    return "META-" + _KEY_SEPARATOR.join(parts) + ".md"
+
+
+def _as_int(value: object, default: int = 0) -> int:
+    """Never let a malformed neighbour report abort the run.
+
+    ``findings: nope`` used to raise straight through ``list_reports()``. The
+    lock parser already skips broken foreign files; reports must follow the
+    same fail-open rule.
+    """
+    try:
+        return int(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return default
+
+
+def _as_text(value: object) -> str:
+    """Empty scalars round-trip as ``[]`` through the minimal parser."""
+    if isinstance(value, list):
+        return ""
+    return str(value)
 
 
 def _as_list(value: object) -> list[str]:
@@ -290,14 +344,15 @@ def read_report(path: Path) -> ReportHeader | None:
         system=system,
         time_token=time_token,
         auditor=auditor,
-        run_id=str(data.get("run_id", "")),
+        run_id=_as_text(data.get("run_id", "")),
         audit_mode=str(data.get("audit_mode", MODE_META if meta_match else MODE_SELF)),
         started_utc=_ts("started_utc"),
         finished_utc=finished,
-        next_domain=str(data.get("next_domain", "")),
-        findings=int(data.get("findings", 0) or 0),
+        window_start_utc=_ts("window_start_utc"),
+        next_domain=_as_text(data.get("next_domain", "")),
+        findings=_as_int(data.get("findings")),
         measures=_as_list(data.get("measures")),
-        evidence_level=int(data.get("evidence_level", 1) or 1),
+        evidence_level=_as_int(data.get("evidence_level"), 1),
         coverage=_as_list(data.get("coverage")),
         clean=_as_list(data.get("clean")),
         aggregation=aggregation,
@@ -314,7 +369,14 @@ def list_reports(reports_dir: Path, audit_mode: str | None = None) -> list[Repor
     directory = Path(reports_dir)
     if not directory.is_dir():
         return []
-    found = [read_report(entry) for entry in sorted(directory.iterdir()) if entry.is_file()]
+    found = []
+    for entry in sorted(directory.iterdir()):
+        if not entry.is_file():
+            continue
+        try:
+            found.append(read_report(entry))
+        except Exception:  # noqa: BLE001 - a hostile neighbour must not stop us
+            continue
     reports = [item for item in found if item is not None]
     if audit_mode is not None:
         reports = [item for item in reports if item.audit_mode == audit_mode]

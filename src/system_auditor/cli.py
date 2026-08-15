@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -21,6 +22,7 @@ from .audit_lock import (
     LockError,
     foreign_presence,
     list_locks,
+    read_lock,
     release,
     resolve_claim,
     utcnow,
@@ -77,6 +79,12 @@ def cmd_next_domain(args: argparse.Namespace) -> int:
     return 0
 
 
+#: The spec names 30 s - 5 min as typical sync latency, so a quarantine of
+#: 120 s does not actually cover it. Default to the upper end instead of
+#: claiming a shorter wait is enough.
+DEFAULT_QUARANTINE_SECONDS = 300
+
+
 def cmd_claim(args: argparse.Namespace) -> int:
     try:
         lock = write_lock(
@@ -107,12 +115,46 @@ def cmd_claim(args: argparse.Namespace) -> int:
         ),
     }
     if lock.mode == MODE_CLAIM:
+        # SPEC section 6: write, wait out the sync latency, re-read, THEN
+        # decide. Resolving immediately is exactly the race the procedure
+        # exists to settle -- with unsynchronised directory views both hosts
+        # would see only their own lock and both would win.
+        if args.no_wait:
+            payload["claim_won"] = None
+            payload["claim_reason"] = (
+                f"quarantine pending -- run 'claim-resolve' after at least "
+                f"{args.quarantine}s, before then nobody may write"
+            )
+            _print(payload, args.json)
+            return 0
+        payload["quarantine_seconds"] = args.quarantine
+        time.sleep(max(0, args.quarantine))
         outcome = resolve_claim(Path(args.locks), lock)
         payload["claim_won"] = outcome.won
         payload["claim_reason"] = outcome.reason
         if not outcome.won:
             release(lock)
             payload["lock"] = "(released -- lost the claim)"
+    _print(payload, args.json)
+    return 0
+
+
+def cmd_claim_resolve(args: argparse.Namespace) -> int:
+    """Second half of the claim procedure, for callers that waited elsewhere."""
+    path = Path(args.locks) / f"LOCK.audit.{args.domain}.{args.system}.txt"
+    try:
+        mine = read_lock(path)
+    except (LockError, OSError) as exc:
+        print(f"ERROR: no own claim to resolve at {path}: {exc}", file=sys.stderr)
+        return 1
+
+    outcome = resolve_claim(Path(args.locks), mine)
+    payload = {"claim_won": outcome.won, "claim_reason": outcome.reason}
+    if outcome.winner is not None:
+        payload["winner"] = outcome.winner.host
+    if not outcome.won:
+        release(mine)
+        payload["lock"] = "(released)"
     _print(payload, args.json)
     return 0
 
@@ -256,7 +298,26 @@ def build_parser() -> argparse.ArgumentParser:
     p_claim.add_argument("--domain-path", default="")
     p_claim.add_argument("--purpose", default="")
     p_claim.add_argument("--compares", default="", help="meta claims: the input set")
+    p_claim.add_argument(
+        "--quarantine",
+        type=int,
+        default=DEFAULT_QUARANTINE_SECONDS,
+        help="seconds to wait before resolving a claim (must exceed sync latency)",
+    )
+    p_claim.add_argument(
+        "--no-wait",
+        action="store_true",
+        help="write the claim and return; resolve later with 'claim-resolve'",
+    )
     p_claim.set_defaults(func=cmd_claim)
+
+    p_resolve = sub.add_parser(
+        "claim-resolve", help="decide a pending claim after the quarantine"
+    )
+    p_resolve.add_argument("--locks", required=True)
+    p_resolve.add_argument("--domain", required=True)
+    p_resolve.add_argument("--system", required=True)
+    p_resolve.set_defaults(func=cmd_claim_resolve)
 
     p_release = sub.add_parser("release", help="remove our own lock")
     p_release.add_argument("--locks", required=True)

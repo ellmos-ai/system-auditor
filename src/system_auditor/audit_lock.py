@@ -56,6 +56,20 @@ class LockError(RuntimeError):
     """Raised when a lock cannot be written or parsed."""
 
 
+def canonical_compares(value: str) -> str:
+    """Canonical form of a claimed input set.
+
+    ``a+b`` and ``b+a`` denote the same set, so they must compare equal --
+    otherwise two hosts claiming the same meta audit would both win. The public
+    interface cannot rely on callers spelling the set identically, so the
+    library enforces the convention instead of documenting it.
+    """
+    parts = sorted(
+        {piece.strip() for piece in (value or "").replace(",", "+").split("+") if piece.strip()}
+    )
+    return "+".join(parts)
+
+
 def utcnow() -> datetime:
     return datetime.now(timezone.utc).replace(microsecond=0)
 
@@ -322,10 +336,23 @@ def resolve_claim(
     if mine.mode != MODE_CLAIM:
         return ClaimResult(True, "presence mode does not compete", winner=mine)
 
+    moment = now or utcnow()
+    # An expired own claim must never win. Otherwise a process that was paused
+    # past its expiry would still consider itself the earliest claimant, while
+    # every other host has already filtered it out -- two winners against the
+    # very same directory state, without any sync delay involved.
+    if mine.is_expired(moment):
+        return ClaimResult(
+            False,
+            "own claim has expired -- re-claim before writing anything",
+            winner=None,
+        )
+
+    wanted = canonical_compares(mine.compares)
     competitors = [
         lock
-        for lock in list_locks(locks_dir, area=mine.area, mode=MODE_CLAIM, now=now)
-        if lock.host != mine.host and lock.compares == mine.compares
+        for lock in list_locks(locks_dir, area=mine.area, mode=MODE_CLAIM, now=moment)
+        if lock.host != mine.host and canonical_compares(lock.compares) == wanted
     ]
     if not competitors:
         return ClaimResult(True, "no competing claim", winner=mine)
