@@ -4,54 +4,19 @@
   "display_name": "system-auditor",
   "category": "control",
   "kind": "workflow",
-  "status": "active",
+  "status": "development",
   "visibility": "private",
-  "provides": [
-    "control.audit",
-    "control.meta-audit",
-    "workflow.system-integrity"
-  ],
+  "provides": ["control.system-audit", "quality.meta-audit"],
   "requires": [],
-  "optional": [
-    "control.tickets",
-    "discovery.system-map"
-  ],
+  "optional": ["control.tickets", "system.discovery", "coordination.locking"],
   "conflicts": [],
-  "surfaces": [
-    "library",
-    "cli",
-    "workflow"
-  ],
-  "state": {
-    "ownership": "external",
-    "location": "project"
-  },
+  "surfaces": ["library", "cli", "workflow"],
+  "state": { "ownership": "external", "location": "project" },
   "boundaries": {
     "network": "none",
     "data": "user-local",
-    "platforms": [
-      "windows",
-      "macos",
-      "linux"
-    ]
+    "platforms": ["windows", "macos", "linux"]
   },
-  "source_of_truth": {
-    "type": "local-directory",
-    "path": ".",
-    "repository": "https://github.com/ellmos-ai/system-auditor"
-  },
-  "adapters": [
-    {
-      "name": "measure-sink",
-      "direction": "outbound",
-      "optional": true,
-      "note": "Belegte Funde an ein Ticketsystem. Faellt auf Dateien zurueck."
-    },
-    {
-      "name": "evidence-source",
-      "direction": "inbound",
-      "optional": true,
-      "note": "Systemkarte/Coverage als Beleg-A-Quelle, z. B. system-explorer."
-    }
-  ]
+  "source_of_truth": { "type": "local-directory", "path": "." },
+  "adapters": []
 }
