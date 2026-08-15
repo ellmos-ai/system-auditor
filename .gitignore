@@ -1,0 +1,22 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# Laufzeitdaten und lokale Konfiguration
+config/system-auditor.config.json
+reports/
+findings/
+_locks/
+LOCK*.txt
+!protocols/**/LOCK*.txt
+
+# Host-spezifische Kopien (OneDrive-Konfliktmuster)
+*-WORKSTATION-LG.*
+*-ASUS-GEI.*
+*-LAPTOP.*

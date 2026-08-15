@@ -1,0 +1,66 @@
+{
+  "schema": "ellmos.module.v2",
+  "id": "system-auditor",
+  "display_name": "system-auditor",
+  "category": "control",
+  "kind": "workflow",
+  "status": "active",
+  "visibility": "private",
+  "provides": [
+    "control.audit",
+    "control.meta-audit",
+    "protocol.audit-host-lock",
+    "workflow.system-integrity"
+  ],
+  "requires": [],
+  "optional": [
+    "control.tickets",
+    "control.locks",
+    "discovery.system-map"
+  ],
+  "conflicts": [],
+  "surfaces": [
+    "library",
+    "cli",
+    "workflow",
+    "protocol"
+  ],
+  "state": {
+    "ownership": "external",
+    "location": "project"
+  },
+  "boundaries": {
+    "network": "none",
+    "data": "user-local",
+    "platforms": [
+      "windows",
+      "macos",
+      "linux"
+    ]
+  },
+  "source_of_truth": {
+    "type": "local-directory",
+    "path": ".",
+    "repository": "https://github.com/ellmos-ai/system-auditor"
+  },
+  "adapters": [
+    {
+      "name": "measure-sink",
+      "direction": "outbound",
+      "optional": true,
+      "note": "Belegte Funde an ein Ticketsystem. Faellt auf Dateien zurueck."
+    },
+    {
+      "name": "evidence-source",
+      "direction": "inbound",
+      "optional": true,
+      "note": "Systemkarte/Coverage als Beleg-A-Quelle, z. B. system-explorer."
+    },
+    {
+      "name": "audit-host-lock",
+      "direction": "outbound",
+      "optional": true,
+      "note": "Protokoll-Spec zur Uebernahme durch ein Lock-System. Erzeuger ist dieses Modul; ein Erkenner ist optional."
+    }
+  ]
+}

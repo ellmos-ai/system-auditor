@@ -1,0 +1,72 @@
+{
+  "_comment": "Beispielkonfiguration fuer system-auditor. Kopieren nach system-auditor.config.json und anpassen. Alle Nachbarmodule sind OPTIONAL: fehlt eines, laeuft der Auditor auf niedrigerer Stufe weiter -- das ist Normalbetrieb, kein Fehler.",
+
+  "_comment_placeholders": "<HOME> = Home-Verzeichnis des jeweiligen Hosts. Wird die Datei zwischen Systemen geteilt, darf hier KEIN literaler Benutzerpfad stehen. <area> = 'path' der im Lauf zugeteilten Domaene.",
+
+  "host": "<HOSTNAME>",
+  "_comment_host": "Voller Rechnername, nicht der Sync-Slotname. Er landet im Dateinamen von Lock und Bericht und ist dort autoritativ.",
+
+  "audit_home": "<HOME>/.system-auditor",
+  "reports_dir": "<HOME>/.system-auditor/reports",
+  "locks_dir": "<HOME>/.system-auditor/_locks",
+  "findings_dir": "<HOME>/.system-auditor/findings",
+  "_comment_locks_dir": "PFLICHT bei Einbindung in ein Lock-System: dieses Verzeichnis in die Scan-Roots aufnehmen (lock_roots.json). Ein Lock ausserhalb der Roots ist unsichtbar -- und aus unsichtbaren Locks entstehen Parallelsysteme.",
+
+  "audit_validity": "14d",
+  "_comment_audit_validity": "Wie lange ein Einzelaudit als Aussage ueber den aktuellen Zustand gilt. Nur gueltige Einzelaudits gehen in ein Meta-Audit ein; veraltete werden ausgeschlossen und im Plan benannt. Kurz = frischere Meta-Audits, aber haeufigere Erneuerung.",
+
+  "claim_quarantine_seconds": 120,
+  "_comment_claim_quarantine_seconds": "Wartezeit im Claim-Verfahren, bevor erneut gelesen wird. Muss ueber der typischen Sync-Latenz des geteilten Ordners liegen (30s-5min bei Cloud-Sync). Nur fuer Meta-Claims relevant, nicht fuer Praesenz.",
+
+  "min_participants": 2,
+
+  "areas": [
+    {
+      "name": "beispiel-domaene",
+      "path": "<HOME>/pfad/zur/domaene",
+      "focus": "Woran diese Domaene geprueft wird. Grosse Baeume hier ausdruecklich auf ihre Steuerungsebene begrenzen, damit ein Lauf ehrlich sagen kann, was er abgedeckt hat."
+    }
+  ],
+
+  "area_selector_command": null,
+  "_comment_area_selector_command": "Optionaler externer Selektor (Rang 2). Bleibt er null, gilt die Rotation ueber areas[] als regulaerer Weg.",
+
+  "policy_stores": [
+    { "name": "beispiel-regelwerk", "kind": "file", "target": "<HOME>/RULES.md" },
+    { "name": "area-rules", "kind": "file", "target": "<area>/CLAUDE.md" }
+  ],
+  "_comment_policy_stores": "Quellen fuer Beleg B (welche Regel ist verletzt). Leer lassen ist erlaubt -- dann greift die Erkennungskaskade: Modul-Probe, danach Konvention, danach 'nichts gefunden' (Funde bleiben Beobachtungen).",
+
+  "decision_stores": [
+    { "name": "area-decisions", "kind": "file", "target": "<area>/DECISIONS.md" }
+  ],
+
+  "known_modules": [
+    {
+      "name": "system-explorer",
+      "provides": "policy",
+      "enabled_probe": "system-explorer --version",
+      "target": "system-explorer coverage --config <cfg> --format json"
+    },
+    {
+      "name": "policy-registry",
+      "provides": "policy",
+      "enabled_probe": "policy-registry --version",
+      "target": "policy-registry list --json"
+    }
+  ],
+  "_comment_known_modules": "Bekannte Nachbarmodule werden ERKANNT, nicht vorausgesetzt: schlaegt die Probe fehl, ist das Modul schlicht nicht installiert und der Lauf geht eine Stufe tiefer weiter.",
+
+  "convention_max_depth": 2,
+  "_comment_convention_max_depth": "Tiefenbegrenzung der Konventions-Suche. Kein Verzeichnis-Crawl: ueber grosse oder cloud-synchronisierte Baeume laeuft eine unbegrenzte Suche in Timeouts.",
+
+  "measure_sink": {
+    "kind": "file",
+    "target": "",
+    "enabled_probe": ""
+  },
+  "_comment_measure_sink": "Wohin belegte Funde gehen. kind=file schreibt nach findings_dir. kind=command uebergibt an ein Ticketsystem (Aufruf bekommt --title/--body angehaengt, stdout gilt als undurchsichtige Referenz). Faellt die Probe durch oder scheitert der Aufruf, wird automatisch auf Dateien zurueckgefallen -- kein Funktionsverlust, nur kein Routing.",
+
+  "evidence_level_default": 1,
+  "_comment_evidence_level_default": "1 = Domaene direkt gelesen, 2 = Systemkarte hat die Suche verengt, 3 = zusaetzlich durch Receipts belegt. Wird pro Lauf im Bericht deklariert, damit ein spaeterer, tieferer Lauf als Verbesserung lesbar ist statt als Widerspruch."
+}

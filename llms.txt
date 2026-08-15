@@ -1,0 +1,45 @@
+# system-auditor
+
+> Belegbasierte Systemaudits ueber mehrere Maschinen, mit Meta-Buendelung.
+> Last-checked: 2026-08-15 | Version: 0.1.0 | Tests: 62 passed | Lint: ruff clean
+
+## Was es ist
+
+Die mittlere Stufe einer Kette: Karte (system-explorer, optional) -> URTEIL (dieses
+Modul) -> Massnahme (Ticketsystem, optional). Es beurteilt, welche Regel ein Zustand
+verletzt, was zu empfehlen ist und ob die Regel selbst noch richtig ist.
+
+## Kernidee
+
+Zwei Maschinen, die dieselbe Domaene auditieren, kommen NICHT zum selben Ergebnis --
+das ist der Nutzen, nicht der Fehler. Gemessenes Beispiel: ein hartkodierter Pfad
+C:\Users\User\... ist auf dem einen Host ein Befund und auf dem anderen korrekt.
+Der Vergleich der gueltigen Audits aller Systeme liefert die Klassen systemwide /
+host_specific / inverse / divergent / unverifiable.
+
+## Meta-Audits
+
+Einzelaudits haben ein Gueltigkeitsfenster. Nur gueltige gehen in ein Meta-Audit ein.
+meta-2 -> meta-3 -> ...; ein hoeheres ersetzt das vorherige, das alte wird archiviert.
+Erneuern darf nur der Host, der das Audit erzeugt hat.
+
+## Audit-Host-Lock
+
+presence = Anwesenheitssignal, schliesst niemanden aus.
+claim = Reservierung nur fuer Meta-Audits, mit deterministischer Verlierer-Regel
+(fruehestes created, Host-Ordnung als Tiebreak, Quarantaene gegen Sync-Latenz).
+Dateiname LOCK.audit.<domaene>.<host>.txt in der bestehenden Lock-Grammatik.
+Spec: protocols/audit-host-lock/SPEC.md (selbsttragend, ohne Bibliothek ausfuehrbar).
+
+## Einstiegspunkte
+
+- prompts/AUDITOR.de.md         Rollen-Prompt fuer Agenten
+- protocols/audit-host-lock/SPEC.md   Lock-Protokoll v1
+- config/system-auditor.config.example.json   Konfigurationsvorlage
+- src/system_auditor/           audit_lock, report, compare, meta, discovery, sinks, cli
+- CLI: system-auditor next-area|claim|release|locks|meta-plan|reports|discover
+
+## Abhaengigkeiten
+
+Keine. Python 3.10+, nur Standardbibliothek. Alle Nachbarmodule sind optional und
+werden per Probe erkannt, nie vorausgesetzt.
