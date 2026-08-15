@@ -3,6 +3,54 @@
 Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [SemVer](https://semver.org/lang/de/).
 
+## [0.5.0] - 2026-08-15
+
+Setzt die Modell-Funde aus Review 2 um. Leitsatz, jetzt im Konstruktor erzwungen
+statt bloss dokumentiert: **Eine Ursache darf nur zuschreiben, wer genau eine
+Dimension variieren laesst.**
+
+### Geaendert -- Identifizierbarkeit
+
+- **`full-system` ist deskriptiv** (Fund 2, kritisch). Variieren Domaene UND
+  Auditor, laesst sich ein Unterschied weder der einen noch dem anderen noch
+  ihrem Zusammenspiel zuordnen; die fuenf Klassen waren dort nicht
+  interpretierbar. Neu: `build_inventory()` liefert eine Bestandsaufnahme
+  (Belegung, Regelhaeufigkeit, Hinweis auf unvollstaendiges Raster).
+  `build_meta()` auf einer deskriptiven Stufe wirft.
+- **`cross-system-rater` ergaenzt** (Fund 1): Zeit+Domaene+Auditor fest, System
+  variiert -- der saubere Host-Effekt. `cross-system` bleibt, sagt aber im
+  Ergebnis, dass das Modell unkontrolliert ist.
+- **Die stehende Stufe ist jetzt die kontrollierte** (Fund 12). Bisher war
+  ausgerechnet die konfundierte Variante `always` und veroeffentlichte etwas als
+  Host-Effekt, was keiner war.
+- `Aggregation.__post_init__` weist inferenzielle Aggregationen mit mehr als
+  einer variierenden Dimension zurueck.
+
+### Geaendert -- ehrlichere Aussagen
+
+- **`agreement` heisst jetzt `unanimity`** (Fund 8), dazu `pairwise_jaccard`.
+  Der Nenner enthaelt nur Schluessel, die jemand gemeldet hat -- gemeinsames
+  Schweigen ueber saubere Stellen geht mangels Item-Universum nicht ein. Cohens
+  Kappa waere aus demselben Grund nicht berechenbar.
+- **`cross-domain` behauptet keine Abwesenheit mehr** (Fund 4). Wer eine Regel
+  nicht meldet, haette den fremden Ort nie abdecken koennen; solche Faelle sind
+  `unverifiable` und nennen den Grund.
+- **`new` und `persistent` sagen, was beobachtet wurde** (Fund 6): neues Flag
+  `first_absence_verified` neben `continuity_verified`.
+- **Die Richtungsangabe zaehlt den letzten Schritt** (Fund 7). `net_change` kam
+  aus kumulativen Lebenslaufklassen -- ein zehn Fenster altes `resolved` zaehlte
+  weiter mit. Neu: `transitions` (appeared/disappeared/unchanged) zwischen den
+  letzten beiden Fenstern.
+- **Nebenbefunde werden mitgefuehrt** (Fund 3): Die Klassen sind eine
+  Prioritaetsprojektion, keine Partition. `MetaFinding.also` nennt die
+  gleichzeitig vorliegenden Evidenzzustaende, statt die staerkere
+  Negativbestaetigung zu verschweigen.
+- **Die Historienbehauptung ist eingegrenzt** (Fund 11): "Historie steckt im
+  Zeittoken" gilt fuer Snapshots ueber Fenstergrenzen -- nicht fuer Zeitreihen
+  und nicht innerhalb eines Fensters. Wer den Trail braucht, archiviert.
+
+123 Tests (+8), ruff sauber.
+
 ## [0.4.1] - 2026-08-15
 
 Behebt die kritischen Funde des zweiten Codex-Reviews

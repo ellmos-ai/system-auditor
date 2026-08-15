@@ -295,13 +295,18 @@ def test_earlier_windows_are_listed_but_untouched(tmp_path):
 def test_only_the_standing_aggregation_is_built_by_default(tmp_path):
     """The ladder is combinatorial -- 14 domains x 3 machines x 2 models yields
     ~191 possible artefacts per window. Building all of them is noise that
-    buries the two somebody reads."""
+    buries the two somebody reads.
+
+    The standing one is the CONTROLLED system comparison: both compare machines,
+    but only cross-system-rater holds the model constant (Review 2, Fund 12)."""
     _single(tmp_path, "H1", auditor="opus")
     _single(tmp_path, "H1", auditor="sonnet")
     _single(tmp_path, "H2", auditor="opus")
 
     plans = plan_all(tmp_path, time_token=WINDOW)
-    assert {plan.aggregation for plan in plans} == {"cross-system"}
+    assert {plan.aggregation for plan in plans} == {"cross-system-rater"}
+    # und es buendelt nur die gleich-bemodelten Maschinen
+    assert plans[0].participants == ["H1", "H2"]
 
 
 def test_an_on_demand_aggregation_is_built_when_asked_for(tmp_path):
@@ -321,7 +326,7 @@ def test_an_off_aggregation_stays_off_even_when_asked_for(tmp_path):
 def test_config_can_promote_an_aggregation_to_standing():
     policy = resolve_policy({"timeseries": {"mode": MODE_ALWAYS}})
     assert [item.name for item, _ in due_aggregations(policy)] == [
-        "cross-system",
+        "cross-system-rater",
         "timeseries",
     ]
 

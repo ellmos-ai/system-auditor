@@ -1,5 +1,7 @@
 """Classification across participants -- machines, models or domains."""
 
+import pytest
+
 from system_auditor.compare import (
     DIVERGENT,
     HOST_SPECIFIC,
@@ -118,23 +120,25 @@ def test_interrater_axis_compares_models_on_one_machine():
     assert result.items[0].classification == SYSTEMWIDE
 
 
-def test_interrater_agreement_is_reported():
-    """On the interrater axis a low value is not a system defect but a
-    reliability problem of the auditors themselves."""
+def test_unanimity_is_reported_under_its_honest_name():
+    """Nicht 'Agreement': Der Nenner enthaelt nur Schluessel, die mindestens ein
+    Auditor gemeldet hat -- gemeinsames Schweigen ueber saubere Stellen geht
+    mangels definierter Item-Menge nicht ein (Review 2, Fund 8)."""
     runs = [
         _run("H1", [Finding(GARDENER, "a"), Finding(GARDENER + "/x", "b")], auditor="opus"),
         _run("H1", [Finding(GARDENER, "a")], auditor="sonnet"),
     ]
     result = build_meta(runs, INTERRATER)
-    assert result.agreement == 0.5
+    assert result.unanimity == 0.5
+    assert result.pairwise_jaccard is not None
 
 
-def test_agreement_is_none_when_nothing_is_decidable():
+def test_unanimity_is_none_when_nothing_is_decidable():
     runs = [
         _run("H1", [Finding(GARDENER, "a")], coverage=[]),
         _run("H1", [], coverage=[], auditor="sonnet"),
     ]
-    assert build_meta(runs, INTERRATER).agreement is None
+    assert build_meta(runs, INTERRATER).unanimity is None
 
 
 def test_cross_domain_matches_by_rule_across_different_places():
@@ -237,30 +241,78 @@ def test_the_same_set_in_a_different_order_yields_identical_output():
     assert forward == backward
 
 
-def test_full_system_falls_back_to_place_matching_when_only_raters_differ():
-    """Fund 5: full-system deklariert group_by=rule (weil die Domaene variieren
-    DARF). Sind die konkreten Teilnehmer aber zwei Modelle EINER Domaene, waere
-    reines Regelmatching falsch: 'dieselbe Regel an verschiedenen Orten' ist
-    keine Rater-Uebereinstimmung."""
+def test_full_system_refuses_to_classify():
+    """Review 2, Fund 2 (kritisch): Variieren Domaene UND Auditor, ist ein
+    Unterschied keiner Ursache zuzuordnen. Die fuenf Klassen sind dort nicht
+    interpretierbar -- die Aggregation ist deskriptiv."""
     from system_auditor.tokens import FULL_SYSTEM
 
     runs = [
-        _run("H1", [Finding("<HOME>/d/x.md", "drift")], domain="d", auditor="opus"),
-        _run("H1", [Finding("<HOME>/d/y.md", "drift")], domain="d", auditor="sonnet"),
+        _run("H1", [Finding("<HOME>/a/x.md", "drift")], domain="bundles", auditor="opus"),
+        _run("H1", [Finding("<HOME>/b/y.md", "drift")], domain="skills", auditor="sonnet"),
     ]
-    result = build_meta(runs, FULL_SYSTEM)
-    # verschiedene Orte -> keine Uebereinstimmung, sondern zwei Einzelbefunde
-    assert all(item.classification != SYSTEMWIDE for item in result.items)
+    with pytest.raises(ValueError, match="descriptive"):
+        build_meta(runs, FULL_SYSTEM)
 
 
-def test_full_system_still_matches_by_rule_across_domains():
-    """Variiert die Domaene tatsaechlich, bleibt die Regel der richtige
-    Schluessel -- zwischen Domaenen gibt es keinen gemeinsamen Ort."""
+def test_full_system_yields_an_inventory_instead():
+    from system_auditor.compare import build_inventory, render_inventory
     from system_auditor.tokens import FULL_SYSTEM
 
     runs = [
         _run("H1", [Finding("<HOME>/a/x.md", "drift")], domain="bundles", auditor="opus"),
         _run("H1", [Finding("<HOME>/b/y.md", "drift")], domain="skills", auditor="opus"),
     ]
-    result = build_meta(runs, FULL_SYSTEM)
+    result = build_inventory(runs, FULL_SYSTEM)
+    assert result.participants == ["bundles / opus", "skills / opus"]
+    assert result.total_findings == 2
+    assert result.rule_frequency() == {"drift": 2}
+    assert any("keiner Ursache zuzuordnen" in note for note in result.caveats)
+
+    rendered = render_inventory(result, "H1")
+    assert "Bestandsaufnahme" in rendered
+    assert "Systemweit" not in rendered  # keine Inferenz-Ueberschriften
+
+
+def test_an_incomplete_grid_is_named():
+    """Zwei nur diagonal besetzte Zellen sind kein vollstaendiges Raster."""
+    from system_auditor.compare import build_inventory
+    from system_auditor.tokens import FULL_SYSTEM
+
+    runs = [
+        _run("H1", [], domain="bundles", auditor="opus"),
+        _run("H1", [], domain="skills", auditor="sonnet"),
+    ]
+    result = build_inventory(runs, FULL_SYSTEM)
+    assert any("Raster unvollstaendig" in note for note in result.caveats)
+
+
+def test_a_controlled_system_comparison_exists():
+    """Review 2, Fund 1: cross-system laesst den Auditor unkontrolliert. Fuer
+    einen belegten Host-Effekt braucht es die Stufe, die das Modell festhaelt."""
+    from system_auditor.tokens import CROSS_SYSTEM, CROSS_SYSTEM_RATER
+
+    assert CROSS_SYSTEM_RATER.uncontrolled == ()
+    assert CROSS_SYSTEM.uncontrolled == ("auditor",)
+
+    runs = [
+        _run("H1", [Finding(GARDENER, "drift")], auditor="opus"),
+        _run("H2", [Finding(GARDENER, "drift")], auditor="opus"),
+    ]
+    result = build_meta(runs, CROSS_SYSTEM_RATER)
     assert result.items[0].classification == SYSTEMWIDE
+    assert result.comparability.caveats == []  # nichts unkontrolliert
+
+
+def test_absence_is_not_claimed_when_matching_by_rule():
+    """Review 2, Fund 4: Bei Regel-Matching kann ein Teilnehmer den fremden Ort
+    gar nicht abgedeckt haben -- 'geprueft, nichts gefunden' ist dort nicht
+    beobachtbar."""
+    runs = [
+        _run("H1", [Finding("<HOME>/d1/x.md", "drift")], domain="d1", coverage=["<HOME>/d1"]),
+        _run("H1", [], domain="d2", coverage=["<HOME>/d2"]),
+    ]
+    item = build_meta(runs, CROSS_DOMAIN).items[0]
+    assert item.absent_on == []
+    assert item.classification == UNVERIFIABLE
+    assert any("not observable" in note for note in item.also)
