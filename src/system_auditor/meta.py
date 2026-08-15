@@ -305,6 +305,63 @@ def stale_windows(
     ]
 
 
+@dataclass
+class WriteOutcome:
+    """Result of a guarded meta write."""
+
+    written: bool
+    reason: str
+    path: Path | None = None
+
+
+def write_meta(
+    reports_dir: Path,
+    header: ReportHeader,
+    body: str,
+    planned_inputs: list[str] | None = None,
+) -> WriteOutcome:
+    """Write a meta artefact, but never over a *newer* one.
+
+    The gap this closes was reproduced on 2026-08-15: run A plans meta-3 from
+    ``r1,r2,r3``; run B meanwhile sees ``r4``, plans and writes meta-4; then A
+    writes its stale meta-3 over the same path. The published state loses ``r4``
+    until somebody plans again.
+
+    ``ACTION_SKIP`` cannot prevent this -- it only stops a run that *starts*
+    after the newer artefact is already visible, not one that planned earlier
+    and writes later. So the check has to happen at write time, against the file
+    as it is *now*: if the artefact on disk rests on a superset of what we
+    planned, our result is outdated and we do not write it.
+
+    This is the honest correction to the idempotence argument: the
+    classification is deterministic, but "deterministic" was never the same as
+    "safe to write blindly".
+    """
+    directory = Path(reports_dir)
+    target = directory / header.filename()
+    planned = set(planned_inputs if planned_inputs is not None else header.inputs)
+
+    if target.exists():
+        from .report import read_report
+
+        current = read_report(target)
+        if current is not None:
+            on_disk = set(current.inputs)
+            if on_disk > planned:
+                return WriteOutcome(
+                    False,
+                    f"artefact on disk already rests on {len(on_disk)} audits "
+                    f"(we planned {len(planned)}) -- ours is stale, not written",
+                    target,
+                )
+            if on_disk == planned and current.meta_level >= header.meta_level:
+                return WriteOutcome(False, "artefact is already current", target)
+
+    from .report import write_report
+
+    return WriteOutcome(True, "written", write_report(directory, header, body))
+
+
 def archive(path: Path, archive_dir: Path | None = None) -> Path | None:
     """Move an artefact aside. Not part of the normal flow.
 

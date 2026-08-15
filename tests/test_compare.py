@@ -221,3 +221,46 @@ def test_unc_and_posix_paths_stay_distinct():
     unc = backslash * 2 + "server" + backslash + "share" + backslash + "x"
     assert normalize_locator(unc) != normalize_locator("/server/share/x")
     assert normalize_locator(unc).startswith("unc:")
+
+
+# --- Regressionen aus dem Codex-Logik-Review -------------------------------
+
+def test_the_same_set_in_a_different_order_yields_identical_output():
+    """Fund 10: build_meta sortierte die Laeufe nicht -- dieselbe MENGE in
+    anderer Reihenfolge ergab einen anderen repraesentativen Titel und eine
+    andere present_on-Reihenfolge. 'Deterministisch' war damit nicht
+    'bitgleich', was der Idempotenz-Anspruch aber verlangt."""
+    a = _run("H1", [Finding(GARDENER, "r", "Titel A")])
+    b = _run("H2", [Finding(GARDENER, "r", "Titel B")])
+    forward = render_markdown(build_meta([a, b], CROSS_SYSTEM), "x")
+    backward = render_markdown(build_meta([b, a], CROSS_SYSTEM), "x")
+    assert forward == backward
+
+
+def test_full_system_falls_back_to_place_matching_when_only_raters_differ():
+    """Fund 5: full-system deklariert group_by=rule (weil die Domaene variieren
+    DARF). Sind die konkreten Teilnehmer aber zwei Modelle EINER Domaene, waere
+    reines Regelmatching falsch: 'dieselbe Regel an verschiedenen Orten' ist
+    keine Rater-Uebereinstimmung."""
+    from system_auditor.tokens import FULL_SYSTEM
+
+    runs = [
+        _run("H1", [Finding("<HOME>/d/x.md", "drift")], domain="d", auditor="opus"),
+        _run("H1", [Finding("<HOME>/d/y.md", "drift")], domain="d", auditor="sonnet"),
+    ]
+    result = build_meta(runs, FULL_SYSTEM)
+    # verschiedene Orte -> keine Uebereinstimmung, sondern zwei Einzelbefunde
+    assert all(item.classification != SYSTEMWIDE for item in result.items)
+
+
+def test_full_system_still_matches_by_rule_across_domains():
+    """Variiert die Domaene tatsaechlich, bleibt die Regel der richtige
+    Schluessel -- zwischen Domaenen gibt es keinen gemeinsamen Ort."""
+    from system_auditor.tokens import FULL_SYSTEM
+
+    runs = [
+        _run("H1", [Finding("<HOME>/a/x.md", "drift")], domain="bundles", auditor="opus"),
+        _run("H1", [Finding("<HOME>/b/y.md", "drift")], domain="skills", auditor="opus"),
+    ]
+    result = build_meta(runs, FULL_SYSTEM)
+    assert result.items[0].classification == SYSTEMWIDE

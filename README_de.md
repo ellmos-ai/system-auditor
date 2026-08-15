@@ -1,6 +1,6 @@
 # system-auditor
 
-[![tests](https://img.shields.io/badge/pytest-109%20bestanden-brightgreen)](tests/)
+[![tests](https://img.shields.io/badge/pytest-115%20bestanden-brightgreen)](tests/)
 [![python](https://img.shields.io/badge/python-3.10%2B-blue)](pyproject.toml)
 [![license](https://img.shields.io/badge/lizenz-MIT-green)](LICENSE)
 [![dependencies](https://img.shields.io/badge/abh%C3%A4ngigkeiten-keine-lightgrey)](pyproject.toml)
@@ -122,14 +122,19 @@ kann.
 Parallele Audits einer Domäne sind die *Voraussetzung* eines Meta-Audits, keine Kollision.
 Es gibt nichts auszuschließen, deshalb hält dieses Modul überhaupt keine Locks.
 
-Das ist keine überdeckte Lücke, sondern eine gemessene Eigenschaft:
+Das ist keine überdeckte Lücke — brauchte aber eine Korrektur:
 
-- **Meta-Audits sind idempotent.** Zwei Maschinen, die dasselbe Bündel rechnen, erzeugen
-  identische Klassifikation; die Artefakte unterscheiden sich nur darin, wer sie schrieb.
-- **Doppelarbeit verhindert schon die Planung.** `plan_metas` liefert `skip`, sobald das
-  Artefakt eines Schlüssels auf denselben Eingaben ruht. Wer später kommt, rechnet gar
-  nicht erst.
 - **Das Audit selbst ist read-only.** In der geprüften Domäne kann nichts kollidieren.
+- **Die Klassifikation ist deterministisch** — gleiche Eingaben, gleiche Ausgabe, Byte für
+  Byte (die Läufe werden vorher kanonisch geordnet).
+- **Doppelarbeit verhindert die Planung weitgehend.** `plan_metas` liefert `skip`, sobald
+  das Artefakt eines Schlüssels auf denselben Eingaben ruht.
+- **Determinismus ist aber keine Erlaubnis, blind zu schreiben.** Ein früher geplanter Lauf
+  kann ein neueres Artefakt überschreiben, das eine andere Maschine inzwischen
+  veröffentlicht hat — ein Review hat genau das reproduziert. `write_meta` liest deshalb
+  vor dem Schreiben erneut und verweigert, wenn die Datei auf der Platte bereits auf einer
+  Obermenge der geplanten Eingaben ruht. Das ist eine *Schreibsicherung*, kein Lock: Sie
+  kostet einen Lesevorgang, blockiert niemanden und braucht keine Abstimmung.
 
 Eine frühere Fassung trug ein vollständiges Claim-Protokoll (Quarantäne, deterministische
 Verlierer-Regel). Es schützte, wie sich zeigte, Rechenzeit und eine mögliche Konfliktkopie
@@ -180,7 +185,7 @@ Konfiguration: `config/system-auditor.config.example.json` kopieren.
 ## Entwicklung
 
 ```bash
-python -m pytest -q     # 109 Tests
+python -m pytest -q     # 115 Tests
 ruff check src tests
 ```
 

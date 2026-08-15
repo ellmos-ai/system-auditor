@@ -40,7 +40,13 @@ import re
 from dataclasses import dataclass, field
 
 from .report import ReportHeader
-from .tokens import CROSS_SYSTEM, GROUP_BY_RULE, Aggregation
+from .tokens import (
+    CROSS_SYSTEM,
+    DIM_DOMAIN,
+    GROUP_BY_LOCATOR,
+    GROUP_BY_RULE,
+    Aggregation,
+)
 
 SYSTEMWIDE = "systemwide"
 HOST_SPECIFIC = "host_specific"
@@ -299,8 +305,27 @@ def _collect_keys(runs: list[AuditRun], group_by: str) -> list[tuple[str, Findin
     return ordered
 
 
+def effective_group_by(runs: list[AuditRun], aggregation: Aggregation) -> str:
+    """Match by rule only when the domain *actually* differs among these runs.
+
+    ``full-system`` lets domain and auditor vary, so its declared ``group_by``
+    is ``rule``. But if the concrete participants are two models on one domain,
+    rule-matching alone would call "same rule at different places" an
+    agreement -- for rater agreement the *place* has to match too. The declared
+    axis states what may vary; only the data says what does.
+    """
+    if DIM_DOMAIN not in aggregation.varying:
+        return aggregation.group_by
+    domains = {run.header.identity.value(DIM_DOMAIN) for run in runs}
+    return GROUP_BY_RULE if len(domains) > 1 else GROUP_BY_LOCATOR
+
+
 def _classify(
-    key: str, representative: Finding, runs: list[AuditRun], aggregation: Aggregation
+    key: str,
+    representative: Finding,
+    runs: list[AuditRun],
+    aggregation: Aggregation,
+    group_by: str | None = None,
 ) -> MetaFinding:
     present: list[str] = []
     absent: list[str] = []
@@ -308,7 +333,7 @@ def _classify(
     unknown: list[str] = []
     divergent: dict[str, str] = {}
 
-    group_by = aggregation.group_by
+    group_by = group_by or aggregation.group_by
     locator = representative.norm_locator
 
     for run in runs:
@@ -377,21 +402,27 @@ def _classify(
 def build_meta(
     runs: list[AuditRun], aggregation: Aggregation = CROSS_SYSTEM
 ) -> MetaResult:
-    """Classify all participants' findings against each other."""
+    """Classify all participants' findings against each other.
+
+    The runs are ordered canonically first. Without that, the same *set* of
+    audits passed in a different order produced a different representative
+    title and a different ``present_on`` order -- the classification held, but
+    the artefact was not byte-identical, which is what an idempotence claim
+    actually requires.
+    """
+    runs = sorted(runs, key=lambda run: run.participant(aggregation))
     comparability = check_comparability(runs, aggregation)
     participants = sorted({run.participant(aggregation) for run in runs})
     if not comparability.ok:
         return MetaResult(comparability, aggregation, participants, [])
 
+    group_by = effective_group_by(runs, aggregation)
     items = [
-        _classify(key, finding, runs, aggregation)
-        for key, finding in _collect_keys(runs, aggregation.group_by)
+        _classify(key, finding, runs, aggregation, group_by)
+        for key, finding in _collect_keys(runs, group_by)
     ]
     items.sort(
-        key=lambda item: (
-            CLASS_ORDER.index(item.classification),
-            item.finding.key(aggregation.group_by),
-        )
+        key=lambda item: (CLASS_ORDER.index(item.classification), item.finding.key(group_by))
     )
     return MetaResult(comparability, aggregation, participants, items)
 

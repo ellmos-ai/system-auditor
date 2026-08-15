@@ -1,6 +1,6 @@
 # system-auditor
 
-[![tests](https://img.shields.io/badge/pytest-109%20passed-brightgreen)](tests/)
+[![tests](https://img.shields.io/badge/pytest-115%20passed-brightgreen)](tests/)
 [![python](https://img.shields.io/badge/python-3.10%2B-blue)](pyproject.toml)
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![dependencies](https://img.shields.io/badge/dependencies-none-lightgrey)](pyproject.toml)
@@ -120,14 +120,18 @@ No system may retire a statement about a machine it cannot see.
 Parallel audits of one domain are the *premise* of a meta audit, not a collision. There is
 nothing to exclude, so this module holds no locks at all.
 
-That is not a gap papered over, it is a measured property:
+That is not a gap papered over, but it needed one correction:
 
-- **Meta audits are idempotent.** Two machines computing the same bundle produce identical
-  classification; the artefacts differ only in who wrote them.
-- **Duplicate work is already prevented without a lock.** `plan_metas` returns `skip` as
-  soon as the artefact for a key rests on the same inputs. A second machine arriving later
-  does not compute anything.
 - **The audit itself is read-only.** Nothing in the audited domain can collide.
+- **The classification is deterministic** — same inputs, same output, byte for byte
+  (the runs are ordered canonically first).
+- **Duplicate work is largely prevented already.** `plan_metas` returns `skip` as soon as
+  the artefact for a key rests on the same inputs.
+- **But determinism is not permission to write blindly.** A run that planned earlier can
+  overwrite a newer artefact another machine published meanwhile — a review reproduced
+  exactly that. So `write_meta` re-reads the target and refuses when the file on disk
+  already rests on a superset of the planned inputs. That is a *write guard*, not a lock:
+  it costs one read, blocks nobody, and needs no coordination.
 
 An earlier version carried a full claim protocol (quarantine, deterministic loser rule).
 It turned out to protect compute time and a possible conflict copy — not correctness — and
@@ -176,7 +180,7 @@ Configuration: copy `config/system-auditor.config.example.json`.
 ## Development
 
 ```bash
-python -m pytest -q     # 109 tests
+python -m pytest -q     # 115 tests
 ruff check src tests
 ```
 
