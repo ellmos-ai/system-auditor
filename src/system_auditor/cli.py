@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -35,11 +36,28 @@ def _print(payload: dict, as_json: bool) -> None:
             print(f"{key}: {value}")
 
 
+#: One load per process. Without this, a command that consults the config twice
+#: (meta-plan: grid, then policy) printed every note twice -- and a warning that
+#: repeats reads as two problems.
+_CONFIG_CACHE: dict = {}
+
+
 def _config(args: argparse.Namespace):
-    """Load the config once per call and report what it did."""
+    """Load the config once per process and report what it did -- once."""
+    key = str(getattr(args, "config", None))
+    if key in _CONFIG_CACHE:
+        return _CONFIG_CACHE[key]
     config = load_config(getattr(args, "config", None))
+    # The auditor is a property of the *model running right now*, not of the
+    # host: a shared host config cannot know it. CLI flag and environment
+    # override the file and silence the unset warning.
+    override = getattr(args, "auditor", None) or os.environ.get("SYSTEM_AUDITOR_AUDITOR")
+    if override:
+        config.auditor = override
+        config.notes = [note for note in config.notes if "auditor is unset" not in note]
     for note in config.notes:
         print(f"config: {note}", file=sys.stderr)
+    _CONFIG_CACHE[key] = config
     return config
 
 
@@ -241,6 +259,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="path to system-auditor.config.json (default: env SYSTEM_AUDITOR_CONFIG, "
         "then ./ and ./config/ and ~/.system-auditor/)",
+    )
+    parser.add_argument(
+        "--auditor",
+        default=None,
+        help="auditor token of the model running now (overrides the config; "
+        "env SYSTEM_AUDITOR_AUDITOR works too)",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 

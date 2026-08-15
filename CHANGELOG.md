@@ -3,6 +3,27 @@
 Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [SemVer](https://semver.org/lang/de/).
 
+## [0.7.1] - 2026-08-16
+
+Diagnose aus dem ersten Praxislauf (Domaene ai-bundles, Fenster 20260810):
+der Lauf fand drei echte Funde in der Domaene UND zwei Reibungspunkte im
+Werkzeug selbst.
+
+### Behoben
+
+- **Doppelte config-Warnung:** meta-plan konsultiert die Config zweimal (Raster,
+  Politik) und druckte jede Note doppelt -- eine Warnung, die sich wiederholt,
+  liest sich wie zwei Probleme. Jetzt ein Load pro Prozess (Cache).
+- **`--auditor` fehlte:** Der Auditor-Token ist eine Eigenschaft des gerade
+  laufenden Modells, nicht des Hosts -- eine geteilte Host-Config kann ihn nicht
+  wissen. Neu: globales `--auditor`-Flag und `SYSTEM_AUDITOR_AUDITOR`-Umgebung,
+  beide uebersteuern die Datei und stillen die unset-Warnung.
+
+### Hinzugefuegt
+
+- Erste CLI-Testdatei (`tests/test_cli.py`) -- via `main(argv)`, wie ein Auditor
+  aufruft; inkl. Regressionswaechter fuer den 0.6.0-Anker-Fix.
+
 ## [0.7.0] - 2026-08-16
 
 Nutzerentscheidung eingearbeitet: Das Meta-Audit ist modellmanuell -- der
