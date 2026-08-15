@@ -1,6 +1,5 @@
 """Classification across participants -- machines, models or domains."""
 
-from system_auditor.audit_lock import utcnow
 from system_auditor.compare import (
     DIVERGENT,
     HOST_SPECIFIC,
@@ -14,7 +13,7 @@ from system_auditor.compare import (
     render_markdown,
 )
 from system_auditor.report import ReportHeader
-from system_auditor.tokens import CROSS_DOMAIN, CROSS_SYSTEM, INTERRATER
+from system_auditor.tokens import CROSS_DOMAIN, CROSS_SYSTEM, INTERRATER, utcnow
 
 GARDENER = "<HOME>/OneDrive/.TOPICS/.AI/.MODULES/.MEMORY/gardener/AGENTS.md"
 DEFAULT_COVERAGE = ["<HOME>/OneDrive/.TOPICS/.AI"]

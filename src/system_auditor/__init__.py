@@ -13,20 +13,16 @@ itself the problem?).
 
 Nothing here requires its neighbours. Detected, they are used; absent, the
 auditor degrades to reading directly and writing files.
+
+**No lock.** Parallel audits of one domain are the *premise* of a meta audit,
+not a collision, so there is nothing to exclude. And a meta audit is
+idempotent: two machines computing the same bundle produce identical
+classification, while ``plan_metas`` returns ``skip`` as soon as the artefact
+already rests on the same inputs. The coordination protocol that used to live
+here moved to ``lock-master`` (``pure-locking/contested.py``), where exclusion
+is the purpose rather than a nuisance.
 """
 
-from .audit_lock import (
-    MODE_CLAIM,
-    MODE_PRESENCE,
-    AuditLock,
-    ClaimResult,
-    foreign_presence,
-    list_locks,
-    read_lock,
-    release,
-    resolve_claim,
-    write_lock,
-)
 from .compare import (
     DIVERGENT,
     HOST_SPECIFIC,
@@ -93,10 +89,13 @@ from .tokens import (
     TimeGrid,
     TimeTable,
     find_bundles,
+    format_ts,
+    parse_ts,
     resolve_time_token,
+    utcnow,
 )
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 
 __all__ = [
     "__version__",
@@ -108,6 +107,9 @@ __all__ = [
     "TimeTable",
     "resolve_time_token",
     "find_bundles",
+    "utcnow",
+    "format_ts",
+    "parse_ts",
     "AGGREGATIONS",
     "INTERRATER",
     "CROSS_SYSTEM",
@@ -122,17 +124,6 @@ __all__ = [
     "PERSISTENT",
     "RECURRING",
     "RESOLVED",
-    # locks
-    "AuditLock",
-    "ClaimResult",
-    "MODE_PRESENCE",
-    "MODE_CLAIM",
-    "write_lock",
-    "read_lock",
-    "list_locks",
-    "release",
-    "resolve_claim",
-    "foreign_presence",
     # reports
     "ReportHeader",
     "MODE_SELF",

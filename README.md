@@ -1,6 +1,6 @@
 # system-auditor
 
-[![tests](https://img.shields.io/badge/pytest-126%20passed-brightgreen)](tests/)
+[![tests](https://img.shields.io/badge/pytest-109%20passed-brightgreen)](tests/)
 [![python](https://img.shields.io/badge/python-3.10%2B-blue)](pyproject.toml)
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![dependencies](https://img.shields.io/badge/dependencies-none-lightgrey)](pyproject.toml)
@@ -115,24 +115,24 @@ No system may retire a statement about a machine it cannot see.
 
 ---
 
-## The lock is a presence signal, not a gate
+## No lock — and why none is needed
 
-Because parallel single audits are *wanted*, the audit lock does not exclude anybody:
+Parallel audits of one domain are the *premise* of a meta audit, not a collision. There is
+nothing to exclude, so this module holds no locks at all.
 
-| mode | meaning |
-|---|---|
-| `presence` | "a self-audit of this domain is running on host X" — informational; **never** a reason to skip a domain, and never a reason for anyone else to stop working |
-| `claim` | "I am building the meta audit over exactly these inputs" — here redundancy is worthless, so claims are mutually exclusive |
+That is not a gap papered over, it is a measured property:
 
-A lock alone does not survive a synchronised folder: with 30 s – 5 min latency, both
-machines look, see nothing and lock. So claims carry a deterministic resolution —
-quarantine, recheck, earliest `created` wins, host order breaks exact ties. Both sides
-reach the same verdict from the same data, without a server.
+- **Meta audits are idempotent.** Two machines computing the same bundle produce identical
+  classification; the artefacts differ only in who wrote them.
+- **Duplicate work is already prevented without a lock.** `plan_metas` returns `skip` as
+  soon as the artefact for a key rests on the same inputs. A second machine arriving later
+  does not compute anything.
+- **The audit itself is read-only.** Nothing in the audited domain can collide.
 
-The files use the ecosystem's existing lock grammar (`LOCK.audit.<domain>.<host>.txt`), so
-existing scanners see them without a code change. Full protocol:
-[`protocols/audit-host-lock/SPEC.md`](protocols/audit-host-lock/SPEC.md) — self-contained,
-executable by hand, no library required.
+An earlier version carried a full claim protocol (quarantine, deterministic loser rule).
+It turned out to protect compute time and a possible conflict copy — not correctness — and
+was therefore **moved to `lock-master`** (`pure-locking/contested.py`), where exclusion is
+the purpose rather than a nuisance. The design history is in this repository's git log.
 
 ---
 
@@ -147,9 +147,6 @@ system-auditor time-token --period 7d
 # which domain is next in my own rotation?
 system-auditor next-domain --domains "bundles,skills,mcp" --reports ./reports --system $HOSTNAME
 
-# announce presence (does not exclude anyone)
-system-auditor claim --locks ./_locks --domain bundles --system $HOSTNAME --mode presence
-
 # where are this domain's rules, on whatever system this is?
 system-auditor discover --domain-path /path/to/domain
 
@@ -159,8 +156,6 @@ system-auditor meta-plan --reports ./reports --aggregation interrater
 
 # which of my audits belong to an earlier window?
 system-auditor stale --reports ./reports --system $HOSTNAME
-
-system-auditor release --locks ./_locks --domain bundles --system $HOSTNAME
 ```
 
 The role prompt an agent follows is [`prompts/AUDITOR.de.md`](prompts/AUDITOR.de.md).
@@ -170,9 +165,8 @@ Configuration: copy `config/system-auditor.config.example.json`.
 
 ## Design notes
 
-* **Zero dependencies.** Standard library only; the lock format is plain text and the
-  report front matter is parsed by a deliberately minimal reader, so the spec cannot
-  promise more than the parser accepts.
+* **Zero dependencies.** Standard library only; the report front matter is parsed by a
+  deliberately minimal reader, so the format cannot promise more than the parser accepts.
 * **No second system.** No new file format, no status registry, no database. An earlier
   attempt at a parallel "in progress" registry elsewhere in this ecosystem had to be rolled
   back; the lesson is in the spec.
@@ -182,7 +176,7 @@ Configuration: copy `config/system-auditor.config.example.json`.
 ## Development
 
 ```bash
-python -m pytest -q     # 126 tests
+python -m pytest -q     # 109 tests
 ruff check src tests
 ```
 

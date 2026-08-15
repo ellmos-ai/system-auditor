@@ -2,7 +2,6 @@
 
 from datetime import timedelta
 
-from system_auditor.audit_lock import utcnow
 from system_auditor.meta import (
     ACTION_CREATE,
     ACTION_SKIP,
@@ -25,6 +24,7 @@ from system_auditor.tokens import (
     INTERRATER,
     TIMESERIES,
     TIMESERIES_RATER,
+    utcnow,
 )
 
 WINDOW = "20260810"

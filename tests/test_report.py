@@ -2,7 +2,6 @@
 
 from datetime import timedelta
 
-from system_auditor.audit_lock import utcnow
 from system_auditor.report import (
     MODE_META,
     MODE_SELF,
@@ -14,6 +13,7 @@ from system_auditor.report import (
     read_report,
     write_report,
 )
+from system_auditor.tokens import utcnow
 
 DOMAINS = ["modules-control", "sync-register", "control-center", "modules-memory", "bundles"]
 

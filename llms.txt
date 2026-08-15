@@ -1,7 +1,7 @@
 # system-auditor
 
 > Belegbasierte Systemaudits ueber mehrere Maschinen, mit Meta-Buendelung.
-> Last-checked: 2026-08-15 | Version: 0.3.1 | Tests: 126 passed | Lint: ruff clean
+> Last-checked: 2026-08-15 | Version: 0.4.0 | Tests: 109 passed | Lint: ruff clean
 
 ## Was es ist
 
@@ -23,21 +23,20 @@ Einzelaudits haben ein Gueltigkeitsfenster. Nur gueltige gehen in ein Meta-Audit
 meta-2 -> meta-3 -> ...; ein hoeheres ersetzt das vorherige, das alte wird archiviert.
 Erneuern darf nur der Host, der das Audit erzeugt hat.
 
-## Audit-Host-Lock
+## Kein Lock
 
-presence = Anwesenheitssignal, schliesst niemanden aus.
-claim = Reservierung nur fuer Meta-Audits, mit deterministischer Verlierer-Regel
-(fruehestes created, Host-Ordnung als Tiebreak, Quarantaene gegen Sync-Latenz).
-Dateiname LOCK.audit.<domaene>.<host>.txt in der bestehenden Lock-Grammatik.
-Spec: protocols/audit-host-lock/SPEC.md (selbsttragend, ohne Bibliothek ausfuehrbar).
+Parallele Audits einer Domaene sind die Voraussetzung des Meta-Audits, keine
+Kollision -- es gibt nichts auszuschliessen. Doppelte Meta-Laeufe sind
+idempotent, und plan_metas liefert skip, sobald das Artefakt auf denselben
+Eingaben ruht. Das frueher hier gefuehrte Claim-Protokoll wurde nach
+lock-master verlegt (pure-locking/contested.py), wo Ausschluss der Zweck ist.
 
 ## Einstiegspunkte
 
 - prompts/AUDITOR.de.md         Rollen-Prompt fuer Agenten
-- protocols/audit-host-lock/SPEC.md   Lock-Protokoll v1
 - config/system-auditor.config.example.json   Konfigurationsvorlage
 - src/system_auditor/           audit_lock, report, compare, meta, discovery, sinks, cli
-- CLI: system-auditor next-area|claim|release|locks|meta-plan|reports|discover
+- CLI: system-auditor time-token|next-domain|meta-plan|reports|stale|discover
 
 ## Abhaengigkeiten
 

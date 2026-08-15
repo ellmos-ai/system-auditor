@@ -3,6 +3,35 @@
 Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [SemVer](https://semver.org/lang/de/).
 
+## [0.4.0] - 2026-08-15
+
+### Entfernt
+
+- **Das gesamte Lock-Protokoll** (`audit_lock.py`, `protocols/audit-host-lock/`,
+  die CLI-Kommandos `claim`/`claim-resolve`/`release`/`locks`).
+
+  Gemessene Begruendung, nicht Geschmack: Die Kernlogik benutzte es nie
+  (`meta.py` und `timeseries.py`: null Treffer; einziger Aufrufer war die CLI).
+  Ein doppelt gerechnetes Meta-Audit ist **idempotent** -- zwei Maschinen
+  erzeugen bitgleiche Klassifikation im selben Dateinamen, unterschiedlich ist
+  nur das Autorenfeld. Und Doppelarbeit verhindert bereits `plan_metas` mit
+  `ACTION_SKIP`, sobald das Artefakt auf denselben Eingaben ruht. Der Claim
+  schuetzte damit Rechenzeit und eine moegliche Konfliktkopie, nicht die
+  Korrektheit.
+
+  Der Mechanismus ist **nicht weggeworfen, sondern verlegt**: nach
+  `ellmos-ai/lock-master` (`pure-locking/contested.py`, Merge `f3dc2b7`). Dort
+  ist Ausschluss der Zweck statt ein Aergernis, und dort fehlte er nachweislich
+  -- `lock_create.py` legte Locks mit check-then-write an, ohne Recheck und ohne
+  Konfliktregel.
+
+### Geaendert
+
+- Zeitstempel-Helfer (`utcnow`, `format_ts`, `parse_ts`) liegen jetzt in
+  `tokens.py` statt im entfernten Lock-Modul. Sie waren nie Lock-Logik.
+- Prompt, READMEs, Config und Manifest tragen die Begruendung "kein Lock noetig"
+  statt der Lock-Beschreibung; veraltete CLI-Aufrufe in der Doku korrigiert.
+
 ## [0.3.1] - 2026-08-15
 
 Behebt die Funde eines externen Reviews (Codex, `_review/CODEX-REVIEW_2026-08-15.md`:

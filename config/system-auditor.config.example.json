@@ -35,12 +35,8 @@
 
   "audit_home": "<HOME>/.system-auditor",
   "reports_dir": "<HOME>/.system-auditor/reports",
-  "locks_dir": "<HOME>/.system-auditor/_locks",
   "findings_dir": "<HOME>/.system-auditor/findings",
-  "_comment_locks_dir": "PFLICHT bei Einbindung in ein Lock-System: dieses Verzeichnis in die Scan-Roots aufnehmen (lock_roots.json). Ein Lock ausserhalb der Roots ist unsichtbar -- und aus unsichtbaren Locks entstehen Parallelsysteme.",
-
-  "claim_quarantine_seconds": 120,
-  "_comment_claim_quarantine_seconds": "Wartezeit im Claim-Verfahren, bevor erneut gelesen wird. Muss ueber der typischen Sync-Latenz des geteilten Ordners liegen (30s-5min bei Cloud-Sync). Gilt NUR fuer Meta-Claims: Praesenz-Locks konkurrieren nicht, weil parallele Einzelaudits erwuenscht sind.",
+  "_comment_no_locks": "Dieses Modul haelt bewusst KEINE Locks: Parallele Audits einer Domaene sind die Voraussetzung des Meta-Audits, nicht eine Kollision. Doppelte Meta-Laeufe sind idempotent, und plan_metas liefert skip, sobald das Artefakt auf denselben Eingaben ruht. Das frueher hier gefuehrte Claim-Verfahren liegt jetzt in lock-master (pure-locking/contested.py), wo Ausschluss der Zweck ist.",
 
   "domains": [
     {
