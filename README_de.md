@@ -1,3 +1,5 @@
+<img src="assets/banner.png" width="100%" alt="system-auditor banner">
+
 # system-auditor
 
 [![tests](https://img.shields.io/badge/pytest-136%20bestanden-brightgreen)](tests/)
