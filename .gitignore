@@ -20,3 +20,14 @@ LOCK*.txt
 *-WORKSTATION-LG.*
 *-ASUS-GEI.*
 *-LAPTOP.*
+
+# Release-Hygiene (Final Gate)
+.env
+*.db
+.idea/
+.vscode/
+data/
+
+# Interne Review-Berichte (lokal wertvoll, nicht Teil des Release)
+_review/
+*.pyc

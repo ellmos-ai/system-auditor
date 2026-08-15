@@ -1,7 +1,7 @@
 # system-auditor
 
 > Belegbasierte Systemaudits ueber mehrere Maschinen, mit Meta-Buendelung.
-> Last-checked: 2026-08-16 | Version: 0.7.0 | Tests: 140 passed | Lint: ruff clean
+> Last-checked: 2026-08-16 | Version: 0.8.0 | Tests: 146 passed | Lint: ruff clean
 
 ## Was es ist
 
@@ -14,7 +14,7 @@ ist.
 
 Zwei Maschinen, die dieselbe Domaene auditieren, kommen NICHT zum selben
 Ergebnis -- das ist der Nutzen, nicht der Fehler. Gemessenes Beispiel: ein
-hartkodierter Pfad C:\Users\User\... ist auf dem einen Host ein Befund und auf
+hartkodierter Pfad C:\Users\alice\... ist auf dem einen Host ein Befund und auf
 dem anderen korrekt.
 
 ## Vier Token, eine Regel
@@ -55,7 +55,7 @@ Gefunden ueber --config, SYSTEM_AUDITOR_CONFIG, ./, ./config/, ~/.system-auditor
 
 ## Einstiegspunkte
 
-- prompts/AUDITOR.de.md         Rollen-Prompt fuer Agenten
+- prompts/AUDITOR.de.md + .en.md   Rollen-Prompt fuer Agenten (DE/EN)
 - templates/                    Berichts- und Meta-Templates (parser-kompatibel)
 - config/system-auditor.config.example.json   Konfigurationsvorlage
 - src/system_auditor/           tokens, report, meta, compare, timeseries,

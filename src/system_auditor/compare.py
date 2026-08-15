@@ -8,7 +8,7 @@ reading changes with the axis.
 Worked example, measured 2026-08-15, axis = system:
 
     Finding "Gardener governance hardcodes the laptop home path"
-    (``AGENTS.md`` points at ``C:\\Users\\User\\...``).
+    (``AGENTS.md`` points at ``C:\\Users\\bob\\...``).
 
 On WORKSTATION-LG this is real: the path does not exist there.  On the laptop
 the very same line is correct and produces no finding at all.  One machine can
@@ -56,7 +56,7 @@ UNVERIFIABLE = "unverifiable"
 
 CLASS_ORDER = (SYSTEMWIDE, HOST_SPECIFIC, INVERSE, DIVERGENT, UNVERIFIABLE)
 
-#: Home directories differ per machine (``C:\\Users\\lukas`` vs ``C:\\Users\\User``).
+#: Home directories differ per machine (``C:\\Users\\alice`` vs ``C:\\Users\\bob``).
 #: Without folding them to a placeholder, no locator would ever match its
 #: counterpart and every finding would look participant-specific.
 _HOME_PATTERNS = (

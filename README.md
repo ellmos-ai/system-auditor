@@ -21,7 +21,7 @@ defect — it is the most useful thing about running the audit twice.
 A measured example:
 
 > **Finding:** *"Gardener governance hardcodes the laptop home path"* —
-> `AGENTS.md` points at `C:\Users\User\…`.
+> `AGENTS.md` points at `C:\Users\alice\…`.
 >
 > On **WORKSTATION-LG** this is real: the path does not exist there.
 > On the **laptop** the very same line is correct and produces no finding at all.

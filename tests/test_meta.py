@@ -30,6 +30,8 @@ from system_auditor.tokens import (
 WINDOW = "20260810"
 DOMAIN = "bundles"
 
+W03, W10, W17 = "20260803", "20260810", "20260817"
+
 
 def _single(tmp_path, system, domain=DOMAIN, time_token=WINDOW, auditor="opus",
             minutes_ago=0, run_id=None):
@@ -85,7 +87,7 @@ def test_audits_from_another_window_do_not_join(tmp_path):
     """Bundling last window's statement with this one would fabricate a
     difference between machines that is really a difference in time."""
     _single(tmp_path, "H1", time_token=WINDOW)
-    _single(tmp_path, "H2", time_token="20260803")
+    _single(tmp_path, "H2", time_token=W03)
     assert plan_metas(tmp_path, time_token=WINDOW) == []
 
 
@@ -202,9 +204,9 @@ def test_separate_domains_get_separate_cross_system_metas(tmp_path):
 def test_timeseries_spans_windows_and_ignores_the_window_filter(tmp_path):
     """Fall B: system and domain fixed, time varies. Filtering to one window
     would leave a single window and no series at all."""
-    _single(tmp_path, "H1", time_token="20260803", run_id="r1")
-    _single(tmp_path, "H1", time_token="20260810", run_id="r2")
-    _single(tmp_path, "H1", time_token="20260817", run_id="r3")
+    _single(tmp_path, "H1", time_token=W03, run_id="r1")
+    _single(tmp_path, "H1", time_token=W10, run_id="r2")
+    _single(tmp_path, "H1", time_token=W17, run_id="r3")
 
     plans = plan_metas(tmp_path, aggregation=TIMESERIES, time_token=WINDOW)
     assert len(plans) == 1
@@ -215,9 +217,9 @@ def test_timeseries_spans_windows_and_ignores_the_window_filter(tmp_path):
 
 def test_timeseries_rater_pins_one_model(tmp_path):
     """Fall C: one auditor, one domain, one machine, across windows."""
-    _single(tmp_path, "H1", time_token="20260803", auditor="opus", run_id="r1")
-    _single(tmp_path, "H1", time_token="20260810", auditor="opus", run_id="r2")
-    _single(tmp_path, "H1", time_token="20260810", auditor="sonnet", run_id="r3")
+    _single(tmp_path, "H1", time_token=W03, auditor="opus", run_id="r1")
+    _single(tmp_path, "H1", time_token=W10, auditor="opus", run_id="r2")
+    _single(tmp_path, "H1", time_token=W10, auditor="sonnet", run_id="r3")
 
     plans = plan_metas(tmp_path, aggregation=TIMESERIES_RATER)
     targets = {plan.target for plan in plans}
@@ -227,8 +229,8 @@ def test_timeseries_rater_pins_one_model(tmp_path):
 
 def test_timeseries_keeps_no_period_in_its_name(tmp_path):
     """It is always "as of now" and gets rewritten as windows accumulate."""
-    _single(tmp_path, "H1", time_token="20260803")
-    _single(tmp_path, "H1", time_token="20260810")
+    _single(tmp_path, "H1", time_token=W03)
+    _single(tmp_path, "H1", time_token=W10)
     plan = plan_metas(tmp_path, aggregation=TIMESERIES)[0]
     assert "2026" not in plan.target
     assert plan.time_token == ""  # time is not a fixed dimension here
@@ -281,7 +283,7 @@ def test_existing_meta_is_matched_by_full_key(tmp_path):
 
 def test_earlier_windows_are_listed_but_untouched(tmp_path):
     """For a snapshot they are past; for a time series they are the material."""
-    old = _single(tmp_path, "H1", time_token="20260803")
+    old = _single(tmp_path, "H1", time_token=W03)
     _single(tmp_path, "H2", time_token=WINDOW)
 
     stale = stale_windows(tmp_path, WINDOW)
@@ -334,8 +336,8 @@ def test_config_can_promote_an_aggregation_to_standing():
 def test_thresholds_are_per_aggregation(tmp_path):
     """A series of two windows says almost nothing, while two machines already
     say something -- so the bar differs."""
-    _single(tmp_path, "H1", time_token="20260803")
-    _single(tmp_path, "H1", time_token="20260810")
+    _single(tmp_path, "H1", time_token=W03)
+    _single(tmp_path, "H1", time_token=W10)
 
     assert plan_all(tmp_path, requested="timeseries") == []  # default needs 3
 

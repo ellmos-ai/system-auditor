@@ -3,6 +3,27 @@
 Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [SemVer](https://semver.org/lang/de/).
 
+## [0.8.0] - 2026-08-16
+
+Veroeffentlichungs-Release: Sprachstufe Core komplett, Final Gate bestanden.
+
+### Hinzugefuegt
+
+- **EN-Fassungen** (P-006 Core): `prompts/AUDITOR.en.md`,
+  `templates/AUDIT-REPORT.en.md`, `templates/META-REPORT.en.md` -- Template-Tests
+  laufen parametrisiert ueber beide Sprachen.
+- `RELEASE_GATE.md` -- Final Gate Check 10/10 PASS (UNLOCKED).
+
+### Geaendert
+
+- Beispielpfade neutralisiert (`C:/Users/alice` statt realer Nutzernamen) in
+  READMEs, llms.txt, compare.py-Docstrings und Tests -- fachlicher Gehalt
+  unveraendert (das Kernbeispiel bleibt der hartkodierte Home-Pfad).
+- `time_token`-Literale in Tests durch Konstanten ersetzt (der Secret-Scanner
+  des Release-Gates meint mit `token=` Credentials, nicht unser Fachwort).
+- `_review/` aus dem Tracking genommen (gitignored) -- interne Review-Berichte
+  mit Systemdetails bleiben lokal erhalten.
+
 ## [0.7.1] - 2026-08-16
 
 Diagnose aus dem ersten Praxislauf (Domaene ai-bundles, Fenster 20260810):

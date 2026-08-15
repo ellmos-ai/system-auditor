@@ -8,13 +8,16 @@ or the manual path produces reports the machinery cannot see.
 """
 from pathlib import Path
 
+import pytest
+
 from system_auditor.report import parse_front_matter
 
 TEMPLATES = Path(__file__).resolve().parents[1] / "templates"
 
 
-def test_audit_template_front_matter_parses():
-    data = parse_front_matter((TEMPLATES / "AUDIT-BERICHT.de.md").read_text(encoding="utf-8"))
+@pytest.mark.parametrize("name", ["AUDIT-BERICHT.de.md", "AUDIT-REPORT.en.md"])
+def test_audit_template_front_matter_parses(name):
+    data = parse_front_matter((TEMPLATES / name).read_text(encoding="utf-8"))
     for key in ("run_id", "audit_mode", "time_token", "domain", "system", "auditor",
                 "window_start_utc", "coverage", "clean", "evidence_level", "findings_detail"):
         assert key in data, f"template lost the {key} field"
@@ -23,8 +26,9 @@ def test_audit_template_front_matter_parses():
     assert isinstance(data["findings_detail"], list) and data["findings_detail"]
 
 
-def test_meta_template_front_matter_parses():
-    data = parse_front_matter((TEMPLATES / "META-BERICHT.de.md").read_text(encoding="utf-8"))
+@pytest.mark.parametrize("name", ["META-BERICHT.de.md", "META-REPORT.en.md"])
+def test_meta_template_front_matter_parses(name):
+    data = parse_front_matter((TEMPLATES / name).read_text(encoding="utf-8"))
     for key in ("aggregation", "meta_level", "participants", "inputs", "scope"):
         assert key in data, f"template lost the {key} field"
     assert data["audit_mode"] == "meta"

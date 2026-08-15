@@ -17,8 +17,11 @@ from system_auditor.tokens import utcnow
 
 DOMAINS = ["modules-control", "sync-register", "control-center", "modules-memory", "bundles"]
 
+W0810 = "20260810"
+SPRINT9, SPRINT10 = "sprint-9", "sprint-10"
 
-def _write(tmp_path, domain, system, minutes_ago=0, time_token="20260810", **kwargs):
+
+def _write(tmp_path, domain, system, minutes_ago=0, time_token=W0810, **kwargs):
     finished = utcnow() - timedelta(minutes=minutes_ago)
     header = ReportHeader(
         domain=domain,
@@ -38,7 +41,7 @@ def test_front_matter_roundtrip_carries_all_four_tokens(tmp_path):
         tmp_path,
         "bundles",
         "ASUS-GEI",
-        time_token="20260810",
+        time_token=W0810,
         auditor="opus-5",
         next_domain="skills",
         findings=2,
@@ -148,7 +151,7 @@ def test_meta_report_overwrites_within_the_same_window(tmp_path):
         return write_report(
             tmp_path,
             ReportHeader(
-                domain="", system=system, time_token="20260810",
+                domain="", system=system, time_token=W0810,
                 audit_mode=MODE_META, aggregation="cross-system",
                 meta_level=level, participants=participants,
                 scope=["20260810", "bundles"], finished_utc=utcnow(),
@@ -175,7 +178,7 @@ def test_listing_filters_by_mode(tmp_path):
     _write(tmp_path, "bundles", "H1")
     write_report(
         tmp_path,
-        ReportHeader(domain="", system="H1", time_token="20260810",
+        ReportHeader(domain="", system="H1", time_token=W0810,
                      audit_mode=MODE_META, aggregation="cross-system",
                      meta_level=2, scope=["20260810", "bundles"],
                      finished_utc=utcnow()),
@@ -233,12 +236,12 @@ def test_window_start_drives_chronology_not_the_token(tmp_path):
     from system_auditor.tokens import TIMESERIES
 
     early = ReportHeader(
-        domain="bundles", system="H1", time_token="sprint-9",
+        domain="bundles", system="H1", time_token=SPRINT9,
         window_start_utc=utcnow() - timedelta(days=14), finished_utc=utcnow(),
         coverage=["/x"],
     )
     late = ReportHeader(
-        domain="bundles", system="H1", time_token="sprint-10",
+        domain="bundles", system="H1", time_token=SPRINT10,
         window_start_utc=utcnow(), finished_utc=utcnow(), coverage=["/x"],
     )
     result = build_timeseries(

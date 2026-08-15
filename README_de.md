@@ -21,7 +21,7 @@ ist kein Mangel — es ist das Nützlichste daran, das Audit zweimal laufen zu l
 Ein gemessenes Beispiel:
 
 > **Befund:** *„Gardener-Governance hartkodiert den Laptop-Home-Pfad"* —
-> `AGENTS.md` verweist auf `C:\Users\User\…`.
+> `AGENTS.md` verweist auf `C:\Users\alice\…`.
 >
 > Auf **WORKSTATION-LG** ist das real: Der Pfad existiert dort nicht.
 > Auf dem **Laptop** ist dieselbe Zeile korrekt und ergibt gar keinen Befund.

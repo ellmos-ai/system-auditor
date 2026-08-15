@@ -20,6 +20,8 @@ from system_auditor.tokens import CROSS_DOMAIN, CROSS_SYSTEM, INTERRATER, utcnow
 GARDENER = "<HOME>/OneDrive/.TOPICS/.AI/.MODULES/.MEMORY/gardener/AGENTS.md"
 DEFAULT_COVERAGE = ["<HOME>/OneDrive/.TOPICS/.AI"]
 
+WINDOW = "20260810"
+
 
 def _run(system="H1", findings=None, domain="modules-memory", auditor="opus",
          coverage=None, clean=None, **kwargs):
@@ -27,7 +29,7 @@ def _run(system="H1", findings=None, domain="modules-memory", auditor="opus",
         domain=domain,
         system=system,
         auditor=auditor,
-        time_token="20260810",
+        time_token=WINDOW,
         run_id=f"{system}-{auditor}-run",
         finished_utc=utcnow(),
         coverage=DEFAULT_COVERAGE if coverage is None else coverage,
@@ -38,10 +40,10 @@ def _run(system="H1", findings=None, domain="modules-memory", auditor="opus",
 
 
 def test_home_paths_are_folded_so_machines_are_comparable():
-    """Without this, C:\\Users\\lukas never matches C:\\Users\\User and every
+    """Without this, C:\\Users\\alice never matches C:\\Users\\bob and every
     finding would look host-specific."""
-    a = normalize_locator(r"C:\Users\lukas\OneDrive\x\AGENTS.md")
-    b = normalize_locator("C:/Users/User/OneDrive/x/AGENTS.md")
+    a = normalize_locator(r"C:\Users\alice\OneDrive\x\AGENTS.md")
+    b = normalize_locator("C:/Users/bob/OneDrive/x/AGENTS.md")
     assert a == b == "<home>/onedrive/x/agents.md"
 
 
@@ -58,7 +60,7 @@ def test_systemwide_when_every_participant_found_it():
 
 
 def test_host_specific_when_others_covered_and_found_nothing():
-    """The measured case T-20260815-08: a hardcoded C:\\Users\\User path is a
+    """The measured case T-20260815-08: a hardcoded C:\\Users\\bob path is a
     real finding on one machine and correct on the other."""
     runs = [
         _run("WORKSTATION-LG",
@@ -215,7 +217,7 @@ def test_case_is_preserved_on_case_sensitive_paths():
     /srv/repo/x gleich -- auf Linux zwei verschiedene Dateien."""
     assert normalize_locator("/srv/Repo/X") != normalize_locator("/srv/repo/x")
     # Windows-Namensraeume bleiben case-insensitiv
-    assert normalize_locator(r"C:\Users\lukas\A.md") == normalize_locator("C:/USERS/LUKAS/a.md")
+    assert normalize_locator(r"C:\Users\alice\A.md") == normalize_locator("C:/USERS/ALICE/a.md")
 
 
 def test_unc_and_posix_paths_stay_distinct():

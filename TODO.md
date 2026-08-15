@@ -1,6 +1,16 @@
 # TODO — system-auditor
 
-Stand: 2026-08-16 · Version 0.7.0 · 140 Tests grün, ruff sauber, keine Abhängigkeiten
+## STATUS
+
+| Category | Status |
+|---|---|
+| Tests / Lint | 146 passed, ruff sauber, keine Abhängigkeiten |
+| Sprachstufe (P-006) | Core erfüllt: README + Rollen-Prompt + Templates je DE und EN |
+| Release-Gate | Lauf siehe RELEASE_GATE.md |
+| Bewusste Entscheidung | Kern-Doku zweisprachig DE/EN (CHANGELOG/TODO deutsch — internes Arbeitsjournal, absichtlich); `_review/`-Berichte bleiben lokal (gitignored): interne Systemdetails, kein Release-Inhalt |
+
+
+Stand: 2026-08-16 · Version 0.8.0 · 146 Tests grün, ruff sauber, keine Abhängigkeiten
 
 Drei externe Reviews sind eingearbeitet und liegen unter `_review/`:
 Codex 1 (Robustheit, 12 Funde), Codex 2 (Logik, 12 Funde), Fable (Benutzbarkeit).
@@ -33,12 +43,12 @@ Die zwei großen offenen Fragen des Fable-Reviews sind beantwortet:
       erwartetes Fensterraster müsste gegen die vorhandenen Berichte geprüft werden.
 - [ ] **`stale` wächst unbegrenzt.** Alte Fenster werden gelistet, nie geräumt.
 
-## Offen — vor einer Veröffentlichung
+## Veröffentlichung (erledigt 2026-08-16)
 
-- [ ] `prompts/AUDITOR.en.md` + `templates/*.en.md` — Sprachstufe Core (DE+EN)
-      ist Pflicht (P-006).
-- [ ] `PRIVATE.txt`-Gate setzen oder Freigabe einholen (`visibility: private`).
-- [ ] Remote anlegen und pushen (bisher nur lokal).
+- [x] `prompts/AUDITOR.en.md` + `templates/*.en.md` — Sprachstufe Core (P-006).
+- [x] Freigabe zur Veröffentlichung vom User erteilt (2026-08-16).
+- [x] Final Gate Check 10/10 PASS → `RELEASE_GATE.md` (UNLOCKED).
+- [x] Remote: `ellmos-ai/system-auditor`.
 
 ## Offen — Ausbau
 
