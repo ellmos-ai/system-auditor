@@ -461,7 +461,19 @@ def _classify(
 def build_meta(
     runs: list[AuditRun], aggregation: Aggregation = CROSS_SYSTEM
 ) -> MetaResult:
-    """Classify -- only for aggregations that may draw a conclusion."""
+    """Classify a *snapshot* -- several participants at one moment.
+
+    Refuses the other two kinds rather than producing a plausible-looking
+    nonsense: a time series asked through these classes reports "systemwide"
+    for a finding present in every window, which is *persistent* and a statement
+    about trend, not about machines.
+    """
+    if aggregation.is_timeseries:
+        raise ValueError(
+            f"{aggregation.name} varies time: the snapshot classes describe who "
+            "saw what at one moment, not how something developed. Use "
+            "build_timeseries() instead."
+        )
     if not aggregation.is_inferential:
         raise ValueError(
             f"{aggregation.name} is descriptive: with {len(aggregation.varying)} "

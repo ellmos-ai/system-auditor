@@ -316,3 +316,14 @@ def test_absence_is_not_claimed_when_matching_by_rule():
     assert item.absent_on == []
     assert item.classification == UNVERIFIABLE
     assert any("not observable" in note for note in item.also)
+
+
+def test_build_meta_refuses_a_timeseries():
+    """Fable-Review: build_meta(runs, TIMESERIES) lieferte 'systemwide' ueber
+    Zeitfenster -- genau der Unsinn, den timeseries.py selbst benennt: 'alle
+    Fenster haben es gefunden' ist anhaltend, nicht systemweit."""
+    from system_auditor.tokens import TIMESERIES
+
+    runs = [_run("H1", [Finding(GARDENER, "drift")]), _run("H2", [Finding(GARDENER, "drift")])]
+    with pytest.raises(ValueError, match="build_timeseries"):
+        build_meta(runs, TIMESERIES)

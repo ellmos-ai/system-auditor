@@ -1,44 +1,73 @@
 # system-auditor
 
 > Belegbasierte Systemaudits ueber mehrere Maschinen, mit Meta-Buendelung.
-> Last-checked: 2026-08-15 | Version: 0.5.0 | Tests: 123 passed | Lint: ruff clean
+> Last-checked: 2026-08-15 | Version: 0.6.0 | Tests: 136 passed | Lint: ruff clean
 
 ## Was es ist
 
-Die mittlere Stufe einer Kette: Karte (system-explorer, optional) -> URTEIL (dieses
-Modul) -> Massnahme (Ticketsystem, optional). Es beurteilt, welche Regel ein Zustand
-verletzt, was zu empfehlen ist und ob die Regel selbst noch richtig ist.
+Die mittlere Stufe einer Kette: Karte (system-explorer, optional) -> URTEIL
+(dieses Modul) -> Massnahme (Ticketsystem, optional). Es beurteilt, welche Regel
+ein Zustand verletzt, was zu empfehlen ist und ob die Regel selbst noch richtig
+ist.
 
 ## Kernidee
 
-Zwei Maschinen, die dieselbe Domaene auditieren, kommen NICHT zum selben Ergebnis --
-das ist der Nutzen, nicht der Fehler. Gemessenes Beispiel: ein hartkodierter Pfad
-C:\Users\User\... ist auf dem einen Host ein Befund und auf dem anderen korrekt.
-Der Vergleich der gueltigen Audits aller Systeme liefert die Klassen systemwide /
-host_specific / inverse / divergent / unverifiable.
+Zwei Maschinen, die dieselbe Domaene auditieren, kommen NICHT zum selben
+Ergebnis -- das ist der Nutzen, nicht der Fehler. Gemessenes Beispiel: ein
+hartkodierter Pfad C:\Users\User\... ist auf dem einen Host ein Befund und auf
+dem anderen korrekt.
 
-## Meta-Audits
+## Vier Token, eine Regel
 
-Einzelaudits haben ein Gueltigkeitsfenster. Nur gueltige gehen in ein Meta-Audit ein.
-meta-2 -> meta-3 -> ...; ein hoeheres ersetzt das vorherige, das alte wird archiviert.
-Erneuern darf nur der Host, der das Audit erzeugt hat.
+Jedes Audit traegt time, domain, system, auditor. Meta-Audits entstehen, indem
+Token festgehalten werden. IDENTIFIZIERBARKEIT: Eine Ursache darf nur
+zuschreiben, wer genau EINE Dimension variieren laesst -- im Konstruktor
+erzwungen. Variieren zwei, ist die Aggregation deskriptiv (Bestandsaufnahme
+statt Urteil).
 
-## Kein Lock
+Inferenziell: interrater (Modelle), cross-system-rater (Maschinen bei
+festgehaltenem Modell -- die stehende Stufe), cross-system (Maschinen, Modell
+unkontrolliert), cross-domain (Domaenen, ueber die Regel), timeseries /
+timeseries-rater (ueber Fenster, eigene Klassen).
+Deskriptiv: full-system (Domaene und Auditor variieren zugleich).
 
-Parallele Audits einer Domaene sind die Voraussetzung des Meta-Audits, keine
-Kollision -- es gibt nichts auszuschliessen. Doppelte Meta-Laeufe sind
-idempotent, und plan_metas liefert skip, sobald das Artefakt auf denselben
-Eingaben ruht. Das frueher hier gefuehrte Claim-Protokoll wurde nach
-lock-master verlegt (pure-locking/contested.py), wo Ausschluss der Zweck ist.
+## Klassen
+
+Momentaufnahme: systemwide / host_specific / inverse / divergent /
+unverifiable -- eine Prioritaetsprojektion, keine Partition; MetaFinding.also
+nennt die gleichzeitig vorliegenden Evidenzzustaende.
+Zeitreihe: new / persistent / resolved / recurring / unverifiable, mit den Flags
+first_absence_verified und continuity_verified.
+
+## Kein Lock, aber eine Schreibsicherung
+
+Parallele Audits sind die Voraussetzung des Meta-Audits. Die Klassifikation ist
+deterministisch -- das ist aber keine Erlaubnis, blind zu schreiben: write_meta
+liest das Ziel erneut und verweigert, wenn dort bereits eine Obermenge der
+geplanten Eingaben liegt. Das Koordinationsprotokoll liegt in lock-master
+(pure-locking/contested.py).
+
+## Konfiguration
+
+config/system-auditor.config.example.json -> system-auditor.config.json.
+Gefunden ueber --config, SYSTEM_AUDITOR_CONFIG, ./, ./config/, ~/.system-auditor/.
+`system-auditor config` zeigt, was tatsaechlich gelesen wurde.
 
 ## Einstiegspunkte
 
 - prompts/AUDITOR.de.md         Rollen-Prompt fuer Agenten
 - config/system-auditor.config.example.json   Konfigurationsvorlage
-- src/system_auditor/           audit_lock, report, compare, meta, discovery, sinks, cli
-- CLI: system-auditor time-token|next-domain|meta-plan|reports|stale|discover
+- src/system_auditor/           tokens, report, meta, compare, timeseries,
+                                config, discovery, sinks, cli
+- CLI: system-auditor config|time-token|next-domain|meta-plan|reports|stale|discover
+
+## Bekannte Luecke
+
+Findings werden aus Berichten NICHT maschinell extrahiert (die Berichte sind
+Prosa). meta-plan entscheidet, OB ein Meta-Audit faellig ist; das Zusammenstellen
+der Findings uebernimmt derzeit der Agent. Siehe TODO.md.
 
 ## Abhaengigkeiten
 
-Keine. Python 3.10+, nur Standardbibliothek. Alle Nachbarmodule sind optional und
-werden per Probe erkannt, nie vorausgesetzt.
+Keine. Python 3.10+, nur Standardbibliothek. Alle Nachbarmodule sind optional
+und werden per Probe erkannt, nie vorausgesetzt.

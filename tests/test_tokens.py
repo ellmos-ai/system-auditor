@@ -219,3 +219,20 @@ def test_repeated_statement_collapses_to_the_newest():
     kept = newest_per_identity(entries, sort_key=lambda payload: payload["t"])
     assert len(kept) == 1
     assert kept[0][1]["t"] == 5
+
+
+def test_the_default_anchor_is_a_constant_not_today():
+    """Fable-Review: Die CLI setzte den Anker auf Mitternacht des AUFRUFTAGS.
+    Damit ergaben Montag und Mittwoch derselben Woche verschiedene Tokens -- das
+    7-Tage-Fenster degenerierte zu Tagesfenstern und meta-plan buendelte nie
+    tagesuebergreifend. Der Anker fixiert die PHASE des Rasters und muss darum
+    konstant sein."""
+    grid = TimeGrid(period="7d")
+    monday = datetime(2026, 8, 10, 9, 0, tzinfo=timezone.utc)
+    wednesday = datetime(2026, 8, 12, 9, 0, tzinfo=timezone.utc)
+    assert grid.token(monday) == grid.token(wednesday)
+
+    # Gegenprobe: der fehlerhafte Aufruftags-Anker trennt sie
+    per_day_monday = TimeGrid(period="7d", anchor=monday.replace(hour=0)).token(monday)
+    per_day_wednesday = TimeGrid(period="7d", anchor=wednesday.replace(hour=0)).token(wednesday)
+    assert per_day_monday != per_day_wednesday

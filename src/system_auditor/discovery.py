@@ -62,7 +62,9 @@ CONVENTION_NAMES: dict[str, tuple[str, ...]] = {
 DEFAULT_MAX_DEPTH = 2
 
 #: Never descend into these -- noise, and expensive on synchronised trees.
-_SKIP_DIRS = (".git", "node_modules", "__pycache__", ".venv", "_archive")
+#: Matched as whole names, not as prefixes: ``startswith(".git")`` also skipped
+#: ``.github``, which is exactly where a repository keeps its rules.
+_SKIP_DIRS = frozenset({".git", "node_modules", "__pycache__", ".venv", "_archive"})
 
 
 @dataclass
@@ -197,7 +199,7 @@ def _from_convention(area_path: Path, kind: str, max_depth: int) -> list[Source]
                         detail=f"found by convention at depth {depth}",
                     )
                 )
-            elif entry.is_dir() and not entry.name.startswith(_SKIP_DIRS):
+            elif entry.is_dir() and entry.name not in _SKIP_DIRS:
                 scan(entry, depth + 1)
 
     scan(root, 0)

@@ -32,11 +32,20 @@ Du bist die **mittlere Stufe** einer Kette:
 
 ## LAUF-ABLAUF
 
-### (a0) Zeitfenster bestimmen
+### (a0) Konfiguration und Zeitfenster prüfen
 
 ```
-system-auditor time-token --period 7d
+system-auditor config           # zeigt, was tatsächlich gelesen wurde
+system-auditor time-token
 ```
+
+**Sieh dir `config` wirklich an**, bevor du loslegst: Steht dort `source: defaults`, wird
+deine Konfigurationsdatei nicht gefunden, und Domänenliste, Zeitraster, Regelquellen und
+Maßnahmen-Senke sind nicht die, die du erwartest. Meldet sie `system`/`auditor` als unbelegt,
+schreibst du Berichte, die keine andere Maschine zuordnen kann.
+
+**Setze `--period` nur, wenn du es wirklich abweichend willst** — ohne Angabe gilt das
+Raster aus der Config.
 
 Dein Audit trägt **vier Token**: Zeitfenster, Domäne, System, Auditor (dein Modell). Sie
 entscheiden später, was womit verglichen werden darf. Das Zeitfenster kommt aus der
@@ -62,8 +71,13 @@ Rangfolge:
 
 Ein anderes System, das dieselbe Domäne prüft, ist **kein Hindernis, sondern die
 Voraussetzung** des späteren Meta-Audits. Es gibt hier nichts zu reservieren: Das Audit ist
-read-only, doppelte Meta-Läufe sind idempotent, und `meta-plan` liefert ohnehin `skip`,
-sobald das Artefakt auf denselben Eingaben ruht.
+read-only, die Klassifikation ist deterministisch, und `meta-plan` liefert `skip`, sobald
+das Artefakt auf denselben Eingaben ruht.
+
+**Das ist keine Erlaubnis, blind zu schreiben.** Ein früher geplanter Lauf könnte ein
+neueres Artefakt überschreiben; deshalb prüft `write_meta` das Ziel unmittelbar vor dem
+Schreiben erneut und verweigert, wenn dort bereits eine Obermenge der geplanten Eingaben
+liegt. Nutze diesen Weg, nicht `write_report` direkt.
 
 **Aktive Fremd-/User-Sperren des normalen Lock-Systems** (`LOCK.txt`, `LOCK.user*.txt` im
 Zielbereich) gelten dagegen absolut: Domäne überspringen, im Bericht vermerken.
