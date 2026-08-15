@@ -17,6 +17,7 @@ from .audit_lock import (
     ClaimResult,
     foreign_presence,
     list_locks,
+    read_lock,
     release,
     resolve_claim,
     write_lock,
@@ -96,5 +97,3 @@ __all__ = [
     "Sink",
     "emit",
 ]
-
-from .audit_lock import read_lock  # noqa: E402  (kept last for a flat __all__)
