@@ -193,8 +193,20 @@ benutzte Konfiguration der Fehler ist, den man am längsten übersieht — bis 0
 mitgelieferte Beispieldatei von **nichts** gelesen, und jede dort dokumentierte Einstellung
 war wirkungslos.
 
+**`reports_dir` ist der Treffpunkt.** Er muss in einem cloud-synchronisierten Ordner
+liegen, den alle teilnehmenden Maschinen teilen — in einem host-lokalen Verzeichnis kann
+strukturell nie ein Meta-Audit entstehen, weil dort kein Fremdbericht ankommt. Die
+Beispieldatei zeigt auf den geteilten Modulordner; `config` warnt, wenn der Pfad
+host-lokal aussieht.
+
+**Der Meta-Bericht ist modellmanuell.** Der Auditor schreibt seinen Bericht nach
+[`templates/AUDIT-BERICHT.de.md`](templates/AUDIT-BERICHT.de.md); entdeckt er Fremdberichte
+derselben Domäne im selben Fenster, schreibt er den Meta-Bericht direkt mit — seine
+Interpretation, nach [`templates/META-BERICHT.de.md`](templates/META-BERICHT.de.md).
+`meta-plan` entscheidet *ob* (`create`/`update`/`skip`), die Bibliothek (`build_meta`)
+dient der Kontrolle. Beide Template-Köpfe sprechen exakt das Format des Parsers.
+
 Der Rollen-Prompt für Agenten: [`prompts/AUDITOR.de.md`](prompts/AUDITOR.de.md).
-Konfiguration: `config/system-auditor.config.example.json` kopieren.
 
 ---
 

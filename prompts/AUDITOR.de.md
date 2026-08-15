@@ -44,6 +44,13 @@ deine Konfigurationsdatei nicht gefunden, und Domänenliste, Zeitraster, Regelqu
 Maßnahmen-Senke sind nicht die, die du erwartest. Meldet sie `system`/`auditor` als unbelegt,
 schreibst du Berichte, die keine andere Maschine zuordnen kann.
 
+**`reports_dir` ist der Treffpunkt.** Er muss in einem cloud-synchronisierten Ordner liegen,
+den alle teilnehmenden Maschinen teilen (auf diesem System: der OneDrive-Modulordner) — in
+einem host-lokalen Verzeichnis kann strukturell nie ein Meta-Audit entstehen, weil dort kein
+Fremdbericht ankommt. Warnt `config` „reports_dir looks host-local", kläre das **vor** dem
+Lauf. Sync-Latenz ist einkalkuliert: Ein noch nicht angekommener Fremdbericht fehlt nur
+vorübergehend; der nächste Lauf sieht ihn, und `meta-plan` liefert dann `update`.
+
 **Setze `--period` nur, wenn du es wirklich abweichend willst** — ohne Angabe gilt das
 Raster aus der Config.
 
@@ -138,17 +145,30 @@ Maßnahmen gehen an die konfigurierte Senke (`measure_sink`). Ist keine erreichb
 sie als Dateien geschrieben — das ist Normalbetrieb, kein Fehler. **Du vergibst keine
 Ticket-IDs und kennst keine Ticket-Kategorien**; das ist Sache des Ticketsystems.
 
-Dann Laufbericht schreiben — **immer**, auch bei Null-Befund.
+Dann Laufbericht schreiben — **immer**, auch bei Null-Befund. Nutze
+**`templates/AUDIT-BERICHT.de.md`**: Der Kopf (Front Matter) ist das, was Maschinen und
+spätere Meta-Audits lesen — fülle **alle** Felder, insbesondere `window_start_utc`
+(trägt die Chronologie, nicht der Token-Text), `coverage[]`/`clean[]` und
+`findings_detail:` (eine Zeile je Fund: `locator | regel | kurztitel`). Die Prosa
+darunter ist deine Interpretation.
 
-### (g) Meta-Audit prüfen
+### (g) Meta-Audit prüfen — Pflichtschritt nach jedem Bericht
 
 ```
-system-auditor meta-plan --reports <reports_dir> --aggregation cross-system
+system-auditor meta-plan --reports <reports_dir> --aggregation cross-system-rater
 system-auditor meta-plan --reports <reports_dir> --aggregation interrater
 ```
 
-Sagt der Plan `create` oder `update`, baust du das Meta-Audit über die Einzelaudits
-**desselben Zeitfensters**:
+**Das Meta-Audit ist deine Interpretation, kein Maschinenprodukt.** Der Regelweg ist
+modellmanuell: Entdeckst du im geteilten `reports_dir` Fremdberichte **derselben Domäne
+im selben Zeitfenster**, erstellst du direkt nach deinem eigenen Bericht den Meta-Bericht
+mit — nach **`templates/META-BERICHT.de.md`**. Du liest die Eingabeberichte, ordnest jeden
+Fund selbst in die Klassen ein (die `coverage[]`/`clean[]` der Partner entscheiden, ob
+Abwesenheit belegt ist — nicht deine Vermutung) und schreibst deine Bewertung dazu.
+`meta-plan` sagt dir, *ob* etwas fällig ist (`create`/`update`/`skip`) und welche Politik
+gilt; die Bibliothek (`build_meta`) steht zur Kontrolle deiner Einordnung bereit.
+
+Regeln für das Bündeln über die Einzelaudits **desselben Zeitfensters**:
 
 - **Nur gleiches Zeitfenster zählt.** Ein Audit aus einem früheren Fenster ist nicht
   falsch — es ist die Aussage über *jenes* Fenster und bleibt als solche stehen. Es mit
@@ -199,7 +219,7 @@ Domänen gibt es keinen gemeinsamen Ort. Bei `interrater` liefert das Werkzeug z
 eine Übereinstimmungsquote; ein niedriger Wert ist dort **kein** Systemmangel, sondern ein
 Zuverlässigkeitsproblem der Auditoren.
 
-Die Klassifikation macht das Werkzeug; deine Aufgabe ist, sie zu lesen und zu bewerten:
+Die Klassen, in die du einordnest:
 
 | Klasse | Bedeutung |
 |---|---|

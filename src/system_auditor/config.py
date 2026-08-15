@@ -101,6 +101,21 @@ def _expand_stores(entries: list, home: str) -> list[dict]:
     ]
 
 
+#: Substrings that suggest a cloud-synchronised (= shareable) location. A pure
+#: heuristic for a *note*, never a gate: an unrecognised sync tool is fine, the
+#: note just tells the operator what to check. Meta audits can only ever happen
+#: where the machines' reports physically meet.
+_SHARED_HINTS = (
+    "onedrive", "dropbox", "nextcloud", "owncloud", "google drive", "googledrive",
+    "syncthing", "icloud", "cloudstation", "/.sync", "\\.sync",
+)
+
+
+def _looks_shared(path: str) -> bool:
+    lowered = path.lower()
+    return any(hint in lowered for hint in _SHARED_HINTS)
+
+
 def _parse_anchor(raw: str | None) -> datetime | None:
     if not raw:
         return None
@@ -189,6 +204,12 @@ def load(path: str | Path | None = None, home: str | None = None) -> Config:
         notes=notes,
     )
 
+    if config.reports_dir and not _looks_shared(config.reports_dir):
+        config.notes.append(
+            "reports_dir looks host-local -- meta audits need a cloud-shared "
+            "folder that every participating machine syncs, or no second "
+            "machine's reports will ever meet yours"
+        )
     if config.system in ("", "<HOSTNAME>"):
         config.notes.append(
             "system is unset or still the placeholder -- reports would be filed "

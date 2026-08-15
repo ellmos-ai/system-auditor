@@ -188,8 +188,19 @@ Found via `--config`, `SYSTEM_AUDITOR_CONFIG`, then `./`, `./config/`,
 not being used is the failure that takes longest to notice — until 0.6.0 the shipped
 example was read by *nothing*, and every setting it documented was inert.
 
+**`reports_dir` is the meeting point.** It must live in a cloud-synchronised folder that
+every participating machine shares — in a host-local directory a meta audit can
+structurally never happen, because no foreign report ever arrives there. The example file
+points at the shared module folder; `config` warns when the path looks host-local.
+
+**The meta report is model-manual.** The auditor writes their own report following
+[`templates/AUDIT-BERICHT.de.md`](templates/AUDIT-BERICHT.de.md); on discovering foreign
+reports for the same domain and window, they write the meta report right after their own —
+their interpretation, following [`templates/META-BERICHT.de.md`](templates/META-BERICHT.de.md).
+`meta-plan` decides *whether* (`create`/`update`/`skip`); the library (`build_meta`) serves
+as a cross-check. Both template headers speak exactly the parser's format.
+
 The role prompt an agent follows is [`prompts/AUDITOR.de.md`](prompts/AUDITOR.de.md).
-Configuration: copy `config/system-auditor.config.example.json`.
 
 ---
 

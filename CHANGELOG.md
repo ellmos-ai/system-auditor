@@ -3,6 +3,32 @@
 Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [SemVer](https://semver.org/lang/de/).
 
+## [0.7.0] - 2026-08-16
+
+Nutzerentscheidung eingearbeitet: Das Meta-Audit ist modellmanuell -- der
+Auditor interpretiert selbst; das Werkzeug entscheidet Faelligkeit und liefert
+Kontrolle. Und die Berichte brauchen einen physischen Treffpunkt.
+
+### Hinzugefuegt
+
+- **`templates/AUDIT-BERICHT.de.md` + `templates/META-BERICHT.de.md`** -- der
+  Vertrag des modellmanuellen Wegs. Front Matter exakt im Format von
+  `parse_front_matter` (testgesichert), inkl. `window_start_utc` (traegt die
+  Chronologie) und `findings_detail:` (`locator | regel | titel` je Zeile) als
+  Anschlusspunkt fuer eine spaetere maschinelle Kontrolle.
+- **Cloud-Treffpunkt:** Beispiel-Config zeigt `reports_dir`/`findings_dir` auf
+  den cloud-geteilten OneDrive-Modulordner; `config` warnt, wenn `reports_dir`
+  host-lokal aussieht (`_looks_shared`-Heuristik -- Note, nie Gate).
+
+### Geaendert
+
+- Prompt (f)/(g): Bericht nach Template; Meta-Schritt ist Pflichtpruefung nach
+  jedem Bericht und ausdruecklich die **Interpretation des Auditors** --
+  `meta-plan` entscheidet ob, `build_meta` kontrolliert, das Modell ordnet ein.
+- TODO: "Torso"-Einordnung des Fable-Reviews als gegenstandslos aufgeloest
+  (die fehlende Maschinen-Extraktion war nie der Plan); Betriebsfrage
+  "wo treffen sich die Berichte?" beantwortet.
+
 ## [0.6.0] - 2026-08-15
 
 Behebt die Funde des Fable-Reviews (`_review/FABLE-REVIEW_2026-08-15.md`) --

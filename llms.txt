@@ -1,7 +1,7 @@
 # system-auditor
 
 > Belegbasierte Systemaudits ueber mehrere Maschinen, mit Meta-Buendelung.
-> Last-checked: 2026-08-15 | Version: 0.6.0 | Tests: 136 passed | Lint: ruff clean
+> Last-checked: 2026-08-16 | Version: 0.7.0 | Tests: 140 passed | Lint: ruff clean
 
 ## Was es ist
 
@@ -56,16 +56,20 @@ Gefunden ueber --config, SYSTEM_AUDITOR_CONFIG, ./, ./config/, ~/.system-auditor
 ## Einstiegspunkte
 
 - prompts/AUDITOR.de.md         Rollen-Prompt fuer Agenten
+- templates/                    Berichts- und Meta-Templates (parser-kompatibel)
 - config/system-auditor.config.example.json   Konfigurationsvorlage
 - src/system_auditor/           tokens, report, meta, compare, timeseries,
                                 config, discovery, sinks, cli
 - CLI: system-auditor config|time-token|next-domain|meta-plan|reports|stale|discover
 
-## Bekannte Luecke
+## Modellmanuell by design
 
-Findings werden aus Berichten NICHT maschinell extrahiert (die Berichte sind
-Prosa). meta-plan entscheidet, OB ein Meta-Audit faellig ist; das Zusammenstellen
-der Findings uebernimmt derzeit der Agent. Siehe TODO.md.
+Das Meta-Audit ist die Interpretation des Auditors, kein Maschinenprodukt:
+Entdeckt ein Auditor Fremdberichte derselben Domaene im selben Fenster, schreibt
+er den Meta-Bericht direkt mit -- nach templates/META-BERICHT.de.md. meta-plan
+entscheidet OB (create/update/skip), build_meta dient der Kontrolle. reports_dir
+MUSS in einem cloud-geteilten Ordner liegen (Treffpunkt der Maschinen); `config`
+warnt bei host-lokalem Pfad.
 
 ## Abhaengigkeiten
 

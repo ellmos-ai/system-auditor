@@ -95,6 +95,19 @@ def test_an_explicit_time_table_is_carried_through(tmp_path):
     assert config.table.token(utcnow().replace(year=2026, month=8, day=15)) == "sprint-42"
 
 
+def test_a_host_local_reports_dir_earns_a_warning(tmp_path):
+    """Meta audits happen where reports physically meet. A host-local
+    reports_dir means no second machine ever writes there -- warn, don't gate:
+    an unrecognised sync tool is legitimate."""
+    local = load(_write(tmp_path, {"reports_dir": "<HOME>/.system-auditor/reports"}))
+    assert any("host-local" in note for note in local.notes)
+
+    tmp2 = tmp_path / "b"
+    tmp2.mkdir()
+    shared = load(_write(tmp2, {"reports_dir": "<HOME>/OneDrive/x/reports"}))
+    assert not any("host-local" in note for note in shared.notes)
+
+
 def test_the_aggregation_policy_comes_from_the_file(tmp_path):
     path = _write(tmp_path, {"aggregations": {"timeseries": {"mode": "always"}}})
     policy = load(path).policy

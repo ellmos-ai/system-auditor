@@ -35,8 +35,9 @@
   "min_participants": 2,
 
   "audit_home": "<HOME>/.system-auditor",
-  "reports_dir": "<HOME>/.system-auditor/reports",
-  "findings_dir": "<HOME>/.system-auditor/findings",
+  "reports_dir": "<HOME>/OneDrive/.TOPICS/.AI/.MODULES/.CONTROL/system-auditor/reports",
+  "findings_dir": "<HOME>/OneDrive/.TOPICS/.AI/.MODULES/.CONTROL/system-auditor/findings",
+  "_comment_reports_dir": "DER TREFFPUNKT. reports_dir MUSS in einem cloud-synchronisierten Ordner liegen, den ALLE teilnehmenden Maschinen teilen (hier: der OneDrive-Modulordner) -- in einem host-lokalen Verzeichnis kann strukturell nie ein Meta-Audit entstehen, weil keine zweite Maschine hinschreibt. audit_home dagegen bleibt lokal (Arbeitsdaten des Hosts). Die Sync-Latenz der Cloud ist einkalkuliert: Ein Bericht, der noch nicht angekommen ist, fehlt dem Meta-Audit nur voruebergehend -- der naechste Lauf sieht ihn und meta-plan liefert dann update.",
   "_comment_no_locks": "Dieses Modul haelt bewusst KEINE Locks: Parallele Audits einer Domaene sind die Voraussetzung des Meta-Audits, nicht eine Kollision. Doppelte Meta-Laeufe sind idempotent, und plan_metas liefert skip, sobald das Artefakt auf denselben Eingaben ruht. Das frueher hier gefuehrte Claim-Verfahren liegt jetzt in lock-master (pure-locking/contested.py), wo Ausschluss der Zweck ist.",
 
   "domains": [
