@@ -45,8 +45,18 @@
       "name": "beispiel-domaene",
       "path": "<HOME>/pfad/zur/domaene",
       "focus": "Woran diese Domaene geprueft wird. Grosse Baeume hier ausdruecklich auf ihre Steuerungsebene begrenzen, damit ein Lauf ehrlich sagen kann, was er abgedeckt hat."
+    },
+    {
+      "name": "beispiel-integrationspfad",
+      "path": "<HOME>/pfad/zur/modulfamilie",
+      "focus": "INTEGRATION: Arbeiten die Glieder so zusammen, wie es deklariert ist? Prueffklassen I1-I7 aus dem Rollen-Prompt (Vertragsaufloesung, Referenz-Aufloesbarkeit, Naht-Ehrlichkeit, Proben-Realitaet, Konsumenten-Format, Doppelstruktur, tote Deklaration).",
+      "members": [
+        "<HOME>/pfad/zur/modulfamilie/modul-a",
+        "<HOME>/pfad/zur/modulfamilie/modul-b"
+      ]
     }
   ],
+  "_comment_domains": "Eine Domaene ist ein Ordner ODER ein Integrationspfad: mit members[] benennt sie die Glieder einer Zusammenarbeits-Kette. path bleibt der gemeinsame Ankerpfad (dort sucht discover), focus benennt die Kette, coverage[] im Bericht sagt ehrlich, welche Glieder angesehen wurden.",
 
   "domain_selector_command": null,
   "_comment_domain_selector_command": "Optionaler externer Selektor (Rang 2). Bleibt er null, gilt die Rotation ueber domains[] als regulaerer Weg.",

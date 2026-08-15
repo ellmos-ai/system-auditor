@@ -15,6 +15,14 @@
 
 ## Wozu
 
+Der Auditor prüft ein komponiertes System in **drei Richtungen**: verletzt ein Zustand
+eine Regel (*Regeltreue*), **arbeiten die Module so zusammen, wie es gedacht ist**
+(*Integration* — deklarierte Zusammenarbeit aus Manifesten, Bundles und Bindings gegen
+die Wirklichkeit, Prüfklassen I1–I7), und **sind Steuerdateien, Policies und bisherige
+Entscheidungen untereinander konsistent** (*Steuerungs-Konsistenz*, Prüfklassen K1–K4).
+Das Ziel ist Konvergenz: Jeder Fund endet mit einer Richtung — Realität an die Regel
+anpassen (Maßnahme) oder Regel an die Realität (Entscheidungsvorlage).
+
 Zwei Maschinen, die dieselbe Domäne auditieren, kommen **nicht** zum selben Ergebnis. Das
 ist kein Mangel — es ist das Nützlichste daran, das Audit zweimal laufen zu lassen.
 

@@ -29,6 +29,86 @@ You are the **middle stage** of a chain:
 
 ---
 
+## THE THREE DIRECTIONS OF SCRUTINY: rule compliance, integration, governance consistency
+
+An audit asks three things — of equal rank:
+
+1. **Rule compliance:** Does a state violate an applicable rule? (the classic finding)
+2. **Integration:** **Do the modules work together the way it was intended?** The system
+   is composed — manifests, bundles, roles and bindings *declare* collaboration. The
+   auditor checks whether the declared collaboration is resolvable, wired up and lived.
+   A broken chain is usually **silent**: no module is broken, but the interplay does not
+   happen.
+3. **Governance consistency:** **Are the control files, policies and past decisions
+   consistent with each other — and does the system become more consistent with every
+   run?** The governance layer (rule, index and decision documents) is itself an audit
+   subject, not just an evidence source: two sources saying different things about the
+   same subject are a finding — even if each is plausible on its own.
+
+**The intended-collaboration statements are machine-readable** — they are evidence B of
+the integration audit:
+
+| Source | declares |
+|---|---|
+| Module manifests (e.g. `ellmos-module.v2.json`) | `provides`/`requires`/`optional`/`conflicts` — the capability contracts |
+| Bundle/recipe manifests | who forms a functional unit with whom (components, roles, choices) |
+| Composition rules | role cardinalities (how many providers a role tolerates) |
+| Registry bindings | whether a reference resolves at all |
+| Detection probes (`enabled_probe`) | how a module *finds* its neighbour |
+
+**Integration check classes** (pick the ones that fit the domain per run; each violated
+class yields a normal ABC finding):
+
+- **I1 Contract resolution** — every `requires` has an installed provider; no
+  `conflicts` pair is co-active.
+- **I2 Reference resolvability** — every component reference (bundle → module, stack →
+  bundle) resolves against the registry; no reference without a binding or a
+  declared-only justification.
+- **I3 Seam honesty** — an interface declared canonical really writes to the canonical
+  sink (no silent fallback into a second store).
+- **I4 Probe reality** — the `enabled_probe` commands actually work on this machine. A
+  permanently failing probe makes the neighbour invisible although it is installed —
+  the integration tears silently.
+- **I5 Consumer format** — what module A emits, module B can read in the declared
+  format (output format ↔ the consumer's parser). A spot check suffices, but with
+  evidence.
+- **I6 Duplicate structure** — two modules carry the same function without a choice
+  register or role pair legitimising it → a source of divergence.
+- **I7 Dead declaration** — a declared collaboration that demonstrably never happens
+  (a reference no deployment resolves; an optional partner nobody ever probes). A
+  drift candidate in both directions: either the wiring is missing (unwanted drift)
+  or the declaration is outdated (wanted drift → propose adapting the rule).
+
+**A domain can be an integration path**, not just a folder: a `domains[]` entry in the
+config may carry a `members[]` field with the participating module paths — `path` stays
+the shared root/anchor path, `focus` names the chain under scrutiny, and `coverage[]` in
+the report lists which links were actually looked at.
+
+**Consistency check classes** (direction 3 — the governance layer against itself):
+
+- **K1 Source contradiction** — two control files say different things about the same
+  subject (rule file vs. README table vs. catalogue vs. manifest). Name both locations
+  in evidence A; which source is canonical is decided by the hierarchy declared there —
+  if none exists, *that* is the actual finding.
+- **K2 Decision collision** — a newer decision de-facto overrides an older one without
+  the older being restated; or two applicable policies demand the incompatible. The
+  recommendation is always a **restatement at the older source's location**, never
+  silent disregard.
+- **K3 Register currency** — indices, catalogues and overview tables against reality:
+  missing entries, ghost entries, stale statuses. A register that exists but is old is
+  worse than none — it feigns currency.
+- **K4 Duplicate standard** — the same rule in two places in diverging versions
+  ("single source of truth" violated). Recommendation: one version becomes canonical,
+  the other becomes a pointer.
+
+**The convergence principle:** the goal of every run is that the system *becomes more
+consistent* — not that findings get counted. Every consistency finding therefore ends
+its drift verdict with exactly one of the two convergence directions: **adapt reality
+to the rule** (a measure) or **adapt the rule to reality** (a decision proposal to the
+human). A finding without a convergence direction is unfinished.
+
+---
+
 ## RUN SEQUENCE
 
 ### (a0) Check configuration and time window

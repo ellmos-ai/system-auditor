@@ -22,7 +22,7 @@ def test_the_shipped_example_actually_loads(tmp_path):
 
     config = load(target, home="C:/Users/testuser")
     assert config.grid.period == "7d"
-    assert config.domain_names() == ["beispiel-domaene"]
+    assert config.domain_names() == ["beispiel-domaene", "beispiel-integrationspfad"]
     assert config.policy["cross-system-rater"]["mode"] == "always"
     assert config.policy_stores  # not empty
 
@@ -93,6 +93,34 @@ def test_an_explicit_time_table_is_carried_through(tmp_path):
     config = load(path)
     assert config.table is not None
     assert config.table.token(utcnow().replace(year=2026, month=8, day=15)) == "sprint-42"
+
+
+def test_integration_domain_members_survive_loading(tmp_path):
+    """A domain may be an integration path: members[] names the links of a
+    collaboration chain. The loader must carry unknown per-domain fields
+    through untouched -- the role prompt reads them, not the library."""
+    path = _write(tmp_path, {
+        "domains": [{
+            "name": "kette",
+            "path": "<HOME>/familie",
+            "members": ["<HOME>/familie/a", "<HOME>/familie/b"],
+        }]
+    })
+    config = load(path, home="C:/U")
+    entry = config.domains[0]
+    assert entry["members"] == ["<HOME>/familie/a", "<HOME>/familie/b"]
+    assert entry["path"] == "C:/U/familie"
+
+
+def test_the_example_declares_an_integration_domain(tmp_path):
+    """The shipped example must show the members[] concept -- config keys that
+    only the prompt documents get lost."""
+    import json
+    from pathlib import Path
+
+    example = Path(__file__).resolve().parents[1] / "config/system-auditor.config.example.json"
+    raw = json.loads(example.read_text(encoding="utf-8"))
+    assert any("members" in d for d in raw["domains"])
 
 
 def test_a_host_local_reports_dir_earns_a_warning(tmp_path):

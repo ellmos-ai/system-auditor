@@ -47,6 +47,10 @@ CONVENTION_NAMES: dict[str, tuple[str, ...]] = {
         "MANIFEST.md",
         "SECURITY.md",
         "CONTRIBUTING.md",
+        # Module manifests are declared collaboration: provides/requires/
+        # optional/conflicts are the rules an integration audit checks against.
+        "ellmos-module.v2.json",
+        "bundle.v1.json",
         "LOCK.permissions.json",
     ),
     KIND_DECISION: (

@@ -3,6 +3,29 @@
 Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [SemVer](https://semver.org/lang/de/).
 
+## [0.9.0] - 2026-08-16
+
+Zweck-Schaerfung (Nutzerklaerung): Der Auditor prueft nicht nur Regeltreue,
+sondern ausdruecklich auch, ob die MODULE ZUSAMMENARBEITEN wie gedacht und ob
+STEUERDATEIEN, POLICIES UND ENTSCHEIDUNGEN konsistent sind bzw. konsistenter
+werden -- der urspruengliche TICKET-WRITER-Kern, jetzt explizit.
+
+### Hinzugefuegt
+
+- **Drei Pruefrichtungen im Rollen-Prompt (DE+EN):** Regeltreue · Integration ·
+  Steuerungs-Konsistenz. Integrations-Pruefklassen I1-I7 (Vertragsaufloesung,
+  Referenz-Aufloesbarkeit, Naht-Ehrlichkeit, Proben-Realitaet, Konsumenten-Format,
+  Doppelstruktur, tote Deklaration) und Konsistenz-Pruefklassen K1-K4
+  (Quellen-Widerspruch, Entscheidungs-Kollision, Register-Aktualitaet,
+  Duplikat-Standard) mit Konvergenz-Prinzip: jeder Fund endet mit genau einer
+  Richtung -- Realitaet an die Regel oder Regel an die Realitaet.
+- **Integrations-Domaenen:** ein domains[]-Eintrag darf members[] tragen (die
+  Glieder einer Zusammenarbeits-Kette); der Loader traegt das Feld unveraendert
+  durch, der Prompt liest es. Beispiel-Config zeigt es vor.
+- **Kompositions-Manifeste als Konventionsquelle:** discover() findet
+  ellmos-module.v2.json und bundle.v1.json als Policy-Quellen -- Modul-Manifeste
+  sind deklarierte Regeln der Zusammenarbeit.
+
 ## [0.8.0] - 2026-08-16
 
 Veroeffentlichungs-Release: Sprachstufe Core komplett, Final Gate bestanden.

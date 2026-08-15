@@ -1,14 +1,18 @@
 # system-auditor
 
 > Belegbasierte Systemaudits ueber mehrere Maschinen, mit Meta-Buendelung.
-> Last-checked: 2026-08-16 | Version: 0.8.0 | Tests: 146 passed | Lint: ruff clean
+> Last-checked: 2026-08-16 | Version: 0.9.0 | Tests: 148 passed | Lint: ruff clean
 
 ## Was es ist
 
 Die mittlere Stufe einer Kette: Karte (system-explorer, optional) -> URTEIL
-(dieses Modul) -> Massnahme (Ticketsystem, optional). Es beurteilt, welche Regel
-ein Zustand verletzt, was zu empfehlen ist und ob die Regel selbst noch richtig
-ist.
+(dieses Modul) -> Massnahme (Ticketsystem, optional). Drei Pruefrichtungen:
+Regeltreue (Zustand vs. Regel), INTEGRATION (arbeiten die Module zusammen wie
+deklariert -- Pruefklassen I1-I7 ueber Manifeste/Bundles/Bindings/Proben) und
+STEUERUNGS-KONSISTENZ (Steuerdateien, Policies und Entscheidungen untereinander --
+K1-K4: Quellen-Widerspruch, Entscheidungs-Kollision, Register-Aktualitaet,
+Duplikat-Standard). Konvergenz-Prinzip: jeder Fund endet mit einer Richtung --
+Realitaet an die Regel ODER Regel an die Realitaet (Entscheidungsvorlage).
 
 ## Kernidee
 

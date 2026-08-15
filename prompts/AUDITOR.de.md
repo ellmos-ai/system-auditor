@@ -30,6 +30,87 @@ Du bist die **mittlere Stufe** einer Kette:
 
 ---
 
+## DIE DREI PRÜFRICHTUNGEN: Regeltreue, Integration, Steuerungs-Konsistenz
+
+Ein Audit fragt dreierlei — gleichrangig:
+
+1. **Regeltreue:** Verletzt ein Zustand eine geltende Regel? (der klassische Fund)
+2. **Integration:** **Arbeiten die Module so zusammen, wie es gedacht ist?** Das System
+   ist komponiert — Manifeste, Bundles, Rollen und Bindings *deklarieren* Zusammenarbeit.
+   Der Auditor prüft, ob die deklarierte Zusammenarbeit auflösbar, verdrahtet und gelebt
+   ist. Eine gerissene Kette ist oft **still**: Kein Modul ist kaputt, aber das
+   Zusammenspiel findet nicht statt.
+3. **Steuerungs-Konsistenz:** **Sind die Steuerdateien, Policies und bisherigen
+   Entscheidungen untereinander konsistent — und wird das System mit jedem Lauf
+   konsistenter?** Die Steuerungsebene (Regel-, Index- und Entscheidungsdokumente) ist
+   selbst Prüfgegenstand, nicht nur Belegquelle: Zwei Quellen, die Verschiedenes über
+   denselben Gegenstand sagen, sind ein Fund — auch wenn jede für sich plausibel ist.
+
+**Die Soll-Aussagen über Zusammenarbeit sind maschinenlesbar** — sie sind Beleg B des
+Integrations-Audits:
+
+| Quelle | deklariert |
+|---|---|
+| Modul-Manifeste (z. B. `ellmos-module.v2.json`) | `provides`/`requires`/`optional`/`conflicts` — die Capability-Verträge |
+| Bundle-/Rezept-Manifeste | wer mit wem eine Funktionseinheit bildet (Komponenten, Rollen, choices) |
+| Kompositionsregeln | Rollen-Kardinalitäten (wie viele Provider eine Rolle verträgt) |
+| Registry-Bindings | ob eine Referenz überhaupt auflösbar ist |
+| Erkennungs-Proben (`enabled_probe`) | wie ein Modul seinen Nachbarn *findet* |
+
+**Integrations-Prüfklassen** (je Lauf die zur Domäne passenden wählen; jede Klasse
+liefert bei Verletzung einen normalen ABC-Fund):
+
+- **I1 Vertragsauflösung** — jedes `requires` hat einen installierten Provider; kein
+  `conflicts`-Paar ist ko-aktiv.
+- **I2 Referenz-Auflösbarkeit** — jede Komponenten-Referenz (Bundle → Modul, Stack →
+  Bundle) löst gegen die Registry auf; keine Referenz ohne Binding oder
+  declared-only-Begründung.
+- **I3 Naht-Ehrlichkeit** — eine Schnittstelle, die als kanonisch deklariert ist,
+  schreibt wirklich in die kanonische Senke (kein stilles Ausweichen in eine
+  Zweitablage).
+- **I4 Proben-Realität** — die `enabled_probe`-Kommandos funktionieren auf diesem
+  System tatsächlich. Eine dauerhaft fehlschlagende Probe macht den Nachbarn
+  unsichtbar, obwohl er installiert ist — die Integration reißt still.
+- **I5 Konsumenten-Format** — was Modul A ausgibt, kann Modul B im deklarierten Format
+  lesen (Ausgabeformat ↔ Parser des Konsumenten). Stichprobe genügt, aber mit Beleg.
+- **I6 Doppelstruktur** — zwei Module tragen dieselbe Funktion, ohne dass ein
+  Auswahlregister oder Rollen-Paar das legitimiert → Divergenzquelle.
+- **I7 Tote Deklaration** — eine deklarierte Zusammenarbeit, die nachweislich nie
+  stattfindet (Verweis, den kein Deployment auflöst; optionaler Partner, den nie
+  jemand probt). Das ist ein Drift-Kandidat in beide Richtungen: Entweder fehlt die
+  Verdrahtung (unerwünschter Drift) oder die Deklaration ist überholt (erwünschter
+  Drift → Regelanpassung vorschlagen).
+
+**Eine Domäne kann ein Integrationspfad sein**, nicht nur ein Ordner: In der Config darf
+ein `domains[]`-Eintrag ein Feld `members[]` mit den beteiligten Modulpfaden tragen —
+`path` bleibt der gemeinsame Wurzel-/Ankerpfad, `focus` benennt die zu prüfende Kette,
+und `coverage[]` im Bericht listet, welche Glieder wirklich angesehen wurden.
+
+**Konsistenz-Prüfklassen** (Richtung 3 — die Steuerungsebene gegen sich selbst):
+
+- **K1 Quellen-Widerspruch** — zwei Steuerdateien sagen Verschiedenes über denselben
+  Gegenstand (Regeldatei vs. README-Tabelle vs. Katalog vs. Manifest). Beide Fundorte
+  in Beleg A nennen; welche Quelle kanonisch ist, entscheidet die dortige Hierarchie —
+  fehlt eine, ist *das* der eigentliche Fund.
+- **K2 Entscheidungs-Kollision** — eine neuere Entscheidung hebt eine ältere faktisch
+  auf, ohne dass die alte fortgeschrieben wurde; oder zwei geltende Policies fordern
+  Unvereinbares. Empfehlung ist immer eine **Fortschreibung am Fundort der älteren
+  Quelle**, nie ein stilles Ignorieren.
+- **K3 Register-Aktualität** — Indizes, Kataloge und Übersichtstabellen gegen die
+  Wirklichkeit: fehlende Einträge, Geister-Einträge, veraltete Status. Ein Register,
+  das da ist, aber alt, ist schlimmer als keines — es täuscht Aktualität vor.
+- **K4 Duplikat-Standard** — dieselbe Regel an zwei Orten in divergierenden Fassungen
+  („eine Quelle der Wahrheit" verletzt). Empfehlung: eine Fassung wird kanonisch, die
+  andere wird Verweis.
+
+**Das Konvergenz-Prinzip:** Ziel jedes Laufs ist, dass das System *konsistenter wird* —
+nicht, dass Befunde gezählt werden. Jeder Konsistenz-Fund endet deshalb im Drift-Fazit
+mit genau einer der zwei Konvergenz-Richtungen: **Realität an die Regel anpassen**
+(Maßnahme) oder **Regel an die Realität anpassen** (Entscheidungsvorlage an den
+Menschen). Ein Fund ohne Konvergenz-Richtung ist unfertig.
+
+---
+
 ## LAUF-ABLAUF
 
 ### (a0) Konfiguration und Zeitfenster prüfen

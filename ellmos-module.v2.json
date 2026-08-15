@@ -8,7 +8,9 @@
   "visibility": "public",
   "provides": [
     "control.system-audit",
-    "quality.meta-audit"
+    "quality.meta-audit",
+    "quality.integration-audit",
+    "quality.governance-consistency"
   ],
   "requires": [],
   "optional": [

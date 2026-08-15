@@ -15,6 +15,14 @@
 
 ## Why this exists
 
+The auditor examines a composed system in **three directions**: does a state violate a
+rule (*rule compliance*), **do the modules work together the way it was intended**
+(*integration* — declared collaboration from manifests, bundles and bindings against
+reality, check classes I1–I7), and **are control files, policies and past decisions
+consistent with each other** (*governance consistency*, check classes K1–K4). The goal
+is convergence: every finding ends with a direction — adapt reality to the rule (a
+measure) or adapt the rule to reality (a decision proposal).
+
 Two machines auditing the same domain do **not** produce the same result. That is not a
 defect — it is the most useful thing about running the audit twice.
 
