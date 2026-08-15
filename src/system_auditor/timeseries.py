@@ -45,6 +45,10 @@ class TrendFinding:
     #: False when a window between the first sighting and now was not covered.
     #: "Present in every window" would then be a claim without observation.
     continuity_verified: bool = True
+    #: False when the windows before the first sighting were not covered.
+    #: "New" is a statement about earlier ABSENCE -- without observation only
+    #: "newly observed" is established.
+    first_absence_verified: bool = True
     windows_present: list[str] = field(default_factory=list)
     windows_absent: list[str] = field(default_factory=list)
     windows_unknown: list[str] = field(default_factory=list)
@@ -79,10 +83,40 @@ class TimeseriesResult:
         return self.windows[-1] if self.windows else ""
 
     @property
+    def transitions(self) -> dict[str, int]:
+        """What actually changed from the previous to the newest window.
+
+        The lifecycle classes are cumulative: a finding stays ``resolved`` ten
+        windows after it was fixed, and ``recurring`` forever after one gap. A
+        balance built from them therefore reports movement where nothing moved.
+        This counts the real step instead: appeared, disappeared, or unchanged
+        between the last two windows.
+        """
+        if len(self.windows) < 2:
+            return {"appeared": 0, "disappeared": 0, "unchanged": 0}
+        previous, latest = self.windows[-2], self.windows[-1]
+        appeared = disappeared = unchanged = 0
+        for item in self.items:
+            was = previous in item.windows_present
+            now = latest in item.windows_present
+            if now and not was:
+                appeared += 1
+            elif was and not now:
+                disappeared += 1
+            elif was and now:
+                unchanged += 1
+        return {"appeared": appeared, "disappeared": disappeared, "unchanged": unchanged}
+
+    @property
     def net_change(self) -> int:
-        """New minus resolved in the newest window -- is it getting better?"""
-        tally = self.counts
-        return tally.get(NEW, 0) + tally.get(RECURRING, 0) - tally.get(RESOLVED, 0)
+        """Appeared minus disappeared between the last two windows.
+
+        Deliberately based on :attr:`transitions`, not on the cumulative
+        classes -- otherwise "direction" reports a movement that already lay
+        several windows in the past.
+        """
+        step = self.transitions
+        return step["appeared"] - step["disappeared"]
 
 
 def _chronology(run: AuditRun):
@@ -178,11 +212,17 @@ def _classify_trend(
     first_seen = present[0] if present else ""
     last_seen = present[-1] if present else ""
 
-    def _make(classification: str, rationale: str, continuity: bool = True) -> TrendFinding:
+    def _make(
+        classification: str,
+        rationale: str,
+        continuity: bool = True,
+        first_absence: bool = True,
+    ) -> TrendFinding:
         return TrendFinding(
             finding=finding,
             classification=classification,
             continuity_verified=continuity,
+            first_absence_verified=first_absence,
             windows_present=present,
             windows_absent=absent,
             windows_unknown=unknown,
@@ -205,6 +245,15 @@ def _classify_trend(
         )
 
     if len(present) == 1:
+        earlier = windows[:windows.index(latest)]
+        unobserved_before = [window for window in earlier if window in unknown]
+        if unobserved_before:
+            return _make(
+                NEW,
+                f"first observed in {latest}; {', '.join(unobserved_before)} did not cover "
+                "the locator -- earlier absence is not established, only first sighting",
+                first_absence=False,
+            )
         return _make(NEW, f"first appearance, in {latest}")
 
     # Present in the newest window and seen before: continuous or interrupted?
@@ -262,12 +311,17 @@ def render_markdown(result: TimeseriesResult, scope_label: str = "") -> str:
     lines.append(
         "**Bilanz:** " + " · ".join(f"{name}: {counts.get(name, 0)}" for name in TREND_CLASSES)
     )
+    step = result.transitions
     direction = (
-        "mehr Neues als Erledigtes"
+        "mehr neu als weggefallen"
         if result.net_change > 0
-        else ("mehr Erledigtes als Neues" if result.net_change < 0 else "ausgeglichen")
+        else ("mehr weggefallen als neu" if result.net_change < 0 else "ausgeglichen")
     )
-    lines.append(f"**Richtung:** {direction} (netto {result.net_change:+d})")
+    lines.append(
+        f"**Veraenderung {result.windows[-2]} -> {result.windows[-1]}:** {direction} "
+        f"(netto {result.net_change:+d}; neu {step['appeared']}, "
+        f"weggefallen {step['disappeared']}, unveraendert {step['unchanged']})"
+    )
     lines.append("")
 
     for classification in TREND_CLASSES:

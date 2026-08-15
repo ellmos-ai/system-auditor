@@ -33,7 +33,9 @@ from .compare import (
     UNVERIFIABLE,
     AuditRun,
     Finding,
+    InventoryResult,
     MetaResult,
+    build_inventory,
     build_meta,
     normalize_locator,
     render_markdown,
@@ -81,6 +83,7 @@ from .tokens import (
     AGGREGATIONS,
     CROSS_DOMAIN,
     CROSS_SYSTEM,
+    CROSS_SYSTEM_RATER,
     FULL_SYSTEM,
     INTERRATER,
     TIMESERIES,
@@ -97,7 +100,7 @@ from .tokens import (
     utcnow,
 )
 
-__version__ = "0.4.1"
+__version__ = "0.5.0"
 
 __all__ = [
     "__version__",
@@ -115,6 +118,7 @@ __all__ = [
     "AGGREGATIONS",
     "INTERRATER",
     "CROSS_SYSTEM",
+    "CROSS_SYSTEM_RATER",
     "CROSS_DOMAIN",
     "FULL_SYSTEM",
     "TIMESERIES",
@@ -141,6 +145,8 @@ __all__ = [
     "AuditRun",
     "MetaResult",
     "build_meta",
+    "build_inventory",
+    "InventoryResult",
     "render_markdown",
     "normalize_locator",
     "SYSTEMWIDE",

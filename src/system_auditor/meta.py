@@ -7,9 +7,19 @@ aggregations (see :mod:`system_auditor.tokens`).  Everything else follows:
 * **Overwrite, don't archive.**  When a participant joins, the artefact for that
   key is rewritten in place.  "What do we know about X" has one current answer;
   keeping meta-2 next to meta-3 would leave two answers to one question.
-* **History is free** for snapshots: another window is another period token,
-  hence another file, untouched.  Time series deliberately have no period in
-  their name -- they *are* the history and are always "as of now".
+* **History is free for snapshots**: another window is another period token,
+  hence another file, untouched. **It is not free anywhere else**, and the
+  earlier claim "history is in the token" was too broad:
+
+  - Time series carry no period in their name and overwrite each previous
+    "as of" evaluation.
+  - Within one window, meta-2 -> meta-3 loses the previously published
+    derivation, and a restated single audit loses its own earlier basis.
+
+  The single audits remain, so an older subset is *recomputable* -- but **which
+  state was published as valid when** is not recorded. For a current-state view
+  that is fine; for an audit trail it is not. Whoever needs the trail archives
+  before overwriting (:func:`archive`).
 * **Restating overwrites itself.**  Identical four tokens produce an identical
   file name, so a correction lands on top of its predecessor without any
   bookkeeping.  Only the meta artefact has to notice and rebuild.
@@ -100,8 +110,16 @@ MODE_OFF = "off"
 
 #: Deliberately narrow: exactly one standing artefact. Everything else is a
 #: question somebody asks, not a report that accumulates unread.
+#:
+#: The standing one is ``cross-system-rater``, not ``cross-system``: both compare
+#: machines, but only the former holds the model constant. Making the confounded
+#: variant the default would publish something labelled "host effect" that is not
+#: one. ``cross-system`` stays available on demand, because in a fleet where each
+#: machine runs its own model it is often the only comparison that has data at
+#: all -- it then says so in its caveats.
 DEFAULT_POLICY: dict[str, dict] = {
-    "cross-system": {"mode": MODE_ALWAYS, "min_participants": 2},
+    "cross-system-rater": {"mode": MODE_ALWAYS, "min_participants": 2},
+    "cross-system": {"mode": MODE_ON_DEMAND, "min_participants": 2},
     "interrater": {"mode": MODE_ON_DEMAND, "min_participants": 2},
     "cross-domain": {"mode": MODE_ON_DEMAND, "min_participants": 3},
     "full-system": {"mode": MODE_ON_DEMAND, "min_participants": 2},

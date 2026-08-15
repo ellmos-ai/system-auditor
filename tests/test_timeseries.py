@@ -152,3 +152,52 @@ def test_uninterrupted_series_still_claims_continuity():
     finding = [Finding(PLACE, "drift")]
     item = build_timeseries([_run("W1", finding), _run("W2", finding)], TIMESERIES).items[0]
     assert item.continuity_verified is True
+
+
+# --- Regressionen aus dem Codex-Logik-Review -------------------------------
+
+def test_new_does_not_claim_earlier_absence_it_never_observed():
+    """Review 2, Fund 6: 'neu' ist eine Aussage ueber frueheres Fehlen. Deckte
+    das Vorfenster den Ort nie ab, ist nur 'erstmals beobachtet' belegt."""
+    runs = [
+        _run("W1", coverage=["<HOME>/elsewhere"]),
+        _run("W2", [Finding(PLACE, "drift")]),
+    ]
+    item = build_timeseries(runs, TIMESERIES).items[0]
+    assert item.classification == NEW
+    assert item.first_absence_verified is False
+    assert "not established" in item.rationale
+
+
+def test_new_with_verified_earlier_absence_says_so():
+    runs = [_run("W1"), _run("W2", [Finding(PLACE, "drift")])]
+    item = build_timeseries(runs, TIMESERIES).items[0]
+    assert item.first_absence_verified is True
+
+
+def test_direction_counts_the_last_step_not_the_lifecycle():
+    """Review 2, Fund 7: resolved bleibt resolved, recurring bleibt recurring --
+    eine Bilanz aus Lebenslaufklassen meldet Bewegung, wo nichts mehr passiert."""
+    finding = [Finding(PLACE, "drift")]
+    runs = [_run("W1", finding), _run("W2"), _run("W3")]
+    result = build_timeseries(runs, TIMESERIES)
+
+    assert result.counts[RESOLVED] == 1          # Lebenslaufklasse bleibt
+    assert result.transitions["disappeared"] == 0  # aber W2 -> W3 aenderte nichts
+    assert result.net_change == 0
+
+
+def test_direction_reports_a_real_disappearance():
+    finding = [Finding(PLACE, "drift")]
+    result = build_timeseries([_run("W1", finding), _run("W2")], TIMESERIES)
+    assert result.transitions["disappeared"] == 1
+    assert result.net_change == -1
+
+
+def test_a_long_settled_recurrence_does_not_keep_counting():
+    finding = [Finding(PLACE, "drift")]
+    runs = [_run("W1", finding), _run("W2"), _run("W3", finding), _run("W4", finding)]
+    result = build_timeseries(runs, TIMESERIES)
+    assert result.counts[RECURRING] == 1
+    assert result.transitions["unchanged"] == 1
+    assert result.net_change == 0

@@ -188,6 +188,11 @@ class MetaFinding:
     unknown_on: list[str] = field(default_factory=list)
     divergent_rules: dict[str, str] = field(default_factory=dict)
     rationale: str = ""
+    #: Evidence states that ALSO apply. The classes are a priority projection,
+    #: not a partition: with four participants the same key can be divergent on
+    #: one, explicitly clean on another and merely absent on a third. Naming
+    #: only the winning class would hide the stronger negative confirmation.
+    also: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -217,13 +222,20 @@ class MetaResult:
         return [item for item in self.items if item.classification == classification]
 
     @property
-    def agreement(self) -> float | None:
-        """Share of findings all participants agree on.
+    def unanimity(self) -> float | None:
+        """Share of decidable findings that *every* participant reported.
 
-        Most meaningful on the ``interrater`` axis, where participants look at
-        the *same* machine: there a low value is not a system defect but a
-        reliability problem of the auditors themselves.  ``None`` when nothing
-        was decidable.
+        Deliberately **not** called "agreement": the denominator contains only
+        keys at least one participant raised, so shared negative judgements
+        about clean rules never enter it -- there is no predefined item universe
+        to be silent about. With more than two participants only unanimity
+        counts as a hit.
+
+        That makes it a Jaccard-like positive-unanimity rate. A proper
+        chance-corrected measure (Cohen's kappa) is not computable here for the
+        same reason: it needs a common set of items both raters judged.
+
+        ``None`` when nothing was decidable.
         """
         decidable = [
             item for item in self.items if item.classification != UNVERIFIABLE
@@ -232,6 +244,34 @@ class MetaResult:
             return None
         agreed = len([item for item in decidable if item.classification == SYSTEMWIDE])
         return round(agreed / len(decidable), 3)
+
+    @property
+    def pairwise_jaccard(self) -> float | None:
+        """Mean pairwise Jaccard over the participants' finding sets.
+
+        For two participants this is the honest name for what ``unanimity``
+        computes; for more it is the milder, more informative sibling, because a
+        single dissenter no longer zeroes out an otherwise broad overlap.
+        """
+        sets = {
+            name: {
+                item.finding.key(GROUP_BY_RULE)
+                for item in self.items
+                if name in item.present_on
+            }
+            for name in self.participants
+        }
+        pairs = [
+            (a, b)
+            for index, a in enumerate(self.participants)
+            for b in self.participants[index + 1:]
+        ]
+        scores = []
+        for left, right in pairs:
+            union = sets[left] | sets[right]
+            if union:
+                scores.append(len(sets[left] & sets[right]) / len(union))
+        return round(sum(scores) / len(scores), 3) if scores else None
 
 
 def check_comparability(runs: list[AuditRun], aggregation: Aggregation) -> Comparability:
@@ -357,6 +397,24 @@ def _classify(
 
     everyone = [run.participant(aggregation) for run in runs]
 
+    also: list[str] = []
+    if divergent and (clean or absent):
+        also.append("clean_on: " + ", ".join(clean) if clean else "")
+        also.append("absent_on: " + ", ".join(absent) if absent else "")
+    elif clean and absent:
+        also.append("absent_on: " + ", ".join(absent))
+    also = [note for note in also if note]
+
+    if group_by == GROUP_BY_RULE and (absent or unknown):
+        # Matching by rule means the participants have no shared location. A
+        # participant that did not report the rule cannot be called "checked and
+        # found nothing" -- its coverage could never have covered a foreign
+        # domain's locator. Absence is not observable on this axis, so the class
+        # stays unverifiable and says why instead of implying a negative result.
+        unknown = sorted(unknown + absent)
+        absent = []
+        also.append("absence is not observable when matching by rule")
+
     if divergent:
         classification = DIVERGENT
         rationale = "same locator, different rules on: " + ", ".join(
@@ -396,11 +454,25 @@ def _classify(
         unknown_on=unknown,
         divergent_rules=divergent,
         rationale=rationale,
+        also=also,
     )
 
 
 def build_meta(
     runs: list[AuditRun], aggregation: Aggregation = CROSS_SYSTEM
+) -> MetaResult:
+    """Classify -- only for aggregations that may draw a conclusion."""
+    if not aggregation.is_inferential:
+        raise ValueError(
+            f"{aggregation.name} is descriptive: with {len(aggregation.varying)} "
+            "dimensions varying, a difference cannot be attributed to a cause. "
+            "Use build_inventory() instead."
+        )
+    return _build_meta(runs, aggregation)
+
+
+def _build_meta(
+    runs: list[AuditRun], aggregation: Aggregation
 ) -> MetaResult:
     """Classify all participants' findings against each other.
 
@@ -474,8 +546,17 @@ def render_markdown(result: MetaResult, scope_label: str = "") -> str:
         f"**Achse:** {result.axis} · **Teilnehmer:** {', '.join(result.participants)}",
         f"**Vergleichbarkeit:** {result.comparability.summary}",
     ]
-    if result.aggregation.name == "interrater" and result.agreement is not None:
-        lines.append(f"**Uebereinstimmung der Auditoren:** {result.agreement:.0%}")
+    if result.aggregation.name == "interrater" and result.unanimity is not None:
+        lines.append(
+            f"**Positive Einstimmigkeit:** {result.unanimity:.0%}"
+            + (f" · **paarweiser Jaccard:** {result.pairwise_jaccard:.0%}"
+               if result.pairwise_jaccard is not None else "")
+        )
+        lines.append(
+            "> Kein allgemeines Interrater-Mass: Gezaehlt werden nur Schluessel, die "
+            "mindestens ein Auditor gemeldet hat. Gemeinsames Schweigen ueber saubere "
+            "Stellen geht mangels definierter Item-Menge nicht ein."
+        )
     lines.append("")
 
     if not result.comparability.ok:
@@ -507,4 +588,127 @@ def render_markdown(result: MetaResult, scope_label: str = "") -> str:
                 lines.append(f"  - Nicht abgedeckt: {', '.join(item.unknown_on)}")
             lines.append(f"  - Einordnung: {item.rationale}")
         lines.append("")
+    return "\n".join(lines).rstrip() + "\n"
+
+
+# ---------------------------------------------------------------------------
+# Descriptive inventory -- for aggregations that must not draw a conclusion
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class InventoryEntry:
+    participant: str
+    findings: list[Finding] = field(default_factory=list)
+    coverage: list[str] = field(default_factory=list)
+
+
+@dataclass
+class InventoryResult:
+    """What was found, where and by whom -- without attributing a cause.
+
+    ``full-system`` lets domain and auditor vary at once. That is a useful
+    picture of one machine in one window, but it cannot answer *why* two cells
+    differ: domain, model, or their interaction are not separable. So this
+    artefact states the holdings and stops there.
+    """
+
+    aggregation: Aggregation
+    entries: list[InventoryEntry] = field(default_factory=list)
+    caveats: list[str] = field(default_factory=list)
+
+    @property
+    def participants(self) -> list[str]:
+        return [entry.participant for entry in self.entries]
+
+    @property
+    def total_findings(self) -> int:
+        return sum(len(entry.findings) for entry in self.entries)
+
+    def rule_frequency(self) -> dict[str, int]:
+        """How often each rule appears across the whole matrix.
+
+        A frequent rule is a hint worth following -- but only a hint: which cell
+        it came from is not a cause, and this artefact does not pretend it is.
+        """
+        tally: dict[str, int] = {}
+        for entry in self.entries:
+            for finding in entry.findings:
+                tally[finding.rule] = tally.get(finding.rule, 0) + 1
+        return dict(sorted(tally.items(), key=lambda pair: (-pair[1], pair[0])))
+
+    def cells(self) -> dict[tuple[str, ...], int]:
+            return {
+            tuple(entry.participant.split(" / ")): len(entry.findings)
+            for entry in self.entries
+        }
+
+
+def build_inventory(
+    runs: list[AuditRun], aggregation: Aggregation
+) -> InventoryResult:
+    """Holdings of a descriptive aggregation. No classes, no attribution."""
+    if aggregation.is_inferential:
+        raise ValueError(
+            f"{aggregation.name} is inferential -- use build_meta() to classify."
+        )
+    ordered = sorted(runs, key=lambda run: run.participant(aggregation))
+    result = InventoryResult(aggregation=aggregation)
+    for run in ordered:
+        result.entries.append(
+            InventoryEntry(
+                participant=run.participant(aggregation),
+                findings=list(run.findings),
+                coverage=list(run.header.coverage),
+            )
+        )
+
+    varying = "+".join(aggregation.varying)
+    result.caveats.append(
+        f"deskriptiv: {varying} variieren gleichzeitig -- ein Unterschied zwischen "
+        "zwei Zellen ist keiner Ursache zuzuordnen"
+    )
+    grid = {dimension: {run.header.identity.value(dimension) for run in ordered}
+            for dimension in aggregation.varying}
+    expected = 1
+    for values in grid.values():
+        expected *= len(values)
+    if len(ordered) < expected:
+        result.caveats.append(
+            f"Raster unvollstaendig: {len(ordered)} von {expected} moeglichen Zellen besetzt"
+        )
+    return result
+
+
+def render_inventory(result: InventoryResult, scope_label: str = "") -> str:
+    title = f"Bestandsaufnahme ({result.aggregation.name})"
+    if scope_label:
+        title += f" -- {scope_label}"
+    lines = [
+        f"# {title}",
+        "",
+        f"**Zellen:** {len(result.entries)} · **Befunde gesamt:** {result.total_findings}",
+    ]
+    for note in result.caveats:
+        lines.append(f"> {note}")
+    lines.append("")
+    lines.append("## Belegung")
+    lines.append("")
+    for entry in result.entries:
+        lines.append(f"- **{entry.participant}** — {len(entry.findings)} Befund(e)")
+        for finding in entry.findings:
+            lines.append(f"  - `{finding.locator}` · {finding.rule}")
+    frequency = result.rule_frequency()
+    if frequency:
+        lines.append("")
+        lines.append("## Regelhaeufigkeit")
+        lines.append("")
+        for rule, count in frequency.items():
+            lines.append(f"- {rule}: {count}x")
+        lines.append("")
+        lines.append(
+            "> Haeufigkeit ist ein Hinweis, keine Ursache. Wer wissen will, ob eine "
+            "Regel *domaenenuebergreifend* bricht, nimmt `cross-domain` (Modell und "
+            "Maschine festgehalten); wer Modelle vergleichen will, `interrater`."
+        )
     return "\n".join(lines).rstrip() + "\n"

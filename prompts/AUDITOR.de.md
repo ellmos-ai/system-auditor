@@ -151,21 +151,34 @@ Sagt der Plan `create` oder `update`, baust du das Meta-Audit über die Einzelau
   Kein System darf die Aussage eines anderen über eine Maschine zurückziehen, die es nicht
   sehen kann.
 
-Sechs Aggregationsstufen, je nachdem welche Token variieren:
+**Die Grundregel: Eine Ursache darf nur zuschreiben, wer genau eine Dimension variieren
+lässt.** Variieren zwei zugleich, ist ein Unterschied nicht zuzuordnen — dann wird
+beschrieben statt geschlossen. Das Werkzeug erzwingt das; `build_meta` auf einer
+deskriptiven Stufe wirft.
 
 | Stufe | fest | variiert | Frage |
 |---|---|---|---|
 | `interrater` | Zeit+Domäne+System | **Auditor** | Sind sich zwei Modelle einig? |
-| `cross-system` | Zeit+Domäne | **System** | Liegt es am System oder an der Maschine? |
-| `cross-domain` | Zeit+System+Auditor | **Domäne** | Wird dieselbe Regel überall verletzt? |
-| `full-system` | Zeit+System | **Domäne+Auditor** | Gesamtbild einer Maschine im Fenster |
+| `cross-system-rater` | Zeit+Domäne+Auditor | **System** | Sauberer Host-Effekt |
+| `cross-system` | Zeit+Domäne | **System** | Maschinen, Modell unkontrolliert — kein Beleg |
+| `cross-domain` | Zeit+System+Auditor | **Domäne** | Bricht dieselbe Regel über Domänen? |
 | `timeseries` | System+Domäne | **Zeit** | Wie hat sich die Domäne entwickelt? |
 | `timeseries-rater` | System+Domäne+Auditor | **Zeit** | Entwicklung aus Sicht *eines* Modells |
+| `full-system` | Zeit+System | Domäne **+** Auditor | **deskriptiv** — Bestand, keine Klassen |
 
 **Zeitreihen haben eigene Klassen** (`new`/`persistent`/`resolved`/`recurring`/
 `unverifiable`): „alle Fenster haben es gefunden" heißt *anhaltend*, nicht *systemweit*.
-Welche Stufen überhaupt gebaut werden, steuert die Config (`always`/`on_demand`/`off`) —
-nicht alle, sonst entsteht Berichtslärm.
+Zwei Flags trennen Beobachtetes von Vermutetem: `first_absence_verified` (war es vorher
+wirklich weg?) und `continuity_verified` (war es lückenlos da?). Die Richtungsangabe zählt
+den letzten Schritt, nicht die Lebenslaufklassen.
+
+**`cross-domain` kann Abwesenheit nicht belegen** — zwischen Domänen gibt es keinen
+gemeinsamen Ort. Wer die Regel nicht meldet, hätte den fremden Ort nie abdecken können;
+solche Fälle bleiben `unverifiable`.
+
+Welche Stufen gebaut werden, steuert die Config (`always`/`on_demand`/`off`) — nicht alle,
+sonst entsteht Berichtslärm. Stehend ist `cross-system-rater`, **nicht** `cross-system`:
+Beide vergleichen Maschinen, aber nur die erste hält das Modell fest.
 
 Bei `cross-domain` wird über die **Regel** verglichen, nicht über den Ort — zwischen
 Domänen gibt es keinen gemeinsamen Ort. Bei `interrater` liefert das Werkzeug zusätzlich

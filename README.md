@@ -1,6 +1,6 @@
 # system-auditor
 
-[![tests](https://img.shields.io/badge/pytest-115%20passed-brightgreen)](tests/)
+[![tests](https://img.shields.io/badge/pytest-123%20passed-brightgreen)](tests/)
 [![python](https://img.shields.io/badge/python-3.10%2B-blue)](pyproject.toml)
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![dependencies](https://img.shields.io/badge/dependencies-none-lightgrey)](pyproject.toml)
@@ -79,21 +79,34 @@ longer windows make the edge rarer.
 
 ## The aggregation ladder
 
-Hold some tokens fixed, let exactly one vary:
+Hold some tokens fixed, let the rest vary. **An aggregation may only attribute a cause when
+exactly one dimension varies** — otherwise a difference is not identifiable. That rule is
+enforced in the constructor, not just documented.
 
 | aggregation | fixed | varies | what it tells you |
 |---|---|---|---|
 | `interrater` | time+domain+system | **auditor** | do two models agree? |
-| `cross-system` | time+domain | **system** | is it the system or the machine? |
-| `cross-domain` | time | **domain** | is the same rule broken everywhere? |
+| `cross-system-rater` | time+domain+auditor | **system** | a *clean* host effect |
+| `cross-system` | time+domain | **system** | machines, model uncontrolled — practical, but not proof |
+| `cross-domain` | time+system+auditor | **domain** | is the same rule broken across domains? |
+| `timeseries` | system+domain | **time** | how did this domain develop? |
+| `timeseries-rater` | system+domain+auditor | **time** | development as *one* model sees it |
+| `full-system` | time+system | domain **+** auditor | **descriptive only** — inventory, no classes |
 
-Note the last one matches by **rule alone**. Across machines you compare the same *place*;
-across domains there is no shared place — what carries meaning is whether the same rule is
-broken in unrelated corners, which makes it a problem of the rule rather than of one
-location.
+`full-system` is the one where two dimensions vary at once. That is a useful picture of a
+machine, but a difference between two cells cannot be traced to domain, model, or their
+interaction — so it yields an **inventory** (`build_inventory`), not a verdict. Calling
+`build_meta` on it raises.
 
-`interrater` additionally reports an **agreement score**. A low value there is not a system
-defect but a reliability problem of the auditors themselves.
+`cross-domain` matches by **rule alone**: across domains there is no shared place. The flip
+side is that *absence* is not observable there — a participant that did not report a rule
+could never have covered a foreign domain's locator — so those cases stay `unverifiable`
+and say why.
+
+`interrater` reports **positive unanimity** plus a pairwise Jaccard. Deliberately not called
+"agreement": only keys somebody raised enter the denominator, so shared silence about clean
+places never counts. A chance-corrected measure (Cohen's kappa) is not computable without a
+common item universe.
 
 ## One current answer per window
 
@@ -180,7 +193,7 @@ Configuration: copy `config/system-auditor.config.example.json`.
 ## Development
 
 ```bash
-python -m pytest -q     # 115 tests
+python -m pytest -q     # 123 tests
 ruff check src tests
 ```
 

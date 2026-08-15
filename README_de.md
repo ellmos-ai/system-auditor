@@ -1,6 +1,6 @@
 # system-auditor
 
-[![tests](https://img.shields.io/badge/pytest-115%20bestanden-brightgreen)](tests/)
+[![tests](https://img.shields.io/badge/pytest-123%20bestanden-brightgreen)](tests/)
 [![python](https://img.shields.io/badge/python-3.10%2B-blue)](pyproject.toml)
 [![license](https://img.shields.io/badge/lizenz-MIT-green)](LICENSE)
 [![dependencies](https://img.shields.io/badge/abh%C3%A4ngigkeiten-keine-lightgrey)](pyproject.toml)
@@ -80,21 +80,34 @@ Glätte am Rand, und längere Fenster machen den Rand seltener.
 
 ## Die Aggregationsleiter
 
-Einige Token festhalten, genau einen variieren lassen:
+Einige Token festhalten, den Rest variieren lassen. **Eine Ursache darf eine Aggregation nur
+dann zuschreiben, wenn genau eine Dimension variiert** — sonst ist ein Unterschied nicht
+identifizierbar. Diese Regel wird im Konstruktor erzwungen, nicht bloß dokumentiert.
 
 | Aggregation | fest | variiert | was sie zeigt |
 |---|---|---|---|
 | `interrater` | time+domain+system | **auditor** | sind sich zwei Modelle einig? |
-| `cross-system` | time+domain | **system** | liegt es am System oder an der Maschine? |
-| `cross-domain` | time | **domain** | wird dieselbe Regel überall verletzt? |
+| `cross-system-rater` | time+domain+auditor | **system** | ein *sauberer* Host-Effekt |
+| `cross-system` | time+domain | **system** | Maschinen, Modell unkontrolliert — praktisch, aber kein Beleg |
+| `cross-domain` | time+system+auditor | **domain** | bricht dieselbe Regel über Domänen? |
+| `timeseries` | system+domain | **time** | wie hat sich die Domäne entwickelt? |
+| `timeseries-rater` | system+domain+auditor | **time** | Entwicklung aus Sicht *eines* Modells |
+| `full-system` | time+system | domain **+** auditor | **nur deskriptiv** — Bestand, keine Klassen |
 
-Die letzte Stufe vergleicht über die **Regel allein**. Zwischen Maschinen vergleicht man
-denselben *Ort*; zwischen Domänen gibt es keinen gemeinsamen Ort — Bedeutung trägt dort, ob
-dieselbe Regel in unverbundenen Ecken verletzt wird. Das macht es zu einem Problem der
-Regel statt eines einzelnen Ortes.
+`full-system` ist die Stufe, in der zwei Dimensionen zugleich variieren. Das ergibt ein
+nützliches Bild einer Maschine, aber ein Unterschied zwischen zwei Zellen lässt sich weder
+der Domäne noch dem Modell noch ihrem Zusammenspiel zuordnen — deshalb liefert sie eine
+**Bestandsaufnahme** (`build_inventory`), kein Urteil. `build_meta` darauf wirft.
 
-`interrater` liefert zusätzlich eine **Übereinstimmungsquote**. Ein niedriger Wert ist dort
-kein Systemmangel, sondern ein Zuverlässigkeitsproblem der Auditoren selbst.
+`cross-domain` vergleicht über die **Regel allein**: Zwischen Domänen gibt es keinen
+gemeinsamen Ort. Die Kehrseite: *Abwesenheit* ist dort nicht beobachtbar — wer eine Regel
+nicht meldet, hätte den fremden Ort nie abdecken können — solche Fälle bleiben
+`unverifiable` und sagen warum.
+
+`interrater` liefert **positive Einstimmigkeit** plus paarweisen Jaccard. Bewusst nicht
+„Agreement" genannt: In den Nenner gehen nur Schlüssel ein, die jemand gemeldet hat;
+gemeinsames Schweigen über saubere Stellen zählt nie mit. Ein zufallskorrigiertes Maß
+(Cohens Kappa) ist ohne gemeinsame Item-Menge gar nicht berechenbar.
 
 ## Eine gültige Antwort je Zeitfenster
 
@@ -185,7 +198,7 @@ Konfiguration: `config/system-auditor.config.example.json` kopieren.
 ## Entwicklung
 
 ```bash
-python -m pytest -q     # 115 Tests
+python -m pytest -q     # 123 Tests
 ruff check src tests
 ```
 

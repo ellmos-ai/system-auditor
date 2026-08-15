@@ -82,8 +82,21 @@ DIMENSIONS = (DIM_TIME, DIM_DOMAIN, DIM_SYSTEM, DIM_AUDITOR)
 GROUP_BY_LOCATOR = "locator+rule"
 GROUP_BY_RULE = "rule"
 
+#: An aggregation either draws a conclusion or it describes.
+#:
+#: ``snapshot`` and ``timeseries`` are **inferential**: they answer "is the
+#: difference caused by X?" -- and that question is only answerable when
+#: everything except X is held constant. Two dimensions varying at once make the
+#: cause unidentifiable, no matter how good the classification is.
+#:
+#: ``descriptive`` states what was found, by whom, where -- without attributing
+#: a cause. That is a legitimate and useful artefact; it just must not wear the
+#: labels of an inference.
 KIND_SNAPSHOT = "snapshot"
 KIND_TIMESERIES = "timeseries"
+KIND_DESCRIPTIVE = "descriptive"
+
+INFERENTIAL_KINDS = (KIND_SNAPSHOT, KIND_TIMESERIES)
 
 
 def as_utc(moment: datetime) -> datetime:
@@ -267,6 +280,23 @@ class Aggregation:
     kind: str = KIND_SNAPSHOT
     description: str = ""
 
+    def __post_init__(self) -> None:
+        # The identifiability rule, enforced rather than documented: an
+        # inferential aggregation attributes a difference to exactly one cause,
+        # so exactly one dimension may vary. Anything else is descriptive.
+        if self.kind in INFERENTIAL_KINDS and len(self.varying) != 1:
+            raise ValueError(
+                f"{self.name}: an inferential aggregation must vary exactly one "
+                f"dimension, got {self.varying}. Use kind=descriptive instead."
+            )
+        overlap = set(self.fixed) & set(self.varying)
+        if overlap:
+            raise ValueError(f"{self.name}: {overlap} is both fixed and varying")
+
+    @property
+    def is_inferential(self) -> bool:
+        return self.kind in INFERENTIAL_KINDS
+
     @property
     def uncontrolled(self) -> tuple[str, ...]:
         """Neither held constant nor compared -- honest about what it ignores."""
@@ -308,18 +338,29 @@ CROSS_DOMAIN = Aggregation(
     description="One machine and model across its domains -- is the rule the problem?",
 )
 
+CROSS_SYSTEM_RATER = Aggregation(
+    name="cross-system-rater",
+    fixed=(DIM_TIME, DIM_DOMAIN, DIM_AUDITOR),
+    varying=(DIM_SYSTEM,),
+    description="Same domain, window AND model on different machines -- a clean host effect.",
+)
+
 CROSS_SYSTEM = Aggregation(
     name="cross-system",
     fixed=(DIM_TIME, DIM_DOMAIN),
     varying=(DIM_SYSTEM,),
-    description="Same domain and window on different machines -- defect or drift?",
+    description=(
+        "Machines compared with the model left uncontrolled -- practical in a "
+        "mixed fleet, but a difference is not a proven host effect."
+    ),
 )
 
 FULL_SYSTEM = Aggregation(
     name="full-system",
     fixed=(DIM_TIME, DIM_SYSTEM),
     varying=(DIM_DOMAIN, DIM_AUDITOR),
-    description="Everything known about one machine in one window.",
+    kind=KIND_DESCRIPTIVE,
+    description="Inventory of one machine in one window -- what was found where, by whom.",
 )
 
 TIMESERIES = Aggregation(
@@ -343,6 +384,7 @@ AGGREGATIONS = {
     for item in (
         INTERRATER,
         CROSS_DOMAIN,
+        CROSS_SYSTEM_RATER,
         CROSS_SYSTEM,
         FULL_SYSTEM,
         TIMESERIES,
