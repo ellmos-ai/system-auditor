@@ -45,11 +45,18 @@ from .meta import (
     ACTION_CREATE,
     ACTION_SKIP,
     ACTION_UPDATE,
+    DEFAULT_POLICY,
+    MODE_ALWAYS,
+    MODE_OFF,
+    MODE_ON_DEMAND,
     MetaPlan,
     current_single_audits,
+    due_aggregations,
     existing_meta,
+    plan_all,
     plan_meta,
     plan_metas,
+    resolve_policy,
     stale_windows,
 )
 from .report import (
@@ -64,11 +71,22 @@ from .report import (
     write_report,
 )
 from .sinks import Sink, emit
+from .timeseries import (
+    NEW,
+    PERSISTENT,
+    RECURRING,
+    RESOLVED,
+    TimeseriesResult,
+    build_timeseries,
+)
 from .tokens import (
     AGGREGATIONS,
     CROSS_DOMAIN,
     CROSS_SYSTEM,
+    FULL_SYSTEM,
     INTERRATER,
+    TIMESERIES,
+    TIMESERIES_RATER,
     Aggregation,
     AuditIdentity,
     Bundle,
@@ -78,7 +96,7 @@ from .tokens import (
     resolve_time_token,
 )
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 __all__ = [
     "__version__",
@@ -94,6 +112,16 @@ __all__ = [
     "INTERRATER",
     "CROSS_SYSTEM",
     "CROSS_DOMAIN",
+    "FULL_SYSTEM",
+    "TIMESERIES",
+    "TIMESERIES_RATER",
+    # time series
+    "build_timeseries",
+    "TimeseriesResult",
+    "NEW",
+    "PERSISTENT",
+    "RECURRING",
+    "RESOLVED",
     # locks
     "AuditLock",
     "ClaimResult",
@@ -131,6 +159,13 @@ __all__ = [
     "MetaPlan",
     "plan_meta",
     "plan_metas",
+    "plan_all",
+    "resolve_policy",
+    "due_aggregations",
+    "DEFAULT_POLICY",
+    "MODE_ALWAYS",
+    "MODE_ON_DEMAND",
+    "MODE_OFF",
     "current_single_audits",
     "existing_meta",
     "stale_windows",

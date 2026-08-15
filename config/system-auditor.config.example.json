@@ -20,8 +20,16 @@
   "time_table": [],
   "_comment_time_table": "Optionale explizite Zeitraumtabelle fuer Kalender, die eine Regel nicht ausdruecken kann (z. B. Sprints): [{\"token\": \"sprint-42\", \"from\": \"2026-08-10\", \"to\": \"2026-08-24\"}]. Sie gewinnt, wo sie greift; ein Moment ausserhalb faellt auf das Raster zurueck -- ein Audit darf nie scheitern, weil der Kalender eine Luecke hat.",
 
-  "aggregations": ["cross-system", "interrater", "cross-domain"],
-  "_comment_aggregations": "Welche Aggregationsstufen dieser Host baut. cross-system: gleiche Domaene+Fenster, verschiedene Maschinen. interrater: gleiche Maschine+Domaene+Fenster, verschiedene Modelle (liefert eine Uebereinstimmungsquote). cross-domain: gleiches Fenster, verschiedene Domaenen -- vergleicht ueber die REGEL statt ueber den Ort, weil es zwischen Domaenen keinen gemeinsamen Ort gibt.",
+  "aggregations": {
+    "cross-system":     { "mode": "always",    "min_participants": 2 },
+    "interrater":       { "mode": "on_demand", "min_participants": 2 },
+    "cross-domain":     { "mode": "on_demand", "min_participants": 3 },
+    "full-system":      { "mode": "on_demand", "min_participants": 2 },
+    "timeseries":       { "mode": "on_demand", "min_participants": 3 },
+    "timeseries-rater": { "mode": "off",       "min_participants": 3 }
+  },
+  "_comment_aggregations": "WELCHE Artefakte gebaut werden -- bewusst nicht alle. Die Leiter ist kombinatorisch: 14 Domaenen x 3 Maschinen x 2 Modelle ergeben ~191 moegliche Artefakte pro Fenster; alle zu bauen ist kein Fleiss, sondern Laerm, der die zwei begraebt, die jemand liest. mode=always: wird bei jedem Lauf gebaut, sobald ein Buendel existiert (die stehende Frage). mode=on_demand: nur auf ausdruecklichen Aufruf. mode=off: gar nicht, auch nicht auf Zuruf -- Einschalten ist eine Konfigurationsentscheidung. min_participants ist je Aggregation eigen, weil 'genug fuer eine Aussage' verschieden ist: zwei Maschinen sagen schon etwas, eine Reihe aus zwei Fenstern fast nichts.",
+  "_comment_aggregation_axes": "Was jede vergleicht: interrater = Modelle auf EINER Maschine (mit Uebereinstimmungsquote). cross-system = Maschinen. cross-domain = Domaenen einer Maschine und eines Modells, verglichen ueber die REGEL statt ueber den Ort. full-system = eine Maschine in einem Fenster ueber ALLE Domaenen und Modelle. timeseries / timeseries-rater = ein Ausschnitt ueber mehrere Fenster; dort gelten eigene Klassen (neu/anhaltend/erledigt/wiederkehrend), weil 'alle Fenster haben es gefunden' anhaltend heisst, nicht systemweit."
 
   "min_participants": 2,
 

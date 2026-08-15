@@ -103,7 +103,7 @@ class AuditRun:
     findings: list[Finding] = field(default_factory=list)
 
     def participant(self, aggregation: Aggregation) -> str:
-        return self.header.identity.value(aggregation.varying)
+        return aggregation.participant(self.header.identity)
 
     def covers(self, locator: str) -> bool:
         target = normalize_locator(locator)
@@ -157,7 +157,8 @@ class MetaResult:
 
     @property
     def axis(self) -> str:
-        return self.aggregation.varying
+        """Single varying dimension, or "+"-joined when several vary."""
+        return "+".join(self.aggregation.varying)
 
     @property
     def counts(self) -> dict[str, int]:
@@ -206,8 +207,9 @@ def check_comparability(runs: list[AuditRun], aggregation: Aggregation) -> Compa
     participants = [run.participant(aggregation) for run in runs]
     duplicates = {name for name in participants if participants.count(name) > 1}
     if duplicates:
+        axis = "+".join(aggregation.varying)
         blockers.append(
-            f"more than one run per {aggregation.varying}: " + ", ".join(sorted(duplicates))
+            f"more than one run per {axis}: " + ", ".join(sorted(duplicates))
         )
 
     for run in runs:
@@ -229,6 +231,18 @@ def check_comparability(runs: list[AuditRun], aggregation: Aggregation) -> Compa
                 f"{run.participant(aggregation)}={run.header.evidence_level}" for run in runs
             )
         )
+
+    # An uncontrolled dimension that actually differs is not a blocker -- in a
+    # fleet where each machine runs its own model, refusing those comparisons
+    # would mean never comparing machines at all. But it must be said, because
+    # the difference may come from there rather than from the compared axis.
+    for dimension in aggregation.uncontrolled:
+        values = sorted({run.header.identity.value(dimension) for run in runs})
+        if len(values) > 1:
+            caveats.append(
+                f"{dimension} is not held constant ({', '.join(values)}) -- "
+                "differences may come from there rather than from the compared axis"
+            )
 
     return Comparability(ok=not blockers, blockers=blockers, caveats=caveats)
 
@@ -367,6 +381,11 @@ _HEADINGS = {
         UNVERIFIABLE: "Nicht verifizierbar (Luecke in der Abdeckung)",
     },
 }
+
+
+#: Where several dimensions vary at once (full-system: domain+auditor), the
+#: domain reading is the honest one -- findings are matched by rule there.
+_HEADINGS["domain+auditor"] = _HEADINGS["domain"]
 
 
 def headings_for(axis: str) -> dict[str, str]:

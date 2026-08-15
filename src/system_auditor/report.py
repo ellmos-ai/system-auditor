@@ -45,9 +45,10 @@ SELF_FILENAME_RE = re.compile(
     r"^AUDIT-(?P<time>[A-Za-z0-9]+)-(?P<domain>[A-Za-z0-9_-]+)"
     r"\.(?P<system>[A-Za-z0-9_-]+)(?:\.(?P<auditor>[A-Za-z0-9_.-]+?))?\.md$"
 )
-META_FILENAME_RE = re.compile(
-    r"^META-(?P<kind>[a-z-]+)-(?P<time>[A-Za-z0-9]+)(?:-(?P<scope>.+?))?\.md$"
-)
+#: The aggregation name itself may contain hyphens ("timeseries-rater"), so the
+#: file name is only recognised as *a* meta artefact here; which aggregation it
+#: is comes from the header.
+META_FILENAME_RE = re.compile(r"^META-(?P<body>.+)\.md$")
 LEGACY_FILENAME_RE = re.compile(
     r"^(?:SIG-TU|AUDIT)-(?P<date>\d{8})-(?P<domain>[A-Za-z0-9_-]+)"
     r"(?:\.(?P<system>[A-Za-z0-9_-]+))?\.md$"
@@ -196,21 +197,28 @@ class ReportHeader:
 
     def filename(self) -> str:
         if self.audit_mode == MODE_META:
-            return meta_filename(self.aggregation, self.time_token, self.scope)
+            return meta_filename(self.aggregation, self.scope)
         name = f"AUDIT-{_slug(self.time_token)}-{_slug(self.domain)}.{_slug(self.system)}"
         if self.auditor and self.auditor != UNSPECIFIED_AUDITOR:
             name += f".{_slug(self.auditor)}"
         return name + ".md"
 
 
-def meta_filename(aggregation: str, time_token: str, scope: list[str]) -> str:
-    """Stable name: one meta audit per (period, scope, aggregation).
+def meta_filename(aggregation: str, key: list[str]) -> str:
+    """Stable name: one meta artefact per (aggregation, fixed key).
 
-    Deliberately without a host token -- a newer, higher-level meta audit
-    *overwrites* its predecessor for the same window instead of joining it.
+    ``key`` is the value of every dimension the aggregation holds fixed, in
+    order -- which puts the period token in the name exactly when the period is
+    fixed, and leaves it out for a time series that spans windows by design.
+
+    Deliberately **without participant counts**: the level changes whenever a
+    participant joins, and a changing name would defeat the overwrite rule that
+    guarantees one current answer.  The counts live in the header and the title.
+    Deliberately **without a host token**: otherwise every machine would keep
+    its own copy of the one answer.
     """
-    parts = [f"META-{_slug(aggregation)}-{_slug(time_token)}"]
-    parts.extend(_slug(item) for item in scope if item)
+    parts = [f"META-{_slug(aggregation)}"]
+    parts.extend(_slug(item) for item in key if item)
     return "-".join(parts) + ".md"
 
 
@@ -259,8 +267,8 @@ def read_report(path: Path) -> ReportHeader | None:
     if meta_match:
         domain = str(data.get("domain", ""))
         system = str(data.get("system", ""))
-        time_token = str(data.get("time_token") or meta_match.group("time"))
-        aggregation = str(data.get("aggregation") or meta_match.group("kind"))
+        time_token = str(data.get("time_token", ""))
+        aggregation = str(data.get("aggregation", ""))
     else:
         name_match = self_match or legacy_match
         domain = str(data.get("domain") or name_match.group("domain"))

@@ -1,22 +1,18 @@
-"""Meta-audit lifecycle -- one current answer per period window.
+"""Meta-audit lifecycle -- one current answer per fixed key.
 
-Bundling rule, in the user's words: audits sharing a period token and a domain
-token but differing in the system token trigger a meta audit for that domain.
-Meta audits sharing a period token but differing in domain can in turn be
-aggregated further.  The aggregation ladder is in :mod:`system_auditor.tokens`.
+Bundling rule, in the user's words: things only ever land in the same pot when
+their fixed tokens match.  Which tokens those are is what distinguishes the
+aggregations (see :mod:`system_auditor.tokens`).  Everything else follows:
 
-Two lifecycle properties follow from putting the period token in the file name:
-
-* **Overwrite, don't archive.**  When a fourth machine joins, the meta audit for
-  that window is rewritten in place.  "What do we know about this domain in this
-  window" has one current answer; keeping meta-2 next to meta-3 would leave two
-  answers to one question.
-* **History is free.**  Last window is a different token, hence a different
-  file, and stays untouched.  Nothing needs to be moved for the record to exist.
-
-The only thing that overwrites a *single* audit is a restatement with the same
-four tokens -- same period, domain, machine and auditor.  That is a correction,
-and it forces the meta audit of that window to be rebuilt.
+* **Overwrite, don't archive.**  When a participant joins, the artefact for that
+  key is rewritten in place.  "What do we know about X" has one current answer;
+  keeping meta-2 next to meta-3 would leave two answers to one question.
+* **History is free** for snapshots: another window is another period token,
+  hence another file, untouched.  Time series deliberately have no period in
+  their name -- they *are* the history and are always "as of now".
+* **Restating overwrites itself.**  Identical four tokens produce an identical
+  file name, so a correction lands on top of its predecessor without any
+  bookkeeping.  Only the meta artefact has to notice and rebuild.
 """
 
 from __future__ import annotations
@@ -50,20 +46,119 @@ class MetaPlan:
 
     action: str
     aggregation: str
-    time_token: str
-    scope: list[str] = field(default_factory=list)
+    key: list[str] = field(default_factory=list)
+    time_token: str = ""
     level: int = 0
     participants: list[str] = field(default_factory=list)
+    counts: dict[str, int] = field(default_factory=dict)
     inputs: list[str] = field(default_factory=list)
     target: str = ""
     replaces: Path | None = None
     previous_level: int = 0
     reason: str = ""
+    uncontrolled: dict[str, list[str]] = field(default_factory=dict)
     restated: list[str] = field(default_factory=list)
 
     @property
     def should_write(self) -> bool:
         return self.action in (ACTION_CREATE, ACTION_UPDATE)
+
+    def title(self) -> str:
+        """Human title carrying the counts the file name deliberately omits.
+
+        For ``full-system`` this reads e.g. "5 Domaenen x 2 Auditoren" -- the
+        naming the user asked for, kept out of the file name so the overwrite
+        rule survives a changing participant count.
+        """
+        parts = " x ".join(f"{count} {dim}" for dim, count in sorted(self.counts.items()))
+        scope = "-".join(self.key)
+        return f"{self.aggregation} [{parts}] {scope}".strip()
+
+
+# ---------------------------------------------------------------------------
+# Which artefacts get built -- policy, not appetite
+# ---------------------------------------------------------------------------
+#
+# The aggregation ladder is combinatorial: 14 domains x 3 machines x 2 models
+# yields ~191 possible artefacts per window. Building all of them is not
+# thoroughness, it is noise -- and noise that costs a run every window and
+# buries the two artefacts somebody actually reads.
+#
+# So each aggregation carries a mode:
+#
+#   always      built whenever a bundle exists (the standing question)
+#   on_demand   built only when explicitly asked for (the occasional question)
+#   off         not built at all
+#
+# plus its own participant threshold, because "enough to be worth stating"
+# differs per aggregation: two machines already say something, while a series
+# of two windows says almost nothing.
+
+MODE_ALWAYS = "always"
+MODE_ON_DEMAND = "on_demand"
+MODE_OFF = "off"
+
+#: Deliberately narrow: exactly one standing artefact. Everything else is a
+#: question somebody asks, not a report that accumulates unread.
+DEFAULT_POLICY: dict[str, dict] = {
+    "cross-system": {"mode": MODE_ALWAYS, "min_participants": 2},
+    "interrater": {"mode": MODE_ON_DEMAND, "min_participants": 2},
+    "cross-domain": {"mode": MODE_ON_DEMAND, "min_participants": 3},
+    "full-system": {"mode": MODE_ON_DEMAND, "min_participants": 2},
+    "timeseries": {"mode": MODE_ON_DEMAND, "min_participants": 3},
+    "timeseries-rater": {"mode": MODE_OFF, "min_participants": 3},
+}
+
+
+def resolve_policy(config: dict | None = None) -> dict[str, dict]:
+    """Merge a config fragment over the defaults, ignoring unknown names."""
+    policy = {name: dict(entry) for name, entry in DEFAULT_POLICY.items()}
+    for name, entry in (config or {}).items():
+        if name not in policy:
+            continue
+        policy[name].update(
+            {key: value for key, value in (entry or {}).items()
+             if key in ("mode", "min_participants")}
+        )
+    return policy
+
+
+def due_aggregations(
+    policy: dict[str, dict] | None = None, requested: str | None = None
+) -> list[tuple[Aggregation, int]]:
+    """Which aggregations to plan now, with their thresholds.
+
+    Without ``requested``: every ``always`` aggregation -- the standing report.
+    With ``requested``: that one, even if it is ``on_demand``; an ``off``
+    aggregation stays off, because switching it on is a config decision and not
+    something a single call should do silently.
+    """
+    resolved = policy or resolve_policy()
+    if requested is not None:
+        entry = resolved.get(requested, {})
+        if entry.get("mode", MODE_OFF) == MODE_OFF:
+            return []
+        return [(AGGREGATIONS[requested], int(entry.get("min_participants", MIN_PARTICIPANTS)))]
+    return [
+        (AGGREGATIONS[name], int(entry.get("min_participants", MIN_PARTICIPANTS)))
+        for name, entry in sorted(resolved.items())
+        if entry.get("mode") == MODE_ALWAYS and name in AGGREGATIONS
+    ]
+
+
+def plan_all(
+    reports_dir: Path,
+    policy: dict[str, dict] | None = None,
+    time_token: str | None = None,
+    requested: str | None = None,
+) -> list[MetaPlan]:
+    """Plans for every aggregation that is due -- the normal entry point."""
+    plans: list[MetaPlan] = []
+    for aggregation, threshold in due_aggregations(policy, requested):
+        plans.extend(
+            plan_metas(reports_dir, aggregation, time_token, min_participants=threshold)
+        )
+    return plans
 
 
 def audit_ref(header: ReportHeader) -> str:
@@ -71,16 +166,8 @@ def audit_ref(header: ReportHeader) -> str:
     return header.run_id or (header.path.name if header.path else "")
 
 
-def scope_of(aggregation: Aggregation, key: tuple[str, ...]) -> list[str]:
-    """The fixed dimensions other than time -- what the meta audit is *about*."""
-    return [
-        value
-        for dimension, value in zip(aggregation.fixed, key, strict=True)
-        if dimension != DIM_TIME
-    ]
-
-
 def time_of(aggregation: Aggregation, key: tuple[str, ...]) -> str:
+    """The period value -- empty when the aggregation spans windows."""
     for dimension, value in zip(aggregation.fixed, key, strict=True):
         if dimension == DIM_TIME:
             return value
@@ -93,7 +180,7 @@ def current_single_audits(
     """Single audits, deduplicated by identity (newest wins).
 
     Returns ``(current, restated)`` -- the second lists identities whose earlier
-    statement was replaced by a newer one with the same four tokens.
+    statement was replaced by a newer one carrying the same four tokens.
     """
     headers = [
         header
@@ -113,10 +200,10 @@ def current_single_audits(
 
 
 def existing_meta(
-    reports_dir: Path, aggregation: str, time_token: str, scope: list[str]
+    reports_dir: Path, aggregation: str, key: list[str]
 ) -> ReportHeader | None:
-    """The meta audit currently in force for exactly this window and scope."""
-    wanted = meta_filename(aggregation, time_token, scope)
+    """The meta artefact currently in force for exactly this key."""
+    wanted = meta_filename(aggregation, key)
     for header in list_reports(reports_dir, audit_mode=MODE_META):
         if header.path is not None and header.path.name == wanted:
             return header
@@ -129,14 +216,15 @@ def plan_metas(
     time_token: str | None = None,
     min_participants: int = MIN_PARTICIPANTS,
 ) -> list[MetaPlan]:
-    """Which meta audits are due -- and for the rest, why not.
+    """Which meta artefacts are due -- and for the rest, why not.
 
-    One plan per bundle.  Bundles below ``min_participants`` are not returned as
-    skips (they are simply not bundles yet); a skip means "this bundle exists
-    and its meta audit is already current".
+    ``time_token`` narrows to one window and is **ignored for time series**,
+    which span windows by definition: filtering there would leave exactly one
+    window and no series at all.
     """
     resolved = AGGREGATIONS[aggregation] if isinstance(aggregation, str) else aggregation
-    current, restated = current_single_audits(reports_dir, time_token)
+    window_filter = None if resolved.is_timeseries else time_token
+    current, restated = current_single_audits(reports_dir, window_filter)
     by_identity = {header.identity: header for header in current}
 
     bundles: list[Bundle] = find_bundles(
@@ -145,40 +233,41 @@ def plan_metas(
 
     plans: list[MetaPlan] = []
     for bundle in bundles:
-        window = time_of(resolved, bundle.key)
-        scope = scope_of(resolved, bundle.key)
+        key = list(bundle.key)
         members = [by_identity[identity] for identity in bundle.identities]
         inputs = sorted(audit_ref(header) for header in members)
-        previous = existing_meta(reports_dir, resolved.name, window, scope)
+        previous = existing_meta(reports_dir, resolved.name, key)
 
         if previous is not None and sorted(previous.inputs) == inputs:
             action, reason = ACTION_SKIP, (
-                f"meta-{previous.meta_level} for this window already rests on "
-                f"exactly these {len(inputs)} audits"
+                f"the artefact for this key already rests on exactly these "
+                f"{len(inputs)} audits"
             )
         elif previous is not None:
             action, reason = ACTION_UPDATE, (
-                f"participants changed: meta-{previous.meta_level} -> "
-                f"meta-{bundle.level}; the window's meta audit is rewritten in place"
+                f"participants changed: {previous.meta_level} -> {bundle.level}; "
+                "rewritten in place"
             )
         else:
             action, reason = ACTION_CREATE, (
-                f"{bundle.level} participants in this window, no meta audit yet"
+                f"{bundle.level} participants, no artefact for this key yet"
             )
 
         plans.append(
             MetaPlan(
                 action=action,
                 aggregation=resolved.name,
-                time_token=window,
-                scope=scope,
+                key=key,
+                time_token=time_of(resolved, bundle.key),
                 level=bundle.level,
                 participants=bundle.varying_values,
+                counts=bundle.counts(),
                 inputs=inputs,
-                target=meta_filename(resolved.name, window, scope),
+                target=meta_filename(resolved.name, key),
                 replaces=previous.path if previous else None,
                 previous_level=previous.meta_level if previous else 0,
                 reason=reason,
+                uncontrolled=bundle.uncontrolled_spread(),
                 restated=restated,
             )
         )
@@ -192,9 +281,9 @@ def plan_meta(
     aggregation: Aggregation | str = CROSS_SYSTEM,
     min_participants: int = MIN_PARTICIPANTS,
 ) -> MetaPlan | None:
-    """Convenience: the plan for one domain in one window, or ``None``."""
+    """Convenience: the plan whose key mentions this domain, or ``None``."""
     for plan in plan_metas(reports_dir, aggregation, time_token, min_participants):
-        if domain in plan.scope or not plan.scope:
+        if domain in plan.key or not plan.key:
             return plan
     return None
 
@@ -205,8 +294,8 @@ def stale_windows(
     """Audits belonging to an earlier window -- candidates for a refresh.
 
     They are not wrong and are not touched: a past window's audit stays as the
-    record of that window.  It simply cannot contribute to the current one, and
-    only the machine that produced it may restate it.
+    record of that window, and only the machine that produced it may restate it.
+    For a time series they are not stale at all -- they are the material.
     """
     return [
         header
@@ -219,8 +308,8 @@ def stale_windows(
 def archive(path: Path, archive_dir: Path | None = None) -> Path | None:
     """Move an artefact aside. Not part of the normal flow.
 
-    With the period token in the file name, history keeps itself; this exists
-    for deliberate housekeeping of long-past windows, never for supersession.
+    With the fixed key in the file name, history keeps itself; this exists for
+    deliberate housekeeping of long-past windows, never for supersession.
     """
     source = Path(path)
     if not source.exists():

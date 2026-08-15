@@ -3,6 +3,48 @@
 Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [SemVer](https://semver.org/lang/de/).
 
+## [0.3.0] - 2026-08-15
+
+Vollstaendige Aggregations-Systematik plus eine Bau-Politik, damit sie nicht in
+Berichtsmuell endet.
+
+### Hinzugefuegt
+
+- **Zwei weitere Aggregationen ueber Momentaufnahmen**: `full-system` (Zeit und
+  System fest, Domaene UND Auditor duerfen variieren -- das Gesamtbild einer
+  Maschine in einem Fenster) sowie die praezisierte `cross-domain`.
+- **Zeitreihen** (`timeseries.py`): eigene Aggregationsart, in der die ZEIT
+  variiert. Sie braucht eigene Klassen, weil die Momentaufnahme-Klassen dort
+  unsinnig waeren -- "alle Fenster haben es gefunden" ist *persistent*, nicht
+  *systemwide*: `new`, `persistent`, `resolved`, `recurring`, `unverifiable`,
+  dazu eine Richtungsangabe (neu minus erledigt).
+  `resolved` wird nur vergeben, wenn der juengste Lauf den Ort nachweislich
+  abgedeckt hat -- sonst sehen "behoben" und "nicht mehr geprueft" gleich aus.
+- **Unkontrollierte Dimensionen** werden benannt statt verschwiegen: Was eine
+  Aggregation weder festhaelt noch vergleicht, erzeugt einen Vorbehalt, wenn es
+  tatsaechlich differiert. `cross-system` haelt das Modell nicht fest -- in einer
+  Flotte mit unterschiedlichen Modellen je Maschine waere die Alternative,
+  Maschinen nie zu vergleichen.
+- **Bau-Politik** (`resolve_policy`, `due_aggregations`, `plan_all`): je
+  Aggregation `always` | `on_demand` | `off` mit eigener Teilnehmerschwelle.
+  Anlass ist gerechnet: 14 Domaenen x 3 Maschinen x 2 Modelle ergeben ~191
+  moegliche Artefakte pro Fenster. Standard ist genau EIN stehendes Artefakt
+  (`cross-system`); alles andere ist eine Frage, die jemand stellt.
+  Ein `off` geschaltetes Artefakt bleibt auch auf Zuruf aus -- das Einschalten
+  ist eine Konfigurationsentscheidung.
+
+### Geaendert
+
+- Dateinamen kommen jetzt aus dem vollstaendigen Fixed-Key
+  (`META-<aggregation>-<key...>.md`). Damit traegt eine Zeitreihe bewusst KEINEN
+  Zeitraum im Namen -- sie ist immer "bis jetzt" -- und ein Snapshot traegt ihn
+  genau dann, wenn die Zeit festgehalten wird.
+- **Teilnehmerzahlen stehen NICHT im Dateinamen**, sondern im Kopf und im Titel.
+  Ein mitwachsender Name (`meta-3-...`) haette die Ueberschreib-Regel gebrochen,
+  die genau eine gueltige Antwort je Schluessel garantiert.
+- `cross-domain` haelt jetzt Maschine und Modell fest. Domaenen ueber Maschinen
+  hinweg zu vergleichen haette zwei Dinge gleichzeitig variiert.
+
 ## [0.2.0] - 2026-08-15
 
 Token-Modell und Aggregationsleiter. Ersetzt das gleitende Gueltigkeitsfenster aus 0.1.0

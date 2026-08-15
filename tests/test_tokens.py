@@ -8,9 +8,12 @@ import pytest
 from system_auditor.tokens import (
     CROSS_DOMAIN,
     CROSS_SYSTEM,
+    FULL_SYSTEM,
     GROUP_BY_LOCATOR,
     GROUP_BY_RULE,
     INTERRATER,
+    TIMESERIES,
+    TIMESERIES_RATER,
     AuditIdentity,
     TimeGrid,
     TimeTable,
@@ -136,7 +139,9 @@ def test_interrater_does_not_bundle_across_machines():
     assert find_bundles(identities, INTERRATER) == []
 
 
-def test_cross_domain_bundles_by_period_only():
+def test_cross_domain_holds_machine_and_model_constant():
+    """Comparing domains across machines would vary two things at once and
+    leave the result uninterpretable."""
     identities = [
         _identity(domain="bundles", system="H1"),
         _identity(domain="skills", system="H1"),
@@ -144,6 +149,56 @@ def test_cross_domain_bundles_by_period_only():
     bundles = find_bundles(identities, CROSS_DOMAIN)
     assert len(bundles) == 1
     assert bundles[0].varying_values == ["bundles", "skills"]
+
+    across_machines = [
+        _identity(domain="bundles", system="H1"),
+        _identity(domain="skills", system="H2"),
+    ]
+    assert find_bundles(across_machines, CROSS_DOMAIN) == []
+
+
+def test_full_system_lets_two_dimensions_vary_at_once():
+    """Fall A: one machine in one window, over all its domains and models."""
+    identities = [
+        _identity(domain="bundles", auditor="opus"),
+        _identity(domain="skills", auditor="opus"),
+        _identity(domain="bundles", auditor="sonnet"),
+    ]
+    bundles = find_bundles(identities, FULL_SYSTEM)
+    assert len(bundles) == 1
+    assert bundles[0].level == 3           # participant = domain / auditor
+    assert bundles[0].counts() == {"domain": 2, "auditor": 2}
+
+
+def test_uncontrolled_dimensions_are_named():
+    """cross-system does not pin the model, and says so rather than pretending
+    the comparison is clean."""
+    assert CROSS_SYSTEM.uncontrolled == ("auditor",)
+    assert FULL_SYSTEM.uncontrolled == ()
+
+    spread = find_bundles(
+        [_identity(system="H1", auditor="opus"), _identity(system="H2", auditor="sonnet")],
+        CROSS_SYSTEM,
+    )[0].uncontrolled_spread()
+    assert spread == {"auditor": ["opus", "sonnet"]}
+
+
+def test_timeseries_varies_time_and_is_marked_as_such():
+    """Fall B: the snapshot classes would be nonsense over windows."""
+    identities = [_identity(time="W1"), _identity(time="W2")]
+    bundles = find_bundles(identities, TIMESERIES)
+    assert TIMESERIES.is_timeseries is True
+    assert bundles[0].varying_values == ["W1", "W2"]
+
+    # Fall C: pinning the auditor separates the models into their own series
+    mixed = [
+        _identity(time="W1", auditor="opus"),
+        _identity(time="W2", auditor="opus"),
+        _identity(time="W2", auditor="sonnet"),
+    ]
+    series = find_bundles(mixed, TIMESERIES_RATER)
+    assert len(series) == 1
+    assert series[0].varying_values == ["W1", "W2"]
 
 
 def test_cross_domain_matches_by_rule_not_by_place():

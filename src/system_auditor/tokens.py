@@ -24,20 +24,43 @@ windows if the boundary falls between them.  That is deliberate.  Determinism
 across machines is worth more here than smoothness at the edge, and longer
 windows make the edge rarer.
 
-**Aggregation** is then simply: hold some tokens fixed, let exactly one vary.
+Aggregation
+-----------
 
-===================  ==================  ===========  ==============================
-aggregation          fixed               varies       what it tells you
-===================  ==================  ===========  ==============================
-``interrater``       time+domain+system  auditor      do two models agree?
-``cross-system``     time+domain         system       is it the system or the machine?
-``cross-domain``     time                domain       is the same rule broken everywhere?
-===================  ==================  ===========  ==============================
+Hold some tokens fixed, let others vary.  Every dimension is *fixed*, *varying*
+or -- deliberately -- **uncontrolled**: not held constant and not the subject of
+the comparison.  An uncontrolled dimension that actually differs produces a
+caveat rather than a blocker, because refusing those comparisons outright would
+make cross-machine audits impossible in a fleet where each machine runs a
+different model.
 
-Note the third one groups by **rule alone**.  Across systems you compare the
-same *place* on different machines; across domains there is no shared place --
-what carries meaning is whether the same rule is broken in unrelated corners of
-the system, which makes it a problem of the rule rather than of one location.
+Two **kinds** of aggregation, and they are not interchangeable:
+
+``snapshot``
+    Several participants look at the *same* moment.  The question is who saw
+    what: agreement, drift, contradiction.
+
+``timeseries``
+    One participant across *several* windows.  The question is development:
+    is a finding new, still there, gone, or back again.  The snapshot classes
+    would be nonsense here -- "every window found it" is *persistent*, not
+    "systemwide".
+
+===================  =====================  ==============  ===================================
+aggregation          fixed                  varies          question
+===================  =====================  ==============  ===================================
+``interrater``       time+domain+system     auditor         do two models agree?
+``cross-domain``     time+system+auditor    domain          same rule broken across domains?
+``cross-system``     time+domain            system          system defect or machine drift?
+``full-system``      time+system            domain+auditor  full picture of one machine
+``timeseries``       system+domain          time            how did this domain develop?
+``timeseries-rater`` system+domain+auditor  time            how did one model's view develop?
+===================  =====================  ==============  ===================================
+
+**Matching follows the axis.**  Where ``domain`` varies there is no shared
+location, so findings are matched by *rule*: the same rule broken in unrelated
+corners is a problem of the rule, not of one place.  Everywhere else the same
+*place* is compared.
 """
 
 from __future__ import annotations
@@ -54,10 +77,13 @@ DIM_SYSTEM = "system"
 DIM_AUDITOR = "auditor"
 DIMENSIONS = (DIM_TIME, DIM_DOMAIN, DIM_SYSTEM, DIM_AUDITOR)
 
-#: How findings are matched when comparing.  ``locator`` = the same place on
-#: different machines; ``rule`` = the same rule in unrelated places.
+#: How findings are matched when comparing.  ``locator`` = the same place;
+#: ``rule`` = the same rule in unrelated places.
 GROUP_BY_LOCATOR = "locator+rule"
 GROUP_BY_RULE = "rule"
+
+KIND_SNAPSHOT = "snapshot"
+KIND_TIMESERIES = "timeseries"
 
 
 def parse_period(raw: str) -> timedelta:
@@ -184,13 +210,35 @@ class AuditIdentity:
 
 @dataclass(frozen=True)
 class Aggregation:
-    """A meta audit is: hold these tokens fixed, let that one vary."""
+    """Hold these tokens fixed, let those vary; the rest is uncontrolled."""
 
     name: str
     fixed: tuple[str, ...]
-    varying: str
-    group_by: str = GROUP_BY_LOCATOR
+    varying: tuple[str, ...]
+    kind: str = KIND_SNAPSHOT
     description: str = ""
+
+    @property
+    def uncontrolled(self) -> tuple[str, ...]:
+        """Neither held constant nor compared -- honest about what it ignores."""
+        return tuple(
+            dimension
+            for dimension in DIMENSIONS
+            if dimension not in self.fixed and dimension not in self.varying
+        )
+
+    @property
+    def group_by(self) -> str:
+        """Across domains there is no shared place, so match by rule."""
+        return GROUP_BY_RULE if DIM_DOMAIN in self.varying else GROUP_BY_LOCATOR
+
+    @property
+    def is_timeseries(self) -> bool:
+        return self.kind == KIND_TIMESERIES
+
+    def participant(self, identity: AuditIdentity) -> str:
+        """Label of one participant along the varying axis (``d×a`` if both)."""
+        return " / ".join(identity.value(dimension) for dimension in self.varying)
 
     def label(self, key: tuple[str, ...]) -> str:
         pairs = zip(self.fixed, key, strict=True)
@@ -200,35 +248,63 @@ class Aggregation:
 INTERRATER = Aggregation(
     name="interrater",
     fixed=(DIM_TIME, DIM_DOMAIN, DIM_SYSTEM),
-    varying=DIM_AUDITOR,
-    group_by=GROUP_BY_LOCATOR,
-    description="Same machine, same domain, same period, different models -- do they agree?",
+    varying=(DIM_AUDITOR,),
+    description="Same machine, domain and window, different models -- do they agree?",
+)
+
+CROSS_DOMAIN = Aggregation(
+    name="cross-domain",
+    fixed=(DIM_TIME, DIM_SYSTEM, DIM_AUDITOR),
+    varying=(DIM_DOMAIN,),
+    description="One machine and model across its domains -- is the rule the problem?",
 )
 
 CROSS_SYSTEM = Aggregation(
     name="cross-system",
     fixed=(DIM_TIME, DIM_DOMAIN),
-    varying=DIM_SYSTEM,
-    group_by=GROUP_BY_LOCATOR,
-    description="Same domain and period on different machines -- system defect or host drift?",
+    varying=(DIM_SYSTEM,),
+    description="Same domain and window on different machines -- defect or drift?",
 )
 
-CROSS_DOMAIN = Aggregation(
-    name="cross-domain",
-    fixed=(DIM_TIME,),
-    varying=DIM_DOMAIN,
-    group_by=GROUP_BY_RULE,
-    description="Same period, different domains -- is the same rule broken everywhere?",
+FULL_SYSTEM = Aggregation(
+    name="full-system",
+    fixed=(DIM_TIME, DIM_SYSTEM),
+    varying=(DIM_DOMAIN, DIM_AUDITOR),
+    description="Everything known about one machine in one window.",
+)
+
+TIMESERIES = Aggregation(
+    name="timeseries",
+    fixed=(DIM_SYSTEM, DIM_DOMAIN),
+    varying=(DIM_TIME,),
+    kind=KIND_TIMESERIES,
+    description="One domain on one machine over several windows -- development.",
+)
+
+TIMESERIES_RATER = Aggregation(
+    name="timeseries-rater",
+    fixed=(DIM_SYSTEM, DIM_DOMAIN, DIM_AUDITOR),
+    varying=(DIM_TIME,),
+    kind=KIND_TIMESERIES,
+    description="One model's view of one domain over several windows.",
 )
 
 AGGREGATIONS = {
-    item.name: item for item in (INTERRATER, CROSS_SYSTEM, CROSS_DOMAIN)
+    item.name: item
+    for item in (
+        INTERRATER,
+        CROSS_DOMAIN,
+        CROSS_SYSTEM,
+        FULL_SYSTEM,
+        TIMESERIES,
+        TIMESERIES_RATER,
+    )
 }
 
 
 @dataclass
 class Bundle:
-    """Candidates for one meta audit: same fixed key, differing varying token."""
+    """Candidates for one meta audit: same fixed key, differing varying tokens."""
 
     aggregation: Aggregation
     key: tuple[str, ...]
@@ -236,12 +312,32 @@ class Bundle:
 
     @property
     def varying_values(self) -> list[str]:
-        return sorted({item.value(self.aggregation.varying) for item in self.identities})
+        return sorted({self.aggregation.participant(item) for item in self.identities})
 
     @property
     def level(self) -> int:
         """How many distinct participants -- meta-2, meta-3, ..."""
         return len(self.varying_values)
+
+    def counts(self) -> dict[str, int]:
+        """Distinct values per varying dimension.
+
+        For ``full-system`` this is what the user's naming asks for: how many
+        domains and how many auditors the picture rests on.
+        """
+        return {
+            dimension: len({item.value(dimension) for item in self.identities})
+            for dimension in self.aggregation.varying
+        }
+
+    def uncontrolled_spread(self) -> dict[str, list[str]]:
+        """Values seen in dimensions this aggregation neither fixes nor compares."""
+        spread: dict[str, list[str]] = {}
+        for dimension in self.aggregation.uncontrolled:
+            values = sorted({item.value(dimension) for item in self.identities})
+            if len(values) > 1:
+                spread[dimension] = values
+        return spread
 
     def label(self) -> str:
         return self.aggregation.label(self.key)
@@ -254,10 +350,10 @@ def find_bundles(
 ) -> list[Bundle]:
     """Group identities into meta-audit candidates.
 
-    A bundle needs at least ``min_participants`` *distinct* values in the
-    varying dimension.  Two audits differing in no dimension at all are one
-    restated statement, not two participants -- deduplicated by the caller
-    before this point.
+    A bundle needs at least ``min_participants`` *distinct* participants along
+    the varying axis.  Where two dimensions vary (``full-system``), a
+    participant is their combination -- so one domain audited by two models
+    already counts as two.
     """
     grouped: dict[tuple[str, ...], list[AuditIdentity]] = {}
     for identity in identities:
@@ -279,7 +375,7 @@ def newest_per_identity(
     """Collapse repeated statements: same four tokens -> keep the newest.
 
     This is what makes a re-run harmless.  Auditing the same domain again, on
-    the same machine, with the same model, in the same period is a *correction*
+    the same machine, with the same model, in the same window is a *correction*
     -- so it replaces its predecessor and forces the meta audit to be rebuilt,
     rather than appearing beside it as a second opinion.
     """

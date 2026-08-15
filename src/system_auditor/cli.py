@@ -27,9 +27,9 @@ from .audit_lock import (
     write_lock,
 )
 from .discovery import discover
-from .meta import plan_metas, stale_windows
+from .meta import due_aggregations, plan_all, stale_windows
 from .report import list_reports, next_domain
-from .tokens import AGGREGATIONS, CROSS_SYSTEM, TimeGrid
+from .tokens import AGGREGATIONS, TimeGrid
 
 
 def _print(payload: dict, as_json: bool) -> None:
@@ -140,20 +140,29 @@ def cmd_locks(args: argparse.Namespace) -> int:
 
 def cmd_meta_plan(args: argparse.Namespace) -> int:
     token = args.time_token or _grid(args).token(utcnow())
-    plans = plan_metas(
+    due = due_aggregations(requested=args.aggregation)
+    if args.aggregation and not due:
+        print(
+            f"ERROR: aggregation '{args.aggregation}' is switched off in the policy. "
+            "Turning it on is a config decision, not a per-call one.",
+            file=sys.stderr,
+        )
+        return 1
+    plans = plan_all(
         Path(args.reports),
-        aggregation=args.aggregation,
         time_token=None if args.all_windows else token,
-        min_participants=args.min_participants,
+        requested=args.aggregation,
     )
     _print(
         {
-            "aggregation": args.aggregation,
+            "aggregation": args.aggregation or "(policy: "
+            + ", ".join(item.name for item, _ in due) + ")",
             "time_token": "(all)" if args.all_windows else token,
             "bundles": len(plans),
             "plans": [
-                f"{plan.action} · {plan.target} · meta-{plan.level} "
+                f"{plan.action} · {plan.target} · {plan.level} Teilnehmer "
                 f"[{', '.join(plan.participants)}] · {plan.reason}"
+                + (f" · unkontrolliert: {plan.uncontrolled}" if plan.uncontrolled else "")
                 for plan in plans
             ],
             "restated_inputs": plans[0].restated if plans else [],
@@ -263,11 +272,13 @@ def build_parser() -> argparse.ArgumentParser:
     p_meta = sub.add_parser("meta-plan", help="which meta audits are due?")
     p_meta.add_argument("--reports", required=True)
     p_meta.add_argument(
-        "--aggregation", choices=sorted(AGGREGATIONS), default=CROSS_SYSTEM.name
+        "--aggregation",
+        choices=sorted(AGGREGATIONS),
+        default=None,
+        help="omit: build what the policy marks 'always'; name one to ask on demand",
     )
     p_meta.add_argument("--time-token", default=None, help="default: current window")
     p_meta.add_argument("--all-windows", action="store_true")
-    p_meta.add_argument("--min-participants", type=int, default=2)
     _add_grid_args(p_meta)
     p_meta.set_defaults(func=cmd_meta_plan)
 

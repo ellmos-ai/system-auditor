@@ -118,13 +118,29 @@ def test_legacy_sig_tu_report_is_read_and_flagged(tmp_path):
     assert next_domain(DOMAINS, tmp_path) == "sync-register"
 
 
-def test_meta_filename_is_stable_and_hostless(tmp_path):
-    """One meta audit per window and scope -- the author is in the header, not
-    in the name, otherwise every machine would keep its own copy."""
-    first = meta_filename("cross-system", "20260810", ["bundles"])
-    second = meta_filename("cross-system", "20260810", ["bundles"])
+def test_meta_filename_is_stable_and_hostless():
+    """One artefact per aggregation and fixed key -- the author is in the
+    header, not in the name, otherwise every machine would keep its own copy."""
+    first = meta_filename("cross-system", ["20260810", "bundles"])
+    second = meta_filename("cross-system", ["20260810", "bundles"])
     assert first == second == "META-cross-system-20260810-bundles.md"
     assert "ASUS" not in first
+
+
+def test_meta_filename_omits_participant_counts():
+    """Counts change whenever a participant joins. A changing name would defeat
+    the overwrite rule that guarantees one current answer -- so counts live in
+    the header and the title, never in the file name."""
+    two = meta_filename("full-system", ["20260810", "H1"])
+    three = meta_filename("full-system", ["20260810", "H1"])
+    assert two == three == "META-full-system-20260810-H1.md"
+    assert "2" not in two.replace("20260810", "")
+
+
+def test_timeseries_filename_carries_no_period():
+    """A time series spans windows by design -- it is always "as of now"."""
+    name = meta_filename("timeseries", ["H1", "bundles"])
+    assert name == "META-timeseries-H1-bundles.md"
 
 
 def test_meta_report_overwrites_within_the_same_window(tmp_path):
@@ -134,8 +150,8 @@ def test_meta_report_overwrites_within_the_same_window(tmp_path):
             ReportHeader(
                 domain="", system=system, time_token="20260810",
                 audit_mode=MODE_META, aggregation="cross-system",
-                meta_level=level, participants=participants, scope=["bundles"],
-                finished_utc=utcnow(),
+                meta_level=level, participants=participants,
+                scope=["20260810", "bundles"], finished_utc=utcnow(),
             ),
             "meta body",
         )
@@ -147,11 +163,11 @@ def test_meta_report_overwrites_within_the_same_window(tmp_path):
     assert read_report(three).meta_level == 3
 
 
-def test_different_windows_produce_different_meta_files(tmp_path):
+def test_different_windows_produce_different_meta_files():
     """History keeps itself: last window is a different token, hence a
     different file. Nothing needs archiving."""
-    assert meta_filename("cross-system", "20260810", ["bundles"]) != meta_filename(
-        "cross-system", "20260817", ["bundles"]
+    assert meta_filename("cross-system", ["20260810", "bundles"]) != meta_filename(
+        "cross-system", ["20260817", "bundles"]
     )
 
 
@@ -161,7 +177,8 @@ def test_listing_filters_by_mode(tmp_path):
         tmp_path,
         ReportHeader(domain="", system="H1", time_token="20260810",
                      audit_mode=MODE_META, aggregation="cross-system",
-                     meta_level=2, scope=["bundles"], finished_utc=utcnow()),
+                     meta_level=2, scope=["20260810", "bundles"],
+                     finished_utc=utcnow()),
         "meta",
     )
     assert len(list_reports(tmp_path, audit_mode=MODE_SELF)) == 1
