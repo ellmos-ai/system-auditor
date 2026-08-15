@@ -1,6 +1,6 @@
 # system-auditor
 
-[![tests](https://img.shields.io/badge/pytest-62%20passed-brightgreen)](tests/)
+[![tests](https://img.shields.io/badge/pytest-86%20passed-brightgreen)](tests/)
 [![python](https://img.shields.io/badge/python-3.10%2B-blue)](pyproject.toml)
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![dependencies](https://img.shields.io/badge/dependencies-none-lightgrey)](pyproject.toml)
@@ -55,21 +55,63 @@ them.*
 
 ---
 
-## Meta audits
+## Four tokens
 
-    system A audits `bundles`                            ->  single audit
-    system B audits `bundles`, sees A's                  ->  meta-2
-    system C audits `bundles`, sees meta-2 + 3 singles   ->  meta-3, meta-2 archived
+Every audit answers four questions, and each answer is a token:
 
-Two properties keep this honest:
+| token | question |
+|---|---|
+| `time` | *when* — which period window does this statement belong to |
+| `domain` | *what* — which domain was audited |
+| `system` | *where* — which machine was looked at |
+| `auditor` | *who* — which model did the looking |
 
-* **Validity is explicit.** An audit is a statement about a moment. Bundling last month's
-  statement with today's would fabricate a "difference between systems" that is really a
-  difference in time. Stale audits are excluded — and the exclusion is *named*, never
-  silent.
-* **Renewal belongs to the bearer.** A stale audit is refreshed by the machine that
-  produced it. No other system may retire a statement about a machine it cannot see.
-  Superseded artefacts are archived, never deleted.
+**Why discrete windows instead of a sliding validity span.** A sliding window ("valid for
+14 days from the run") makes overlap a matter of degree — every machine has to compare
+pairs to find out. A window *grid* derived from config turns that into a lookup: ask the
+clock, get a token. Two machines that never talk to each other derive the same token for
+the same moment, so "same period" becomes a string comparison instead of an agreement
+problem.
+
+The price is the boundary: two runs minutes apart can land in different windows. That is
+deliberate — determinism across machines is worth more than smoothness at the edge, and
+longer windows make the edge rarer.
+
+## The aggregation ladder
+
+Hold some tokens fixed, let exactly one vary:
+
+| aggregation | fixed | varies | what it tells you |
+|---|---|---|---|
+| `interrater` | time+domain+system | **auditor** | do two models agree? |
+| `cross-system` | time+domain | **system** | is it the system or the machine? |
+| `cross-domain` | time | **domain** | is the same rule broken everywhere? |
+
+Note the last one matches by **rule alone**. Across machines you compare the same *place*;
+across domains there is no shared place — what carries meaning is whether the same rule is
+broken in unrelated corners, which makes it a problem of the rule rather than of one
+location.
+
+`interrater` additionally reports an **agreement score**. A low value there is not a system
+defect but a reliability problem of the auditors themselves.
+
+## One current answer per window
+
+    system A audits `bundles`                        ->  single audit
+    system B audits `bundles`                        ->  meta-2  (created)
+    system C audits `bundles`                        ->  meta-3  (same file, rewritten)
+
+Within a window the meta audit is **overwritten, not archived**: "what do we know about
+this domain in this window" has one current answer, and keeping meta-2 beside meta-3 would
+leave two answers to one question.
+
+**History keeps itself.** Last window is a different token, hence a different file, and
+stays untouched — nothing has to be moved for the record to exist. The only thing that
+overwrites a *single* audit is a restatement with the same four tokens; that is a
+correction, and it forces the window's meta audit to be rebuilt.
+
+**Renewal belongs to the bearer.** Only the machine that produced an audit may restate it.
+No system may retire a statement about a machine it cannot see.
 
 ---
 
@@ -99,19 +141,26 @@ executable by hand, no library required.
 ```bash
 python -m pip install -e .
 
+# which audit window is it right now?
+system-auditor time-token --period 7d
+
 # which domain is next in my own rotation?
-system-auditor next-area --areas "bundles,skills,mcp" --reports ./reports --host $HOSTNAME
+system-auditor next-domain --domains "bundles,skills,mcp" --reports ./reports --system $HOSTNAME
 
 # announce presence (does not exclude anyone)
-system-auditor claim --locks ./_locks --area bundles --host $HOSTNAME --mode presence
+system-auditor claim --locks ./_locks --domain bundles --system $HOSTNAME --mode presence
 
 # where are this domain's rules, on whatever system this is?
-system-auditor discover --area-path /path/to/domain
+system-auditor discover --domain-path /path/to/domain
 
-# is a meta audit due?
-system-auditor meta-plan --reports ./reports --area bundles --validity 14d
+# which meta audits are due in the current window?
+system-auditor meta-plan --reports ./reports --aggregation cross-system
+system-auditor meta-plan --reports ./reports --aggregation interrater
 
-system-auditor release --locks ./_locks --area bundles --host $HOSTNAME
+# which of my audits belong to an earlier window?
+system-auditor stale --reports ./reports --system $HOSTNAME
+
+system-auditor release --locks ./_locks --domain bundles --system $HOSTNAME
 ```
 
 The role prompt an agent follows is [`prompts/AUDITOR.de.md`](prompts/AUDITOR.de.md).
@@ -133,7 +182,7 @@ Configuration: copy `config/system-auditor.config.example.json`.
 ## Development
 
 ```bash
-python -m pytest -q     # 62 tests
+python -m pytest -q     # 86 tests
 ruff check src tests
 ```
 

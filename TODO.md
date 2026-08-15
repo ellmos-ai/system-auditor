@@ -1,68 +1,79 @@
 # TODO — system-auditor
 
-Stand: 2026-08-15 · Version 0.1.0 · 62 Tests grün, ruff sauber
+Stand: 2026-08-15 · Version 0.2.0 · 86 Tests grün, ruff sauber, keine Abhängigkeiten
 
-## Was v0.1.0 wirklich kann
+## Was v0.2.0 wirklich kann
 
-- [x] **Audit-Host-Lock v1** — `presence` (Signal, schließt nie aus) und `claim`
-      (Reservierung nur für Meta-Audits) mit deterministischer Verlierer-Regel,
-      sekundengenauem `created`, Ablauf, Freigabe. Spec + Referenz-Implementierung.
-- [x] **Berichte** — maschinenlesbarer Kopf, Rotation nach `finished_utc`, Rotation pro
-      Host, Rückwärtskompatibilität zu `SIG-TU-*.md` ohne Kopf.
-- [x] **Meta-Audit** — Klassifikation über N Systeme (`systemwide` / `host_specific` /
-      `inverse` / `divergent` / `unverifiable`), Home-Pfad-Normalisierung,
-      Vergleichbarkeits-Gate mit Blockern und Vorbehalten.
-- [x] **Meta-Lebenszyklus** — Gültigkeitsfenster, neuestes Audit je System, `meta-N`
-      ersetzt `meta-(N-1)`, Archivierung statt Löschung, Erneuerung nur durch den eigenen
-      Host.
-- [x] **Erkennungskaskade** — konfiguriert → Modul-Probe → Konvention → nichts
-      (Beobachtungen statt Maßnahmen), tiefenbegrenzt.
-- [x] **Senken** — Datei-Senke; Kommando-Senke mit automatischem Rückfall.
-- [x] **CLI** — `next-area`, `claim`, `release`, `locks`, `meta-plan`, `reports`,
-      `discover`.
+- [x] **Vier Token je Audit** — `time`, `domain`, `system`, `auditor`. Identische Token =
+      dieselbe Aussage, korrigiert; die neuere ersetzt die ältere (auf Dateiebene, weil der
+      Name aus den Token gebildet wird).
+- [x] **Zeitraster als Heartbeat** — `TimeGrid` (period + anchor) und optionale explizite
+      `TimeTable`. Jede Maschine leitet denselben Token aus der Uhr ab, ohne Abstimmung.
+- [x] **Aggregationsleiter** — `interrater` (Modelle, mit Übereinstimmungsquote),
+      `cross-system` (Maschinen), `cross-domain` (Domänen, verglichen über die Regel statt
+      über den Ort).
+- [x] **Ein Meta-Audit je Fenster** — wird bei wechselnder Teilnehmerzahl in derselben
+      Datei überschrieben (meta-2 → meta-3). Historie steckt im Zeittoken.
+- [x] **Klassifikation** — `systemwide` / `host_specific` / `inverse` / `divergent` /
+      `unverifiable`, mit Home-Pfad-Normalisierung und Vergleichbarkeits-Gate.
+      Überschriften folgen der Achse.
+- [x] **Audit-Host-Lock v1** — `presence` (Signal, schließt nie aus), `claim` (nur für
+      Meta-Audits) mit deterministischer Verlierer-Regel.
+- [x] **Erkennungskaskade** für Regelquellen — konfiguriert → Modul-Probe → Konvention →
+      nichts (dann Beobachtungen statt Maßnahmen).
+- [x] **Senken** — Datei-Senke, Kommando-Senke mit automatischem Rückfall.
+- [x] **CLI** — `time-token`, `next-domain`, `claim`, `release`, `locks`, `meta-plan`,
+      `reports`, `stale`, `discover`.
+
+## Offen — der wichtigste Punkt zuerst
+
+- [ ] **`meta-build`: die Pipeline ist noch nicht geschlossen.** `meta-plan` entscheidet
+      zuverlässig, *ob* ein Meta-Audit fällig ist, und `build_meta()` klassifiziert
+      korrekt — aber **nichts extrahiert Findings aus geschriebenen Berichten**, die sind
+      Prosa. Der Agent stellt sie heute selbst zusammen. Voraussetzung für die
+      Schließung: strukturierte Fundliste im Berichtskopf (siehe nächster Punkt).
+- [ ] **Findings maschinenlesbar im Bericht** — `findings_detail: [{locator, rule, title}]`
+      neben der Prosa, damit Meta-Audits ohne Nachlesen des Fließtexts gebaut werden können.
 
 ## Offen — vor einer Veröffentlichung
 
-- [ ] **`prompts/AUDITOR.en.md`** — Sprachstufe Core (DE+EN) ist für veröffentlichte
-      Repos Pflicht (P-006). Aktuell liegt nur die deutsche Fassung vor.
-- [ ] **`llms.txt`** ergänzen (Discovery-Index).
-- [ ] `PRIVATE.txt`-Gate bewusst setzen oder Freigabe einholen — das Repo ist als
-      `visibility: private` deklariert.
+- [ ] **`prompts/AUDITOR.en.md`** — Sprachstufe Core (DE+EN) ist für veröffentlichte Repos
+      Pflicht (P-006). Aktuell liegt nur die deutsche Fassung vor.
+- [ ] `PRIVATE.txt`-Gate bewusst setzen oder Freigabe einholen — `visibility: private`.
+- [ ] Remote anlegen und pushen (bisher nur lokal committet).
 
 ## Offen — Integration
 
 - [ ] **`locks_dir` in die Scan-Roots** des Lock-Systems eintragen. Ohne das ist der
-      Audit-Lock für Scanner und Watcher unsichtbar — genau die Lücke, aus der im
-      Ökosystem am 2026-07-25 schon einmal ein Parallelsystem entstand.
+      Audit-Lock für Scanner und Watcher unsichtbar — genau die Lücke, aus der im Ökosystem
+      am 2026-07-25 schon einmal ein Parallelsystem entstand. **Erster Schritt bei
+      Übernahme, nicht später.**
 - [ ] **`lock_utils.is_audit_lock()`** im Lock-System ergänzen und Audit-Locks in
-      Scan/Watcher/GUI als *advisory* ausweisen, damit sie nicht als Sperre gelesen werden.
-- [ ] **Rollenverlagerung** aus dem Ticketsystem: Prompt dort stilllegen, Verweis hierher,
-      Architektur-Vorbehalt vom 2026-07-31 als aufgelöst markieren.
-- [ ] **Bestandsberichte** (`SIG-TU-*.md`) beim ersten Lauf je Host mit Kopf nachziehen
-      oder auslaufen lassen — sie werden gelesen, tragen aber weder `coverage` noch
-      `clean` und können deshalb nicht in ein Meta-Audit eingehen.
+      Scan/Watcher/GUI als *advisory* ausweisen.
+- [ ] **Bestandsberichte** (`SIG-TU-*.md`) werden gelesen und als `legacy` geführt, tragen
+      aber weder Token noch `coverage`/`clean` — sie können deshalb nicht in ein Meta-Audit
+      eingehen. Beim ersten Lauf je Host mit Kopf nachziehen oder auslaufen lassen.
 
 ## Offen — Ausbau
 
 - [ ] **Explorer-Adapter** (Beleg-A-Stufe 2/3): Coverage-/Kartenausgabe als Einstieg,
       Receipts als Beleg. Rein additiv hinter `enabled_probe`.
-- [ ] **`meta-build`-Kommando** — derzeit liefert `meta-plan` die Entscheidung, das
-      Zusammenstellen der Findings übernimmt der Agent. Ein Kommando, das aus vorhandenen
-      Berichten direkt das Meta-Audit schreibt, wäre der nächste sinnvolle Schritt.
-      Voraussetzung: Findings müssen maschinenlesbar im Bericht liegen (heute Prosa).
-- [ ] **Findings im Berichtskopf** — Ergänzung zu obigem: strukturierte Fundliste
-      (`locator`, `rule`, `title`) neben der Prosa, damit Meta-Audits ohne Nachlesen des
-      Fließtexts gebaut werden können.
-- [ ] Protokoll `protocols/audit-host-lock/` in ein eigenes Repo heben — **erst wenn ein
-      dritter Konsument existiert.** Der Schnitt ist bereits so gelegt, dass das ein
-      Verschieben ist, kein Umbau.
+- [ ] **Weitere Aggregationsstufen?** Die Leiter ist generisch (fixed/varying), also wären
+      z. B. „gleiche Domäne über mehrere Fenster" (Zeitreihe) oder „ein Modell über alle
+      Maschinen" ohne Codeänderung definierbar. Erst bauen, wenn ein konkreter Bedarf da
+      ist — nicht auf Vorrat.
 - [ ] JSON-Schema für den Berichtskopf (`audit-report.v1.schema.json`).
+- [ ] Protokoll `protocols/audit-host-lock/` in ein eigenes Repo heben — **erst wenn ein
+      dritter Konsument existiert.** Der Schnitt liegt bereits so, dass das ein Verschieben
+      ist, kein Umbau.
 
 ## Bewusst nicht gebaut
 
+- **Gleitendes Gültigkeitsfenster.** Ersetzt durch diskrete Zeitraster: Überlappung wird
+  damit zum Stringvergleich statt zur Gradfrage, die jede Maschine einzeln beurteilen muss.
+- **Archivierung im Normalfluss.** Der Zeittoken im Dateinamen trägt die Historie.
+  `archive()` bleibt für bewusstes Aufräumen alter Fenster.
 - **Zentrales Cursor-Register.** Der Bericht *ist* der Rotationsanker; eine geteilte
-  Schreibdatei wäre genau die Bauform, die dieses Ökosystem schon zweimal zurückbauen
-  musste.
-- **Ticket-IDs, Kategorien, Routing.** Hoheit des Ticketsystems. Der Auditor kennt nur
-  „lege eine Maßnahme an".
+  Schreibdatei wäre die Bauform, die dieses Ökosystem schon zweimal zurückbauen musste.
+- **Ticket-IDs, Kategorien, Routing.** Hoheit des Ticketsystems.
 - **Eigene Kartenerzeugung.** Hoheit des Explorers.

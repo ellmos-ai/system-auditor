@@ -1,4 +1,4 @@
-"""system-auditor -- evidence-based system audits across several machines.
+"""system-auditor -- evidence-based system audits across machines, models and domains.
 
 Three stages, three owners:
 
@@ -6,7 +6,12 @@ Three stages, three owners:
     verdict  what is wrong about it   -> THIS module
     measure  what we do about it      -> ticket system (optional)
 
-Nothing here requires its neighbours.  Detected, they are used; absent, the
+Every audit carries four tokens -- period, domain, system, auditor. Holding some
+fixed and letting exactly one vary yields the aggregation ladder: interrater
+(models disagree?), cross-system (machine or system?), cross-domain (is the rule
+itself the problem?).
+
+Nothing here requires its neighbours. Detected, they are used; absent, the
 auditor degrades to reading directly and writing files.
 """
 
@@ -36,23 +41,59 @@ from .compare import (
     render_markdown,
 )
 from .discovery import DiscoveryResult, discover
-from .meta import MetaPlan, current_meta, plan_meta, renew_own_audits, valid_single_audits
+from .meta import (
+    ACTION_CREATE,
+    ACTION_SKIP,
+    ACTION_UPDATE,
+    MetaPlan,
+    current_single_audits,
+    existing_meta,
+    plan_meta,
+    plan_metas,
+    stale_windows,
+)
 from .report import (
     MODE_META,
     MODE_SELF,
     ReportHeader,
     latest_report,
     list_reports,
-    next_area,
+    meta_filename,
+    next_domain,
     read_report,
     write_report,
 )
 from .sinks import Sink, emit
+from .tokens import (
+    AGGREGATIONS,
+    CROSS_DOMAIN,
+    CROSS_SYSTEM,
+    INTERRATER,
+    Aggregation,
+    AuditIdentity,
+    Bundle,
+    TimeGrid,
+    TimeTable,
+    find_bundles,
+    resolve_time_token,
+)
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     "__version__",
+    # tokens and aggregation
+    "AuditIdentity",
+    "Aggregation",
+    "Bundle",
+    "TimeGrid",
+    "TimeTable",
+    "resolve_time_token",
+    "find_bundles",
+    "AGGREGATIONS",
+    "INTERRATER",
+    "CROSS_SYSTEM",
+    "CROSS_DOMAIN",
     # locks
     "AuditLock",
     "ClaimResult",
@@ -71,8 +112,9 @@ __all__ = [
     "read_report",
     "list_reports",
     "latest_report",
-    "next_area",
+    "next_domain",
     "write_report",
+    "meta_filename",
     # comparison
     "Finding",
     "AuditRun",
@@ -88,9 +130,13 @@ __all__ = [
     # meta lifecycle
     "MetaPlan",
     "plan_meta",
-    "current_meta",
-    "valid_single_audits",
-    "renew_own_audits",
+    "plan_metas",
+    "current_single_audits",
+    "existing_meta",
+    "stale_windows",
+    "ACTION_CREATE",
+    "ACTION_UPDATE",
+    "ACTION_SKIP",
     # discovery + sinks
     "discover",
     "DiscoveryResult",

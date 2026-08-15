@@ -3,6 +3,37 @@
 Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [SemVer](https://semver.org/lang/de/).
 
+## [0.2.0] - 2026-08-15
+
+Token-Modell und Aggregationsleiter. Ersetzt das gleitende Gueltigkeitsfenster aus 0.1.0
+durch diskrete, aus der Config abgeleitete Zeitraeume -- jede Maschine leitet fuer
+denselben Moment denselben Token ab, ohne Abstimmung.
+
+### Hinzugefuegt
+
+- **Vier Token je Audit** (`tokens.py`): time, domain, system, auditor. Zwei Audits mit
+  identischen vier Token sind dieselbe Aussage, korrigiert -- die neuere ersetzt die
+  aeltere.
+- **Zeitraster** (`TimeGrid`) aus period + anchor, plus optionale explizite Tabelle
+  (`TimeTable`) fuer Kalender, die eine Regel nicht ausdruecken kann. Ein Moment ausserhalb
+  der Tabelle faellt auf das Raster zurueck.
+- **Aggregationsleiter**: `interrater` (Modelle auf einer Maschine, mit
+  Uebereinstimmungsquote), `cross-system` (Maschinen), `cross-domain` (Domaenen, verglichen
+  ueber die REGEL statt ueber den Ort).
+- **Achsenabhaengige Darstellung**: dieselbe Klasse heisst je nach Achse "systemweit",
+  "alle Auditoren einig" oder "in allen Domaenen".
+- CLI: `time-token`, `stale`, `meta-plan --aggregation`; `next-area` -> `next-domain`.
+
+### Geaendert
+
+- **Meta-Audits werden im Zeitfenster ueberschrieben statt archiviert.** Der Dateiname
+  traegt den Zeittoken und keinen Host (`META-<kind>-<time>[-<scope>].md`), also gibt es
+  je Fenster und Scope genau eine gueltige Antwort. Die Historie steckt im Token: das
+  letzte Fenster ist eine andere Datei und bleibt unberuehrt.
+- Archivierung ist damit kein Teil des Normalflusses mehr; `archive()` bleibt fuer
+  bewusstes Aufraeumen laengst vergangener Fenster.
+- Berichtsfelder `area`/`host` heissen jetzt `domain`/`system`, passend zu den Token.
+
 ## [0.1.0] - 2026-08-15
 
 Erste Fassung. Herausgeloest aus der Rolle SIG-TU/TICKET-WRITER des Ticketsystems,

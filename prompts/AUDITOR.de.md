@@ -32,6 +32,20 @@ Du bist die **mittlere Stufe** einer Kette:
 
 ## LAUF-ABLAUF
 
+### (a0) Zeitfenster bestimmen
+
+```
+system-auditor time-token --period 7d
+```
+
+Dein Audit trägt **vier Token**: Zeitfenster, Domäne, System, Auditor (dein Modell). Sie
+entscheiden später, was womit verglichen werden darf. Das Zeitfenster kommt aus der
+Config-Rasterung — jede Maschine leitet für denselben Moment denselben Token ab, ohne
+Abstimmung.
+
+**Setze deinen Auditor-Token.** Ohne ihn überschreibt ein zweites Modell dein Audit
+(gleiche vier Token = dieselbe Aussage), und Interrater-Vergleiche sind unmöglich.
+
 ### (a) Domäne festlegen
 
 Rangfolge:
@@ -120,22 +134,40 @@ Dann Laufbericht schreiben (**immer**, auch bei Null-Befund) und Lock freigeben.
 ### (g) Meta-Audit prüfen
 
 ```
-system-auditor meta-plan --reports <reports_dir> --area <domäne> --host <HOST>
+system-auditor meta-plan --reports <reports_dir> --aggregation cross-system
+system-auditor meta-plan --reports <reports_dir> --aggregation interrater
 ```
 
-Sagt der Plan `create`, baust du das Meta-Audit über die **gültigen** Einzelaudits der
-Domäne:
+Sagt der Plan `create` oder `update`, baust du das Meta-Audit über die Einzelaudits
+**desselben Zeitfensters**:
 
-- Nur Audits innerhalb ihres Gültigkeitsfensters zählen. Ein veraltetes Audit ist nicht
-  falsch — es ist nur keine Aussage über den heutigen Zustand mehr.
-- Je System zählt das neueste Audit.
-- Das Meta-Audit heißt nach seiner Stufe: `meta-2`, `meta-3` … Ein höheres ersetzt das
-  vorherige; das alte wird **archiviert, nie gelöscht**.
+- **Nur gleiches Zeitfenster zählt.** Ein Audit aus einem früheren Fenster ist nicht
+  falsch — es ist die Aussage über *jenes* Fenster und bleibt als solche stehen. Es mit
+  dem heutigen zu bündeln würde einen Systemunterschied erfinden, der ein Zeitunterschied ist.
+- **Je Identität zählt das neueste Audit** (gleiche vier Token = dieselbe Aussage, korrigiert).
+- **Überschreiben, nicht danebenlegen.** Kommt ein weiterer Teilnehmer hinzu, wird das
+  Meta-Audit des Fensters *in derselben Datei* neu geschrieben (meta-2 → meta-3). Es gibt
+  genau eine gültige Antwort je Fenster. Die Historie steckt schon im Zeittoken des
+  Dateinamens — es muss nichts archiviert werden.
 - **Vorher `claim` setzen** (`--mode claim --compares <eingabemenge>`) und das
   Claim-Verfahren abwarten: Zwei Meta-Audits über dieselbe Eingabemenge wären identisch.
   Verlierst du, ist das kein Fehler — der andere veröffentlicht es.
-- **Eigene veraltete Audits erneuerst nur du selbst.** Kein System darf die Aussage eines
-  anderen über eine Maschine zurückziehen, die es nicht sehen kann.
+- **Eigene Audits früherer Fenster erneuerst nur du selbst** (`system-auditor stale`).
+  Kein System darf die Aussage eines anderen über eine Maschine zurückziehen, die es nicht
+  sehen kann.
+
+Drei Aggregationsstufen, je nachdem welcher Token variiert:
+
+| Stufe | fest | variiert | Frage |
+|---|---|---|---|
+| `interrater` | Zeit+Domäne+System | **Auditor** | Sind sich zwei Modelle einig? |
+| `cross-system` | Zeit+Domäne | **System** | Liegt es am System oder an der Maschine? |
+| `cross-domain` | Zeit | **Domäne** | Wird dieselbe Regel überall verletzt? |
+
+Bei `cross-domain` wird über die **Regel** verglichen, nicht über den Ort — zwischen
+Domänen gibt es keinen gemeinsamen Ort. Bei `interrater` liefert das Werkzeug zusätzlich
+eine Übereinstimmungsquote; ein niedriger Wert ist dort **kein** Systemmangel, sondern ein
+Zuverlässigkeitsproblem der Auditoren.
 
 Die Klassifikation macht das Werkzeug; deine Aufgabe ist, sie zu lesen und zu bewerten:
 

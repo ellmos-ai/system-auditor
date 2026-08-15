@@ -1,10 +1,29 @@
 {
   "_comment": "Beispielkonfiguration fuer system-auditor. Kopieren nach system-auditor.config.json und anpassen. Alle Nachbarmodule sind OPTIONAL: fehlt eines, laeuft der Auditor auf niedrigerer Stufe weiter -- das ist Normalbetrieb, kein Fehler.",
 
-  "_comment_placeholders": "<HOME> = Home-Verzeichnis des jeweiligen Hosts. Wird die Datei zwischen Systemen geteilt, darf hier KEIN literaler Benutzerpfad stehen. <area> = 'path' der im Lauf zugeteilten Domaene.",
+  "_comment_placeholders": "<HOME> = Home-Verzeichnis des jeweiligen Hosts. Wird die Datei zwischen Systemen geteilt, darf hier KEIN literaler Benutzerpfad stehen. <domain> = 'path' der im Lauf zugeteilten Domaene.",
 
-  "host": "<HOSTNAME>",
-  "_comment_host": "Voller Rechnername, nicht der Sync-Slotname. Er landet im Dateinamen von Lock und Bericht und ist dort autoritativ.",
+  "_comment_tokens": "Jedes Audit traegt vier Token: time (welches Zeitfenster), domain (welche Domaene), system (welche Maschine), auditor (welches Modell). Meta-Audits entstehen, indem einige Token festgehalten werden und genau einer variiert.",
+
+  "system": "<HOSTNAME>",
+  "_comment_system": "Voller Rechnername, nicht der Sync-Slotname. Er landet im Dateinamen von Lock und Bericht und ist dort autoritativ.",
+
+  "auditor": "<MODELL-ODER-AGENT>",
+  "_comment_auditor": "Kennung des pruefenden Modells/Agenten, z. B. 'opus-5' oder 'codex'. WICHTIG: Ohne unterscheidbaren Auditor-Token ueberschreibt ein zweites Modell das Audit des ersten (gleiche vier Token = dieselbe Aussage) -- und Interrater-Vergleiche sind dann unmoeglich.",
+
+  "time_grid": {
+    "period": "7d",
+    "anchor": "2026-01-05T00:00:00Z"
+  },
+  "_comment_time_grid": "Der 'Heartbeat': Aus period + anchor leitet JEDE Maschine denselben Zeitraum-Token ab -- ohne Abstimmung, allein aus der Uhr. Nur Audits desselben Fensters werden gebuendelt. Laengere Fenster = seltenere Grenzfaelle an den Raendern, aber traegere Meta-Audits. anchor legt die Phase fest (hier ein Montag).",
+
+  "time_table": [],
+  "_comment_time_table": "Optionale explizite Zeitraumtabelle fuer Kalender, die eine Regel nicht ausdruecken kann (z. B. Sprints): [{\"token\": \"sprint-42\", \"from\": \"2026-08-10\", \"to\": \"2026-08-24\"}]. Sie gewinnt, wo sie greift; ein Moment ausserhalb faellt auf das Raster zurueck -- ein Audit darf nie scheitern, weil der Kalender eine Luecke hat.",
+
+  "aggregations": ["cross-system", "interrater", "cross-domain"],
+  "_comment_aggregations": "Welche Aggregationsstufen dieser Host baut. cross-system: gleiche Domaene+Fenster, verschiedene Maschinen. interrater: gleiche Maschine+Domaene+Fenster, verschiedene Modelle (liefert eine Uebereinstimmungsquote). cross-domain: gleiches Fenster, verschiedene Domaenen -- vergleicht ueber die REGEL statt ueber den Ort, weil es zwischen Domaenen keinen gemeinsamen Ort gibt.",
+
+  "min_participants": 2,
 
   "audit_home": "<HOME>/.system-auditor",
   "reports_dir": "<HOME>/.system-auditor/reports",
@@ -12,15 +31,10 @@
   "findings_dir": "<HOME>/.system-auditor/findings",
   "_comment_locks_dir": "PFLICHT bei Einbindung in ein Lock-System: dieses Verzeichnis in die Scan-Roots aufnehmen (lock_roots.json). Ein Lock ausserhalb der Roots ist unsichtbar -- und aus unsichtbaren Locks entstehen Parallelsysteme.",
 
-  "audit_validity": "14d",
-  "_comment_audit_validity": "Wie lange ein Einzelaudit als Aussage ueber den aktuellen Zustand gilt. Nur gueltige Einzelaudits gehen in ein Meta-Audit ein; veraltete werden ausgeschlossen und im Plan benannt. Kurz = frischere Meta-Audits, aber haeufigere Erneuerung.",
-
   "claim_quarantine_seconds": 120,
-  "_comment_claim_quarantine_seconds": "Wartezeit im Claim-Verfahren, bevor erneut gelesen wird. Muss ueber der typischen Sync-Latenz des geteilten Ordners liegen (30s-5min bei Cloud-Sync). Nur fuer Meta-Claims relevant, nicht fuer Praesenz.",
+  "_comment_claim_quarantine_seconds": "Wartezeit im Claim-Verfahren, bevor erneut gelesen wird. Muss ueber der typischen Sync-Latenz des geteilten Ordners liegen (30s-5min bei Cloud-Sync). Gilt NUR fuer Meta-Claims: Praesenz-Locks konkurrieren nicht, weil parallele Einzelaudits erwuenscht sind.",
 
-  "min_participants": 2,
-
-  "areas": [
+  "domains": [
     {
       "name": "beispiel-domaene",
       "path": "<HOME>/pfad/zur/domaene",
@@ -28,17 +42,17 @@
     }
   ],
 
-  "area_selector_command": null,
-  "_comment_area_selector_command": "Optionaler externer Selektor (Rang 2). Bleibt er null, gilt die Rotation ueber areas[] als regulaerer Weg.",
+  "domain_selector_command": null,
+  "_comment_domain_selector_command": "Optionaler externer Selektor (Rang 2). Bleibt er null, gilt die Rotation ueber domains[] als regulaerer Weg.",
 
   "policy_stores": [
     { "name": "beispiel-regelwerk", "kind": "file", "target": "<HOME>/RULES.md" },
-    { "name": "area-rules", "kind": "file", "target": "<area>/CLAUDE.md" }
+    { "name": "domain-rules", "kind": "file", "target": "<domain>/CLAUDE.md" }
   ],
   "_comment_policy_stores": "Quellen fuer Beleg B (welche Regel ist verletzt). Leer lassen ist erlaubt -- dann greift die Erkennungskaskade: Modul-Probe, danach Konvention, danach 'nichts gefunden' (Funde bleiben Beobachtungen).",
 
   "decision_stores": [
-    { "name": "area-decisions", "kind": "file", "target": "<area>/DECISIONS.md" }
+    { "name": "domain-decisions", "kind": "file", "target": "<domain>/DECISIONS.md" }
   ],
 
   "known_modules": [

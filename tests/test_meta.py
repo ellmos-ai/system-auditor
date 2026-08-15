@@ -1,166 +1,205 @@
-"""Meta lifecycle: validity, bundling, supersession, renewal."""
+"""Meta lifecycle: one current answer per window, overwritten as participants change."""
 
 from datetime import timedelta
 
 from system_auditor.audit_lock import utcnow
 from system_auditor.meta import (
-    archive,
-    current_meta,
+    ACTION_CREATE,
+    ACTION_SKIP,
+    ACTION_UPDATE,
+    current_single_audits,
+    existing_meta,
     plan_meta,
-    renew_own_audits,
-    supersede,
-    valid_single_audits,
+    plan_metas,
+    stale_windows,
 )
 from system_auditor.report import MODE_META, ReportHeader, write_report
+from system_auditor.tokens import CROSS_DOMAIN, INTERRATER
 
-AREA = "ai-bundles"
+WINDOW = "20260810"
+DOMAIN = "bundles"
 
 
-def _single(tmp_path, host, days_ago=0, run_id=None):
-    finished = utcnow() - timedelta(days=days_ago)
+def _single(tmp_path, system, domain=DOMAIN, time_token=WINDOW, auditor="opus",
+            minutes_ago=0, run_id=None):
     header = ReportHeader(
-        area=AREA, host=host, run_id=run_id or f"{host}-run", finished_utc=finished
+        domain=domain,
+        system=system,
+        auditor=auditor,
+        time_token=time_token,
+        run_id=run_id or f"{system}-{auditor}-{time_token}",
+        finished_utc=utcnow() - timedelta(minutes=minutes_ago),
     )
     write_report(tmp_path, header, "body")
     return header
 
 
-def _meta(tmp_path, host, level, inputs, days_ago=0):
+def _meta(tmp_path, level, inputs, aggregation="cross-system", scope=None,
+          time_token=WINDOW, system="H2"):
     header = ReportHeader(
-        area=AREA,
-        host=host,
-        run_id=f"{host}-meta{level}",
+        domain="",
+        system=system,
+        time_token=time_token,
         audit_mode=MODE_META,
+        aggregation=aggregation,
         meta_level=level,
         inputs=inputs,
-        finished_utc=utcnow() - timedelta(days=days_ago),
+        scope=scope if scope is not None else [DOMAIN],
+        finished_utc=utcnow(),
     )
     write_report(tmp_path, header, "meta body")
     return header
 
 
-def test_stale_audits_are_excluded_and_named(tmp_path):
-    """Bundling last month's statement with today's would fabricate a
-    'difference between systems' that is really a difference in time."""
-    _single(tmp_path, "H1", days_ago=1)
-    _single(tmp_path, "H2", days_ago=40)
-
-    valid, stale = valid_single_audits(tmp_path, AREA, validity="14d")
-    assert [item.host for item in valid] == ["H1"]
-    assert [item.host for item in stale] == ["H2"]
-
-    plan = plan_meta(tmp_path, AREA, validity="14d")
-    assert plan.action == "skip"
-    assert any("H2" in entry for entry in plan.stale_excluded)
-
-
-def test_only_the_newest_audit_per_system_counts(tmp_path):
-    _single(tmp_path, "H1", days_ago=5, run_id="H1-old")
-    _single(tmp_path, "H1", days_ago=1, run_id="H1-new")
-    _single(tmp_path, "H2", days_ago=1)
-
-    valid, _ = valid_single_audits(tmp_path, AREA)
-    assert len(valid) == 2
-    assert {item.run_id for item in valid} == {"H1-new", "H2-run"}
-
-
-def test_meta_2_is_planned_once_two_systems_have_audited(tmp_path):
+def test_two_machines_in_one_window_make_a_meta_due(tmp_path):
     _single(tmp_path, "H1")
     _single(tmp_path, "H2")
 
-    plan = plan_meta(tmp_path, AREA)
-    assert plan.should_create
-    assert plan.level == 2
-    assert plan.participants == ["H1", "H2"]
-    assert plan.supersedes is None
+    plans = plan_metas(tmp_path, time_token=WINDOW)
+    assert len(plans) == 1
+    assert plans[0].action == ACTION_CREATE
+    assert plans[0].level == 2
+    assert plans[0].participants == ["H1", "H2"]
+    assert plans[0].target == "META-cross-system-20260810-bundles.md"
 
 
-def test_single_audit_alone_does_not_justify_a_meta(tmp_path):
+def test_one_machine_is_not_a_bundle(tmp_path):
     _single(tmp_path, "H1")
-    plan = plan_meta(tmp_path, AREA)
-    assert plan.action == "skip"
-    assert "needs 2" in plan.reason
+    assert plan_metas(tmp_path, time_token=WINDOW) == []
 
 
-def test_third_system_triggers_meta_3_superseding_meta_2(tmp_path):
-    """The user's scenario: a third system adds its audit, sees only a meta-2,
-    and builds the meta-3 that replaces it."""
+def test_audits_from_another_window_do_not_join(tmp_path):
+    """Bundling last window's statement with this one would fabricate a
+    difference between machines that is really a difference in time."""
+    _single(tmp_path, "H1", time_token=WINDOW)
+    _single(tmp_path, "H2", time_token="20260803")
+    assert plan_metas(tmp_path, time_token=WINDOW) == []
+
+
+def test_third_machine_updates_the_windows_meta_in_place(tmp_path):
+    """The user's rule: within a window the meta audit is overwritten, so there
+    is exactly one current answer -- not meta-2 beside meta-3."""
     _single(tmp_path, "H1", run_id="r1")
     _single(tmp_path, "H2", run_id="r2")
-    meta2 = _meta(tmp_path, "H2", 2, ["r1", "r2"])
+    previous = _meta(tmp_path, 2, ["r1", "r2"])
 
     _single(tmp_path, "H3", run_id="r3")
-    plan = plan_meta(tmp_path, AREA, host="H3")
+    plan = plan_metas(tmp_path, time_token=WINDOW)[0]
 
-    assert plan.should_create
+    assert plan.action == ACTION_UPDATE
     assert plan.level == 3
+    assert plan.previous_level == 2
     assert plan.inputs == ["r1", "r2", "r3"]
-    assert plan.supersedes == meta2.path
-    assert "supersedes meta-2" in plan.reason
+    assert plan.replaces == previous.path
+    assert plan.target == previous.path.name  # same file, rewritten
+    assert "rewritten in place" in plan.reason
 
 
-def test_no_new_meta_when_inputs_are_unchanged(tmp_path):
+def test_unchanged_participants_need_no_rewrite(tmp_path):
     _single(tmp_path, "H1", run_id="r1")
     _single(tmp_path, "H2", run_id="r2")
-    _meta(tmp_path, "H2", 2, ["r1", "r2"])
+    _meta(tmp_path, 2, ["r1", "r2"])
 
-    plan = plan_meta(tmp_path, AREA)
-    assert plan.action == "skip"
+    plan = plan_metas(tmp_path, time_token=WINDOW)[0]
+    assert plan.action == ACTION_SKIP
     assert "already rests on exactly these" in plan.reason
 
 
-def test_expiring_input_makes_a_new_meta_due(tmp_path):
-    """A meta audit is only as current as its inputs."""
-    _single(tmp_path, "H1", days_ago=1, run_id="r1")
-    _single(tmp_path, "H2", days_ago=20, run_id="r2")
-    _single(tmp_path, "H3", days_ago=1, run_id="r3")
-    _meta(tmp_path, "H2", 3, ["r1", "r2", "r3"])
+def test_restated_audit_replaces_its_predecessor_and_forces_a_rebuild(tmp_path):
+    """A re-run with identical tokens is a correction, so the meta audit of
+    that window has to be rebuilt.
 
-    plan = plan_meta(tmp_path, AREA, validity="14d")
-    assert plan.should_create
-    assert plan.inputs == ["r1", "r3"]
-    assert any("H2" in entry for entry in plan.stale_excluded)
+    Note the replacement needs no bookkeeping: identical tokens produce an
+    identical file name, so the correction simply lands on top of its
+    predecessor. Only the meta audit has to notice.
+    """
+    _single(tmp_path, "H1", run_id="r1-old", minutes_ago=60)
+    _single(tmp_path, "H2", run_id="r2")
+    _meta(tmp_path, 2, ["r1-old", "r2"])
 
+    _single(tmp_path, "H1", run_id="r1-new")  # same identity, newer
+    current, _restated = current_single_audits(tmp_path, WINDOW)
 
-def test_supersede_marks_and_archives_without_deleting(tmp_path):
-    meta2 = _meta(tmp_path, "H2", 2, ["r1", "r2"])
-    moved = supersede(meta2, "META-3-20260815-ai-bundles.H3.md")
+    assert len(current) == 2
+    assert {header.run_id for header in current} == {"r1-new", "r2"}
 
-    assert moved is not None and moved.exists()
-    assert not meta2.path.exists()
-    assert "superseded_by:" in moved.read_text(encoding="utf-8")
-    assert current_meta(tmp_path, AREA) is None
-
-
-def test_current_meta_prefers_the_highest_level(tmp_path):
-    _meta(tmp_path, "H1", 2, ["r1", "r2"], days_ago=1)
-    _meta(tmp_path, "H3", 3, ["r1", "r2", "r3"])
-    assert current_meta(tmp_path, AREA).meta_level == 3
+    plan = plan_metas(tmp_path, time_token=WINDOW)[0]
+    assert plan.action == ACTION_UPDATE
+    assert plan.inputs == ["r1-new", "r2"]
 
 
-def test_renewal_touches_only_our_own_stale_audits(tmp_path):
-    """No system may retire another's statement about a machine it cannot see."""
-    mine = _single(tmp_path, "H1", days_ago=40)
-    theirs = _single(tmp_path, "H2", days_ago=40)
+def test_duplicate_identity_across_naming_schemes_is_deduplicated(tmp_path):
+    """The migration case: a legacy report and a new one describe the same
+    statement under different file names. Only the newer one counts, and the
+    replacement is named so it does not look like a lost audit."""
+    (tmp_path / f"SIG-TU-{WINDOW}-{DOMAIN}.H1.md").write_text(
+        "# alter Bericht ohne Kopf\n", encoding="utf-8"
+    )
+    _single(tmp_path, "H1", auditor="unspecified", run_id="r-new")
+    _single(tmp_path, "H2", auditor="unspecified", run_id="r2")
 
-    archived = renew_own_audits(tmp_path, AREA, "H1", validity="14d")
-    assert len(archived) == 1
-    assert not mine.path.exists()
-    assert theirs.path.exists()
-
-
-def test_plan_flags_our_own_stale_audit_for_renewal(tmp_path):
-    _single(tmp_path, "H1", days_ago=40)
-    _single(tmp_path, "H2", days_ago=1)
-    plan = plan_meta(tmp_path, AREA, host="H1", validity="14d")
-    assert plan.renew_needed == ["H1"]
+    current, restated = current_single_audits(tmp_path, WINDOW)
+    assert {header.run_id for header in current} == {"r-new", "r2"}
+    assert restated == ["H1/unspecified"]
 
 
-def test_archive_never_overwrites(tmp_path):
-    first = _single(tmp_path, "H1", run_id="r1")
-    moved_one = archive(first.path)
-    second = _single(tmp_path, "H1", run_id="r2")
-    moved_two = archive(second.path)
+def test_interrater_bundle_is_found_on_one_machine(tmp_path):
+    _single(tmp_path, "H1", auditor="opus", run_id="r-opus")
+    _single(tmp_path, "H1", auditor="sonnet", run_id="r-sonnet")
 
-    assert moved_one.exists() and moved_two.exists()
-    assert moved_one != moved_two
+    plans = plan_metas(tmp_path, aggregation=INTERRATER, time_token=WINDOW)
+    assert len(plans) == 1
+    assert plans[0].participants == ["opus", "sonnet"]
+    assert plans[0].scope == [DOMAIN, "H1"]
+    assert plans[0].target == "META-interrater-20260810-bundles-H1.md"
+
+
+def test_cross_domain_bundle_spans_domains_in_one_window(tmp_path):
+    _single(tmp_path, "H1", domain="bundles", run_id="r-b")
+    _single(tmp_path, "H1", domain="skills", run_id="r-s")
+
+    plans = plan_metas(tmp_path, aggregation=CROSS_DOMAIN, time_token=WINDOW)
+    assert len(plans) == 1
+    assert plans[0].participants == ["bundles", "skills"]
+    assert plans[0].scope == []
+    assert plans[0].target == "META-cross-domain-20260810.md"
+
+
+def test_separate_domains_get_separate_cross_system_metas(tmp_path):
+    for domain in ("bundles", "skills"):
+        _single(tmp_path, "H1", domain=domain, run_id=f"r1-{domain}")
+        _single(tmp_path, "H2", domain=domain, run_id=f"r2-{domain}")
+
+    plans = plan_metas(tmp_path, time_token=WINDOW)
+    assert len(plans) == 2
+    assert {plan.target for plan in plans} == {
+        "META-cross-system-20260810-bundles.md",
+        "META-cross-system-20260810-skills.md",
+    }
+
+
+def test_plan_meta_convenience_finds_one_domain(tmp_path):
+    _single(tmp_path, "H1")
+    _single(tmp_path, "H2")
+    assert plan_meta(tmp_path, DOMAIN, WINDOW).level == 2
+    assert plan_meta(tmp_path, "nonexistent", WINDOW) is None
+
+
+def test_existing_meta_is_matched_by_window_and_scope(tmp_path):
+    _meta(tmp_path, 2, ["r1", "r2"])
+    assert existing_meta(tmp_path, "cross-system", WINDOW, [DOMAIN]) is not None
+    assert existing_meta(tmp_path, "cross-system", "20260817", [DOMAIN]) is None
+
+
+def test_earlier_windows_are_listed_but_untouched(tmp_path):
+    """A past window's audit stays as the record of that window -- and only its
+    own machine may restate it."""
+    old = _single(tmp_path, "H1", time_token="20260803")
+    _single(tmp_path, "H2", time_token=WINDOW)
+
+    stale = stale_windows(tmp_path, WINDOW)
+    assert [item.time_token for item in stale] == ["20260803"]
+    assert old.path.exists()
+
+    mine = stale_windows(tmp_path, WINDOW, system="H2")
+    assert mine == []

@@ -1,6 +1,6 @@
 # system-auditor
 
-[![tests](https://img.shields.io/badge/pytest-62%20bestanden-brightgreen)](tests/)
+[![tests](https://img.shields.io/badge/pytest-86%20bestanden-brightgreen)](tests/)
 [![python](https://img.shields.io/badge/python-3.10%2B-blue)](pyproject.toml)
 [![license](https://img.shields.io/badge/lizenz-MIT-green)](LICENSE)
 [![dependencies](https://img.shields.io/badge/abh%C3%A4ngigkeiten-keine-lightgrey)](pyproject.toml)
@@ -56,21 +56,64 @@ sie nicht.*
 
 ---
 
-## Meta-Audits
+## Vier Token
 
-    System A auditiert `bundles`                          ->  Einzelaudit
-    System B auditiert `bundles`, sieht das von A         ->  meta-2
-    System C auditiert `bundles`, sieht meta-2 + 3 Einzel ->  meta-3, meta-2 archiviert
+Jedes Audit beantwortet vier Fragen, und jede Antwort ist ein Token:
 
-Zwei Eigenschaften halten das ehrlich:
+| Token | Frage |
+|---|---|
+| `time` | *wann* — zu welchem Zeitfenster gehört diese Aussage |
+| `domain` | *was* — welche Domäne wurde auditiert |
+| `system` | *wo* — auf welche Maschine wurde geschaut |
+| `auditor` | *wer* — welches Modell hat geschaut |
 
-* **Gültigkeit ist ausdrücklich.** Ein Audit ist eine Aussage über einen Zeitpunkt. Die
-  Aussage vom letzten Monat mit der von heute zu bündeln würde einen „Unterschied zwischen
-  Systemen" erfinden, der in Wahrheit ein Unterschied in der Zeit ist. Veraltete Audits
-  werden ausgeschlossen — und der Ausschluss wird **benannt**, nie stillschweigend.
-* **Erneuern darf nur der Träger.** Ein veraltetes Audit erneuert die Maschine, die es
-  erzeugt hat. Kein System darf eine Aussage über eine Maschine zurückziehen, die es nicht
-  sehen kann. Ersetztes wird archiviert, nie gelöscht.
+**Warum diskrete Fenster statt eines gleitenden Gültigkeitsspanne.** Ein gleitendes Fenster
+(„gilt 14 Tage ab dem Lauf") macht Überlappung zur Gradfrage — jede Maschine müsste Paare
+vergleichen, um es herauszufinden. Ein aus der Config abgeleitetes **Raster** macht daraus
+eine Abfrage: Uhr fragen, Token bekommen. Zwei Maschinen, die nie miteinander sprechen,
+leiten für denselben Moment denselben Token ab; „gleicher Zeitraum" wird damit zum
+Stringvergleich statt zum Abstimmungsproblem.
+
+Der Preis ist die Grenze: Zwei Läufe wenige Minuten auseinander können in verschiedenen
+Fenstern landen. Das ist bewusst so — Determinismus zwischen Maschinen wiegt schwerer als
+Glätte am Rand, und längere Fenster machen den Rand seltener.
+
+## Die Aggregationsleiter
+
+Einige Token festhalten, genau einen variieren lassen:
+
+| Aggregation | fest | variiert | was sie zeigt |
+|---|---|---|---|
+| `interrater` | time+domain+system | **auditor** | sind sich zwei Modelle einig? |
+| `cross-system` | time+domain | **system** | liegt es am System oder an der Maschine? |
+| `cross-domain` | time | **domain** | wird dieselbe Regel überall verletzt? |
+
+Die letzte Stufe vergleicht über die **Regel allein**. Zwischen Maschinen vergleicht man
+denselben *Ort*; zwischen Domänen gibt es keinen gemeinsamen Ort — Bedeutung trägt dort, ob
+dieselbe Regel in unverbundenen Ecken verletzt wird. Das macht es zu einem Problem der
+Regel statt eines einzelnen Ortes.
+
+`interrater` liefert zusätzlich eine **Übereinstimmungsquote**. Ein niedriger Wert ist dort
+kein Systemmangel, sondern ein Zuverlässigkeitsproblem der Auditoren selbst.
+
+## Eine gültige Antwort je Zeitfenster
+
+    System A auditiert `bundles`                     ->  Einzelaudit
+    System B auditiert `bundles`                     ->  meta-2  (angelegt)
+    System C auditiert `bundles`                     ->  meta-3  (dieselbe Datei, neu geschrieben)
+
+Innerhalb eines Fensters wird das Meta-Audit **überschrieben, nicht archiviert**: „Was
+wissen wir über diese Domäne in diesem Fenster" hat eine gültige Antwort, und meta-2 neben
+meta-3 stehen zu lassen hieße, zwei Antworten auf eine Frage zu haben.
+
+**Die Historie ergibt sich von selbst.** Das letzte Fenster hat einen anderen Token, also
+eine andere Datei, und bleibt unberührt — es muss nichts verschoben werden, damit der Beleg
+existiert. Ein *Einzelaudit* wird nur durch eine Wiederholung mit denselben vier Token
+überschrieben; das ist eine Korrektur, und sie erzwingt den Neubau des Meta-Audits.
+
+**Erneuern darf nur der Träger.** Nur die Maschine, die ein Audit erzeugt hat, darf es neu
+aussprechen. Kein System zieht eine Aussage über eine Maschine zurück, die es nicht sehen
+kann.
 
 ---
 
@@ -101,19 +144,26 @@ selbsttragend, von Hand ausführbar, ohne Bibliothek.
 ```bash
 python -m pip install -e .
 
+# In welchem Audit-Fenster sind wir gerade?
+system-auditor time-token --period 7d
+
 # Welche Domäne ist in meiner eigenen Rotation als nächste dran?
-system-auditor next-area --areas "bundles,skills,mcp" --reports ./reports --host $HOSTNAME
+system-auditor next-domain --domains "bundles,skills,mcp" --reports ./reports --system $HOSTNAME
 
 # Anwesenheit melden (schließt niemanden aus)
-system-auditor claim --locks ./_locks --area bundles --host $HOSTNAME --mode presence
+system-auditor claim --locks ./_locks --domain bundles --system $HOSTNAME --mode presence
 
 # Wo liegen die Regeln dieser Domäne — auf welchem System auch immer?
-system-auditor discover --area-path /pfad/zur/domaene
+system-auditor discover --domain-path /pfad/zur/domaene
 
-# Ist ein Meta-Audit fällig?
-system-auditor meta-plan --reports ./reports --area bundles --validity 14d
+# Welche Meta-Audits sind im aktuellen Fenster fällig?
+system-auditor meta-plan --reports ./reports --aggregation cross-system
+system-auditor meta-plan --reports ./reports --aggregation interrater
 
-system-auditor release --locks ./_locks --area bundles --host $HOSTNAME
+# Welche meiner Audits gehören zu einem früheren Fenster?
+system-auditor stale --reports ./reports --system $HOSTNAME
+
+system-auditor release --locks ./_locks --domain bundles --system $HOSTNAME
 ```
 
 Der Rollen-Prompt für Agenten: [`prompts/AUDITOR.de.md`](prompts/AUDITOR.de.md).
@@ -135,7 +185,7 @@ Konfiguration: `config/system-auditor.config.example.json` kopieren.
 ## Entwicklung
 
 ```bash
-python -m pytest -q     # 62 Tests
+python -m pytest -q     # 86 Tests
 ruff check src tests
 ```
 
