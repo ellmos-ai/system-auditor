@@ -5,18 +5,40 @@
   "category": "control",
   "kind": "workflow",
   "status": "development",
-  "visibility": "private",
-  "provides": ["control.system-audit", "quality.meta-audit"],
+  "visibility": "public",
+  "provides": [
+    "control.system-audit",
+    "quality.meta-audit"
+  ],
   "requires": [],
-  "optional": ["control.tickets", "system.discovery", "coordination.locking"],
+  "optional": [
+    "control.tickets",
+    "system.discovery",
+    "coordination.locking"
+  ],
   "conflicts": [],
-  "surfaces": ["library", "cli", "workflow"],
-  "state": { "ownership": "external", "location": "project" },
+  "surfaces": [
+    "library",
+    "cli",
+    "workflow"
+  ],
+  "state": {
+    "ownership": "external",
+    "location": "project"
+  },
   "boundaries": {
     "network": "none",
     "data": "user-local",
-    "platforms": ["windows", "macos", "linux"]
+    "platforms": [
+      "windows",
+      "macos",
+      "linux"
+    ]
   },
-  "source_of_truth": { "type": "local-directory", "path": "." },
+  "source_of_truth": {
+    "type": "local-directory",
+    "path": ".",
+    "repository": "https://github.com/ellmos-ai/system-auditor"
+  },
   "adapters": []
 }
