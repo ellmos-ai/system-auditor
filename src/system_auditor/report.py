@@ -4,11 +4,12 @@ Two kinds share one format:
 
 ``self``
     One auditor's audit of one domain on one machine in one period window.
-    File name: ``AUDIT-<time>-<domain>.<system>[.<auditor>].md``
+    File name: ``AUDIT-<time>--<domain>.<system>[.<auditor>].md``
+    (double hyphen between key components -- see ``meta_filename``)
 
 ``meta``
     A cross-cutting audit over the audits of one period window.
-    File name: ``META-<kind>-<time>[-<scope>...].md`` -- **no host token.**
+    File name: ``META-<kind>--<time>[--<scope>...].md`` -- **no host token.**
 
 **Why the meta file carries no host.**  There is exactly one meta audit per
 (period, scope, aggregation).  When a fourth machine joins, the meta audit for

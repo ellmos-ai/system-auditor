@@ -3,6 +3,55 @@
 Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [SemVer](https://semver.org/lang/de/).
 
+## [0.6.0] - 2026-08-15
+
+Behebt die Funde des Fable-Reviews (`_review/FABLE-REVIEW_2026-08-15.md`) --
+Fokus Benutzbarkeit statt Robustheit oder Logik. Alle Funde neu, keiner der
+beiden Codex-Runden.
+
+### Behoben -- funktionsbrechend
+
+- **Die Konfiguration wurde von nichts gelesen.** Kein `json.load` im Modul, kein
+  `--config`-Flag: Zeitraster, Aggregations-Politik, Regelquellen, Domaenenliste
+  und Massnahmen-Senke waren ueber die CLI wirkungslos, die Discovery-Stufen 1
+  und 2 unerreichbar. Eine Konfigurationsdatei, die nichts liest, ist schlechter
+  als keine -- sie behauptet etwas ueber das Verhalten des Werkzeugs.
+  Neu: `config.py`, globales `--config`, Auffinden ueber
+  `SYSTEM_AUDITOR_CONFIG`/`./`/`./config/`/`~/.system-auditor/`, und ein Kommando
+  `system-auditor config`, das zeigt, was tatsaechlich gelesen wurde.
+- **Der CLI-Anker zerstoerte das Zeitfenster.** Default war Mitternacht des
+  AUFRUFTAGS statt des festen Rasterankers -- damit ergaben Montag und Mittwoch
+  derselben Woche verschiedene Tokens, ein 7-Tage-Fenster degenerierte zu
+  Tagesfenstern, und `meta-plan` buendelte nie tagesuebergreifend. Der Anker
+  fixiert die *Phase* des Rasters und muss konstant sein.
+- **`.github` wurde als `.git`-Praefix uebersprungen** -- ausgerechnet das
+  Verzeichnis, in dem ein Repository seine Regeln fuehrt. Ganze Namen statt
+  `startswith`.
+- **`build_meta()` klassifizierte Zeitreihen** und lieferte `systemwide` ueber
+  Fenster -- genau der Unsinn, den `timeseries.py` selbst benennt. Wird jetzt
+  abgewiesen mit Verweis auf `build_timeseries()`.
+- **`write_meta` stand in `__all__`, war aber nicht importiert**:
+  `from system_auditor import *` warf `AttributeError`.
+
+### Geaendert
+
+- `next-domain` und `discover` nehmen Domaenen und Regelquellen aus der Config,
+  wenn keine Argumente gegeben sind.
+- `llms.txt` und `TODO.md` hingen drei Versionen zurueck (Idempotenz-Behauptung
+  ohne Schreibsicherung, `audit_lock` noch gelistet, TODO auf v0.2.0). Der
+  Prompt nennt jetzt die Schreibsicherung und den Config-Check als ersten
+  Schritt; `report.py` zeigt das aktuelle Dateinamensmuster.
+
+### Offen und benannt
+
+Die Extraktion von Findings aus Prosa-Berichten fehlt weiterhin -- das Fable-
+Review nennt das Modul deshalb einen "Torso mit exzellenten Einzelteilen", und
+das trifft zu. Ebenso offen: wo sich die Berichte mehrerer Maschinen physisch
+treffen (ohne diese Entscheidung kann strukturell kein Meta-Audit entstehen),
+unsichtbare ausgefallene Fenster, unbegrenzt wachsendes `stale`. Siehe TODO.md.
+
+136 Tests (+13), ruff sauber.
+
 ## [0.5.0] - 2026-08-15
 
 Setzt die Modell-Funde aus Review 2 um. Leitsatz, jetzt im Konstruktor erzwungen

@@ -1,79 +1,80 @@
 # TODO — system-auditor
 
-Stand: 2026-08-15 · Version 0.2.0 · 86 Tests grün, ruff sauber, keine Abhängigkeiten
+Stand: 2026-08-15 · Version 0.6.0 · 136 Tests grün, ruff sauber, keine Abhängigkeiten
 
-## Was v0.2.0 wirklich kann
+Drei externe Reviews sind eingearbeitet und liegen unter `_review/`:
+Codex 1 (Robustheit, 12 Funde), Codex 2 (Logik, 12 Funde), Fable (Benutzbarkeit).
 
-- [x] **Vier Token je Audit** — `time`, `domain`, `system`, `auditor`. Identische Token =
-      dieselbe Aussage, korrigiert; die neuere ersetzt die ältere (auf Dateiebene, weil der
-      Name aus den Token gebildet wird).
-- [x] **Zeitraster als Heartbeat** — `TimeGrid` (period + anchor) und optionale explizite
-      `TimeTable`. Jede Maschine leitet denselben Token aus der Uhr ab, ohne Abstimmung.
-- [x] **Aggregationsleiter** — `interrater` (Modelle, mit Übereinstimmungsquote),
-      `cross-system` (Maschinen), `cross-domain` (Domänen, verglichen über die Regel statt
-      über den Ort).
-- [x] **Ein Meta-Audit je Fenster** — wird bei wechselnder Teilnehmerzahl in derselben
-      Datei überschrieben (meta-2 → meta-3). Historie steckt im Zeittoken.
-- [x] **Klassifikation** — `systemwide` / `host_specific` / `inverse` / `divergent` /
-      `unverifiable`, mit Home-Pfad-Normalisierung und Vergleichbarkeits-Gate.
-      Überschriften folgen der Achse.
-- [x] **Audit-Host-Lock v1** — `presence` (Signal, schließt nie aus), `claim` (nur für
-      Meta-Audits) mit deterministischer Verlierer-Regel.
-- [x] **Erkennungskaskade** für Regelquellen — konfiguriert → Modul-Probe → Konvention →
-      nichts (dann Beobachtungen statt Maßnahmen).
-- [x] **Senken** — Datei-Senke, Kommando-Senke mit automatischem Rückfall.
-- [x] **CLI** — `time-token`, `next-domain`, `claim`, `release`, `locks`, `meta-plan`,
-      `reports`, `stale`, `discover`.
+## Die eine offene Lücke, die alles andere blockiert
 
-## Offen — der wichtigste Punkt zuerst
-
-- [ ] **`meta-build`: die Pipeline ist noch nicht geschlossen.** `meta-plan` entscheidet
+- [ ] **Findings maschinenlesbar aus Berichten gewinnen.** `meta-plan` entscheidet
       zuverlässig, *ob* ein Meta-Audit fällig ist, und `build_meta()` klassifiziert
-      korrekt — aber **nichts extrahiert Findings aus geschriebenen Berichten**, die sind
-      Prosa. Der Agent stellt sie heute selbst zusammen. Voraussetzung für die
-      Schließung: strukturierte Fundliste im Berichtskopf (siehe nächster Punkt).
-- [ ] **Findings maschinenlesbar im Bericht** — `findings_detail: [{locator, rule, title}]`
-      neben der Prosa, damit Meta-Audits ohne Nachlesen des Fließtexts gebaut werden können.
+      korrekt — aber nichts extrahiert `Finding`-Objekte aus geschriebenen
+      Berichten, denn die sind Prosa. Der Agent stellt sie heute selbst zusammen.
+
+      **Das Fable-Review nennt das Modul deshalb einen Torso mit exzellenten
+      Einzelteilen — zu Recht.** Zwei Konsequenzen, die daran hängen:
+      Determinismus und Schreibsicherung greifen an `Finding`-Objekten, die nur
+      aus Prosa rekonstruierbar sind; und `write_meta` vergleicht Run-IDs, nicht
+      Inhalte, merkt also nicht, wenn zwei Läufe dieselben Eingaben verschieden
+      interpretiert haben.
+
+      Nächster Schritt: `findings_detail: [{locator, rule, title}]` im
+      Berichtskopf, dann `meta-build` als Kommando.
+
+## Offen — Betrieb (aus dem Fable-Review)
+
+- [ ] **Wo treffen sich die Berichte physisch?** `reports_dir` zeigt per Default
+      auf ein host-lokales Verzeichnis — dort kann ein Meta-Audit strukturell nie
+      entstehen, weil keine zweite Maschine hinschreibt. Ohne diese Entscheidung
+      (geteilter Ordner? Sync-Latenz?) trägt die lockfreie Architektur nicht.
+      **Das ist die Frage, die vor dem ersten Produktivlauf beantwortet sein muss.**
+- [ ] **Ausgefallene Fenster sind unsichtbar.** Wurde eine Woche gar nicht
+      auditiert, bleibt ein Befund `persistent` mit `continuity_verified=True` —
+      die Lücke existiert in den Daten nicht, weil kein Bericht sie meldet. Ein
+      erwartetes Fensterraster müsste gegen die vorhandenen Berichte geprüft werden.
+- [ ] **`stale` wächst unbegrenzt.** Alte Fenster werden gelistet, nie geräumt.
+- [ ] **`window_start_utc` wird von keinem dokumentierten Schritt befüllt** —
+      das Feld existiert und trägt die Chronologie, aber der Prompt sagt nirgends,
+      dass es zu setzen ist.
+- [ ] Kein Kommando für Bericht-Schreiben, Maßnahmen-Ausgabe und Meta-Bau; diese
+      Schritte laufen über die Bibliothek, nicht über die CLI.
 
 ## Offen — vor einer Veröffentlichung
 
-- [ ] **`prompts/AUDITOR.en.md`** — Sprachstufe Core (DE+EN) ist für veröffentlichte Repos
-      Pflicht (P-006). Aktuell liegt nur die deutsche Fassung vor.
-- [ ] `PRIVATE.txt`-Gate bewusst setzen oder Freigabe einholen — `visibility: private`.
-- [ ] Remote anlegen und pushen (bisher nur lokal committet).
-
-## Offen — Integration
-
-- [ ] **`locks_dir` in die Scan-Roots** des Lock-Systems eintragen. Ohne das ist der
-      Audit-Lock für Scanner und Watcher unsichtbar — genau die Lücke, aus der im Ökosystem
-      am 2026-07-25 schon einmal ein Parallelsystem entstand. **Erster Schritt bei
-      Übernahme, nicht später.**
-- [ ] **`lock_utils.is_audit_lock()`** im Lock-System ergänzen und Audit-Locks in
-      Scan/Watcher/GUI als *advisory* ausweisen.
-- [ ] **Bestandsberichte** (`SIG-TU-*.md`) werden gelesen und als `legacy` geführt, tragen
-      aber weder Token noch `coverage`/`clean` — sie können deshalb nicht in ein Meta-Audit
-      eingehen. Beim ersten Lauf je Host mit Kopf nachziehen oder auslaufen lassen.
+- [ ] `prompts/AUDITOR.en.md` — Sprachstufe Core (DE+EN) ist Pflicht (P-006).
+- [ ] `PRIVATE.txt`-Gate setzen oder Freigabe einholen (`visibility: private`).
+- [ ] Remote anlegen und pushen (bisher nur lokal).
 
 ## Offen — Ausbau
 
-- [ ] **Explorer-Adapter** (Beleg-A-Stufe 2/3): Coverage-/Kartenausgabe als Einstieg,
-      Receipts als Beleg. Rein additiv hinter `enabled_probe`.
-- [ ] **Weitere Aggregationsstufen?** Die Leiter ist generisch (fixed/varying), also wären
-      z. B. „gleiche Domäne über mehrere Fenster" (Zeitreihe) oder „ein Modell über alle
-      Maschinen" ohne Codeänderung definierbar. Erst bauen, wenn ein konkreter Bedarf da
-      ist — nicht auf Vorrat.
-- [ ] JSON-Schema für den Berichtskopf (`audit-report.v1.schema.json`).
-- [ ] Protokoll `protocols/audit-host-lock/` in ein eigenes Repo heben — **erst wenn ein
-      dritter Konsument existiert.** Der Schnitt liegt bereits so, dass das ein Verschieben
-      ist, kein Umbau.
+- [ ] **Explorer-Adapter** (Beleg-A-Stufe 2/3): Coverage-/Kartenausgabe als
+      Einstieg, Receipts als Beleg. Additiv hinter `enabled_probe`.
+- [ ] Klassennamen sind achsenabhängig lesbar (`systemwide` heißt bei
+      `interrater` „alle Modelle einig"). Die Überschriften passen sich an, die
+      **Feldnamen nicht** — wer die Rohdaten liest, kann das missverstehen.
+      Kandidat: neutrale Namen (`universal`/`partial`) mit achsenabhängiger Anzeige.
+- [ ] JSON-Schema für den Berichtskopf.
+
+## Erledigt (Auswahl)
+
+- [x] Vier Token, Zeitraster, Aggregationsleiter mit erzwungener
+      Identifizierbarkeit (0.5.0)
+- [x] Zeitreihen mit eigenen Klassen und Beobachtungs-Flags
+- [x] Bau-Politik `always`/`on_demand`/`off` je Aggregation
+- [x] Schreibsicherung gegen veraltete Schreiber (0.4.1)
+- [x] Lock-Protokoll verlegt nach `lock-master` (0.4.0)
+- [x] **Konfiguration wird tatsächlich gelesen** (0.6.0) — bis dahin war die
+      Beispieldatei reine Dokumentation: kein `json.load` im Modul, kein
+      `--config`. Jede dort dokumentierte Einstellung war wirkungslos.
+- [x] **CLI-Anker zerstörte das Zeitfenster** (0.6.0): Default war Mitternacht
+      des Aufruftags, damit degenerierte ein 7-Tage-Fenster zu Tagesfenstern.
 
 ## Bewusst nicht gebaut
 
-- **Gleitendes Gültigkeitsfenster.** Ersetzt durch diskrete Zeitraster: Überlappung wird
-  damit zum Stringvergleich statt zur Gradfrage, die jede Maschine einzeln beurteilen muss.
-- **Archivierung im Normalfluss.** Der Zeittoken im Dateinamen trägt die Historie.
-  `archive()` bleibt für bewusstes Aufräumen alter Fenster.
-- **Zentrales Cursor-Register.** Der Bericht *ist* der Rotationsanker; eine geteilte
-  Schreibdatei wäre die Bauform, die dieses Ökosystem schon zweimal zurückbauen musste.
-- **Ticket-IDs, Kategorien, Routing.** Hoheit des Ticketsystems.
-- **Eigene Kartenerzeugung.** Hoheit des Explorers.
+- **Gleitendes Gültigkeitsfenster** — ersetzt durch diskrete Zeitraster.
+- **Archivierung im Normalfluss** — der Fixed-Key im Dateinamen trägt die
+  Historie (für Snapshots über Fenstergrenzen; *nicht* für Zeitreihen).
+- **Zentrales Cursor-Register** — der Bericht *ist* der Rotationsanker.
+- **Ticket-IDs, Kategorien, Routing** — Hoheit des Ticketsystems.
+- **Eigene Kartenerzeugung** — Hoheit des Explorers.

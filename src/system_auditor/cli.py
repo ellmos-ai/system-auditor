@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from . import __version__
+from .config import load as load_config
 from .discovery import discover
 from .meta import due_aggregations, plan_all, stale_windows
 from .report import list_reports, next_domain
@@ -34,13 +35,35 @@ def _print(payload: dict, as_json: bool) -> None:
             print(f"{key}: {value}")
 
 
+def _config(args: argparse.Namespace):
+    """Load the config once per call and report what it did."""
+    config = load_config(getattr(args, "config", None))
+    for note in config.notes:
+        print(f"config: {note}", file=sys.stderr)
+    return config
+
+
 def _grid(args: argparse.Namespace) -> TimeGrid:
-    anchor = utcnow().replace(hour=0, minute=0, second=0)
+    """Build the window grid, defaulting to the *library* anchor.
+
+    This used to default to midnight of the day the command ran. That silently
+    destroyed the whole point of the grid: with a 7d period, Monday and
+    Wednesday of the same week produced different tokens, so a weekly window
+    degenerated into daily ones and ``meta-plan`` never bundled across days.
+    The anchor fixes the *phase* of the grid and must therefore be a constant,
+    not "now".
+    """
     if getattr(args, "anchor", None):
         anchor = datetime.fromisoformat(args.anchor.replace("Z", "+00:00"))
         if anchor.tzinfo is None:
             anchor = anchor.replace(tzinfo=timezone.utc)
-    return TimeGrid(period=args.period, anchor=anchor)
+        return TimeGrid(period=args.period, anchor=anchor)
+    if getattr(args, "period", "7d") == "7d":
+        # No explicit period given: the config's grid wins over the built-in
+        # default, otherwise the file that documents the heartbeat would not
+        # actually set it.
+        return _config(args).grid
+    return TimeGrid(period=args.period)
 
 
 def cmd_time_token(args: argparse.Namespace) -> int:
@@ -60,7 +83,16 @@ def cmd_time_token(args: argparse.Namespace) -> int:
 
 
 def cmd_next_domain(args: argparse.Namespace) -> int:
-    domains = [item.strip() for item in args.domains.split(",") if item.strip()]
+    if args.domains:
+        domains = [item.strip() for item in args.domains.split(",") if item.strip()]
+    else:
+        domains = _config(args).domain_names()
+        if not domains:
+            print(
+                "ERROR: no --domains given and no domains[] in the config",
+                file=sys.stderr,
+            )
+            return 1
     chosen = next_domain(domains, Path(args.reports), system=args.system)
     _print({"domain": chosen, "system": args.system or "(any)"}, args.json)
     return 0
@@ -68,7 +100,8 @@ def cmd_next_domain(args: argparse.Namespace) -> int:
 
 def cmd_meta_plan(args: argparse.Namespace) -> int:
     token = args.time_token or _grid(args).token(utcnow())
-    due = due_aggregations(requested=args.aggregation)
+    config = _config(args)
+    due = due_aggregations(config.policy, requested=args.aggregation)
     if args.aggregation and not due:
         print(
             f"ERROR: aggregation '{args.aggregation}' is switched off in the policy. "
@@ -78,6 +111,7 @@ def cmd_meta_plan(args: argparse.Namespace) -> int:
         return 1
     plans = plan_all(
         Path(args.reports),
+        policy=config.policy,
         time_token=None if args.all_windows else token,
         requested=args.aggregation,
     )
@@ -137,7 +171,20 @@ def cmd_stale(args: argparse.Namespace) -> int:
 
 
 def cmd_discover(args: argparse.Namespace) -> int:
-    result = discover(args.domain_path)
+    config = _config(args)
+    if args.domain:
+        config = config.for_domain(args.domain)
+    path = args.domain_path or config.domain_path(args.domain or "")
+    if not path:
+        print("ERROR: give --domain-path, or --domain with a configured path", file=sys.stderr)
+        return 1
+    result = discover(
+        path,
+        policy_stores=config.policy_stores,
+        decision_stores=config.decision_stores,
+        known_modules=config.known_modules,
+        max_depth=config.convention_max_depth,
+    )
     _print(
         {
             "tier": result.tier_reached,
@@ -156,6 +203,32 @@ def _add_grid_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--anchor", default=None, help="ISO start of the window grid")
 
 
+def cmd_config(args: argparse.Namespace) -> int:
+    """Show what the tool actually read -- the fastest way to catch a config
+    that is present but not being used."""
+    config = _config(args)
+    start, end = config.grid.window(utcnow())
+    _print(
+        {
+            "source": config.source,
+            "system": config.system or "(unset)",
+            "auditor": config.auditor,
+            "reports_dir": config.reports_dir or "(unset)",
+            "period": config.grid.period,
+            "current_window": f"{config.grid.token(utcnow())} ({start:%Y-%m-%d} .. {end:%Y-%m-%d})",
+            "domains": config.domain_names(),
+            "standing_aggregations": [
+                name for name, entry in sorted(config.policy.items())
+                if entry.get("mode") == "always"
+            ],
+            "measure_sink": config.measure_sink.get("kind", "file"),
+            "notes": config.notes,
+        },
+        args.json,
+    )
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="system-auditor",
@@ -163,6 +236,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--version", action="version", version=f"system-auditor {__version__}")
     parser.add_argument("--json", action="store_true", help="machine-readable output")
+    parser.add_argument(
+        "--config",
+        default=None,
+        help="path to system-auditor.config.json (default: env SYSTEM_AUDITOR_CONFIG, "
+        "then ./ and ./config/ and ~/.system-auditor/)",
+    )
     sub = parser.add_subparsers(dest="command", required=True)
 
     p_token = sub.add_parser("time-token", help="which audit window is it right now?")
@@ -170,7 +249,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_token.set_defaults(func=cmd_time_token)
 
     p_next = sub.add_parser("next-domain", help="resolve the next domain in the rotation")
-    p_next.add_argument("--domains", required=True, help="comma-separated rotation list")
+    p_next.add_argument(
+        "--domains", default="", help="comma-separated rotation list (default: from config)"
+    )
     p_next.add_argument("--reports", required=True)
     p_next.add_argument("--system", default=None)
     p_next.set_defaults(func=cmd_next_domain)
@@ -200,8 +281,12 @@ def build_parser() -> argparse.ArgumentParser:
     p_stale.set_defaults(func=cmd_stale)
 
     p_disc = sub.add_parser("discover", help="find policy/decision sources for a domain")
-    p_disc.add_argument("--domain-path", required=True)
+    p_disc.add_argument("--domain-path", default="", help="path to audit (or use --domain)")
+    p_disc.add_argument("--domain", default="", help="domain name from the config")
     p_disc.set_defaults(func=cmd_discover)
+
+    p_config = sub.add_parser("config", help="show the resolved configuration")
+    p_config.set_defaults(func=cmd_config)
 
     return parser
 

@@ -1,6 +1,6 @@
 # system-auditor
 
-[![tests](https://img.shields.io/badge/pytest-123%20bestanden-brightgreen)](tests/)
+[![tests](https://img.shields.io/badge/pytest-136%20bestanden-brightgreen)](tests/)
 [![python](https://img.shields.io/badge/python-3.10%2B-blue)](pyproject.toml)
 [![license](https://img.shields.io/badge/lizenz-MIT-green)](LICENSE)
 [![dependencies](https://img.shields.io/badge/abh%C3%A4ngigkeiten-keine-lightgrey)](pyproject.toml)
@@ -163,7 +163,8 @@ Entwurfsgeschichte steht im Git-Log dieses Repositoriums.
 python -m pip install -e .
 
 # In welchem Audit-Fenster sind wir gerade?
-system-auditor time-token --period 7d
+system-auditor config          # was wurde gelesen?
+system-auditor time-token
 
 # Welche Domäne ist in meiner eigenen Rotation als nächste dran?
 system-auditor next-domain --domains "bundles,skills,mcp" --reports ./reports --system $HOSTNAME
@@ -178,6 +179,19 @@ system-auditor meta-plan --reports ./reports --aggregation interrater
 # Welche meiner Audits gehören zu einem früheren Fenster?
 system-auditor stale --reports ./reports --system $HOSTNAME
 ```
+
+## Konfiguration
+
+```bash
+cp config/system-auditor.config.example.json system-auditor.config.json
+system-auditor config          # zeigt, was tatsächlich gelesen wurde
+```
+
+Gefunden über `--config`, `SYSTEM_AUDITOR_CONFIG`, dann `./`, `./config/`,
+`~/.system-auditor/`. Das Kommando `config` gibt es, weil eine vorhandene, aber nicht
+benutzte Konfiguration der Fehler ist, den man am längsten übersieht — bis 0.6.0 wurde die
+mitgelieferte Beispieldatei von **nichts** gelesen, und jede dort dokumentierte Einstellung
+war wirkungslos.
 
 Der Rollen-Prompt für Agenten: [`prompts/AUDITOR.de.md`](prompts/AUDITOR.de.md).
 Konfiguration: `config/system-auditor.config.example.json` kopieren.
@@ -198,7 +212,7 @@ Konfiguration: `config/system-auditor.config.example.json` kopieren.
 ## Entwicklung
 
 ```bash
-python -m pytest -q     # 123 Tests
+python -m pytest -q     # 136 Tests
 ruff check src tests
 ```
 

@@ -1,6 +1,6 @@
 # system-auditor
 
-[![tests](https://img.shields.io/badge/pytest-123%20passed-brightgreen)](tests/)
+[![tests](https://img.shields.io/badge/pytest-136%20passed-brightgreen)](tests/)
 [![python](https://img.shields.io/badge/python-3.10%2B-blue)](pyproject.toml)
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![dependencies](https://img.shields.io/badge/dependencies-none-lightgrey)](pyproject.toml)
@@ -159,7 +159,8 @@ the purpose rather than a nuisance. The design history is in this repository's g
 python -m pip install -e .
 
 # which audit window is it right now?
-system-auditor time-token --period 7d
+system-auditor config          # what was actually read?
+system-auditor time-token
 
 # which domain is next in my own rotation?
 system-auditor next-domain --domains "bundles,skills,mcp" --reports ./reports --system $HOSTNAME
@@ -174,6 +175,18 @@ system-auditor meta-plan --reports ./reports --aggregation interrater
 # which of my audits belong to an earlier window?
 system-auditor stale --reports ./reports --system $HOSTNAME
 ```
+
+## Configuration
+
+```bash
+cp config/system-auditor.config.example.json system-auditor.config.json
+system-auditor config          # shows what was actually read
+```
+
+Found via `--config`, `SYSTEM_AUDITOR_CONFIG`, then `./`, `./config/`,
+`~/.system-auditor/`. `system-auditor config` exists because a config that is present but
+not being used is the failure that takes longest to notice — until 0.6.0 the shipped
+example was read by *nothing*, and every setting it documented was inert.
 
 The role prompt an agent follows is [`prompts/AUDITOR.de.md`](prompts/AUDITOR.de.md).
 Configuration: copy `config/system-auditor.config.example.json`.
@@ -193,7 +206,7 @@ Configuration: copy `config/system-auditor.config.example.json`.
 ## Development
 
 ```bash
-python -m pytest -q     # 123 tests
+python -m pytest -q     # 136 tests
 ruff check src tests
 ```
 

@@ -58,6 +58,7 @@ from .meta import (
     plan_metas,
     resolve_policy,
     stale_windows,
+    write_meta,
 )
 from .report import (
     MODE_META,
@@ -100,7 +101,7 @@ from .tokens import (
     utcnow,
 )
 
-__version__ = "0.5.0"
+__version__ = "0.6.0"
 
 __all__ = [
     "__version__",

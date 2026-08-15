@@ -107,3 +107,18 @@ def test_command_sink_falls_back_to_files_when_absent(tmp_path):
     assert result.fell_back
     assert result.kind == "file"
     assert "not available" in result.detail
+
+
+def test_dot_github_is_not_skipped_as_a_git_prefix(tmp_path):
+    """Fable-Review: startswith('.git') uebersprang auch .github -- genau das
+    Verzeichnis, in dem ein Repository seine Regeln fuehrt."""
+    workflows = tmp_path / ".github"
+    workflows.mkdir()
+    (workflows / "CONTRIBUTING.md").write_text("rules", encoding="utf-8")
+    (tmp_path / ".git").mkdir()
+    (tmp_path / ".git" / "CLAUDE.md").write_text("noise", encoding="utf-8")
+
+    result = discover(tmp_path, probe_runner=lambda cmd: False)
+    targets = [item.target for item in result.policy]
+    assert any(".github" in target for target in targets)
+    assert not any(f"{chr(92)}.git{chr(92)}" in target or "/.git/" in target for target in targets)
