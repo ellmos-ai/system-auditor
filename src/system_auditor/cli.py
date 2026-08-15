@@ -11,27 +11,14 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-import time
 from datetime import datetime, timezone
 from pathlib import Path
 
 from . import __version__
-from .audit_lock import (
-    MODE_CLAIM,
-    MODE_PRESENCE,
-    LockError,
-    foreign_presence,
-    list_locks,
-    read_lock,
-    release,
-    resolve_claim,
-    utcnow,
-    write_lock,
-)
 from .discovery import discover
 from .meta import due_aggregations, plan_all, stale_windows
 from .report import list_reports, next_domain
-from .tokens import AGGREGATIONS, TimeGrid
+from .tokens import AGGREGATIONS, TimeGrid, utcnow
 
 
 def _print(payload: dict, as_json: bool) -> None:
@@ -76,107 +63,6 @@ def cmd_next_domain(args: argparse.Namespace) -> int:
     domains = [item.strip() for item in args.domains.split(",") if item.strip()]
     chosen = next_domain(domains, Path(args.reports), system=args.system)
     _print({"domain": chosen, "system": args.system or "(any)"}, args.json)
-    return 0
-
-
-#: The spec names 30 s - 5 min as typical sync latency, so a quarantine of
-#: 120 s does not actually cover it. Default to the upper end instead of
-#: claiming a shorter wait is enough.
-DEFAULT_QUARANTINE_SECONDS = 300
-
-
-def cmd_claim(args: argparse.Namespace) -> int:
-    try:
-        lock = write_lock(
-            Path(args.locks),
-            area=args.domain,
-            host=args.system,
-            mode=args.mode,
-            run_id=args.run_id or f"{args.system}-{args.domain}",
-            area_path=args.domain_path,
-            purpose=args.purpose,
-            compares=args.compares,
-        )
-    except LockError as exc:
-        print(f"ERROR: {exc}", file=sys.stderr)
-        return 1
-
-    others = foreign_presence(Path(args.locks), args.domain, args.system)
-    payload = {
-        "lock": str(lock.path),
-        "mode": lock.mode,
-        "advisory": lock.is_advisory(),
-        "other_systems_present": [item.host for item in others],
-        "note": (
-            "presence does not exclude anyone -- parallel audits are the input "
-            "of the meta audit"
-            if lock.is_advisory()
-            else "claim mode: only one participant builds this meta audit"
-        ),
-    }
-    if lock.mode == MODE_CLAIM:
-        # SPEC section 6: write, wait out the sync latency, re-read, THEN
-        # decide. Resolving immediately is exactly the race the procedure
-        # exists to settle -- with unsynchronised directory views both hosts
-        # would see only their own lock and both would win.
-        if args.no_wait:
-            payload["claim_won"] = None
-            payload["claim_reason"] = (
-                f"quarantine pending -- run 'claim-resolve' after at least "
-                f"{args.quarantine}s, before then nobody may write"
-            )
-            _print(payload, args.json)
-            return 0
-        payload["quarantine_seconds"] = args.quarantine
-        time.sleep(max(0, args.quarantine))
-        outcome = resolve_claim(Path(args.locks), lock)
-        payload["claim_won"] = outcome.won
-        payload["claim_reason"] = outcome.reason
-        if not outcome.won:
-            release(lock)
-            payload["lock"] = "(released -- lost the claim)"
-    _print(payload, args.json)
-    return 0
-
-
-def cmd_claim_resolve(args: argparse.Namespace) -> int:
-    """Second half of the claim procedure, for callers that waited elsewhere."""
-    path = Path(args.locks) / f"LOCK.audit.{args.domain}.{args.system}.txt"
-    try:
-        mine = read_lock(path)
-    except (LockError, OSError) as exc:
-        print(f"ERROR: no own claim to resolve at {path}: {exc}", file=sys.stderr)
-        return 1
-
-    outcome = resolve_claim(Path(args.locks), mine)
-    payload = {"claim_won": outcome.won, "claim_reason": outcome.reason}
-    if outcome.winner is not None:
-        payload["winner"] = outcome.winner.host
-    if not outcome.won:
-        release(mine)
-        payload["lock"] = "(released)"
-    _print(payload, args.json)
-    return 0
-
-
-def cmd_release(args: argparse.Namespace) -> int:
-    path = Path(args.locks) / f"LOCK.audit.{args.domain}.{args.system}.txt"
-    _print({"released": release(path), "lock": str(path)}, args.json)
-    return 0
-
-
-def cmd_locks(args: argparse.Namespace) -> int:
-    locks = list_locks(Path(args.locks), area=args.domain)
-    _print(
-        {
-            "count": len(locks),
-            "locks": [
-                f"{item.area} · {item.host} · {item.mode} · until {item.expires_at:%Y-%m-%d %H:%M}Z"
-                for item in locks
-            ],
-        },
-        args.json,
-    )
     return 0
 
 
@@ -288,47 +174,6 @@ def build_parser() -> argparse.ArgumentParser:
     p_next.add_argument("--reports", required=True)
     p_next.add_argument("--system", default=None)
     p_next.set_defaults(func=cmd_next_domain)
-
-    p_claim = sub.add_parser("claim", help="announce presence or claim a meta audit")
-    p_claim.add_argument("--locks", required=True)
-    p_claim.add_argument("--domain", required=True)
-    p_claim.add_argument("--system", required=True)
-    p_claim.add_argument("--mode", choices=(MODE_PRESENCE, MODE_CLAIM), default=MODE_PRESENCE)
-    p_claim.add_argument("--run-id", default="")
-    p_claim.add_argument("--domain-path", default="")
-    p_claim.add_argument("--purpose", default="")
-    p_claim.add_argument("--compares", default="", help="meta claims: the input set")
-    p_claim.add_argument(
-        "--quarantine",
-        type=int,
-        default=DEFAULT_QUARANTINE_SECONDS,
-        help="seconds to wait before resolving a claim (must exceed sync latency)",
-    )
-    p_claim.add_argument(
-        "--no-wait",
-        action="store_true",
-        help="write the claim and return; resolve later with 'claim-resolve'",
-    )
-    p_claim.set_defaults(func=cmd_claim)
-
-    p_resolve = sub.add_parser(
-        "claim-resolve", help="decide a pending claim after the quarantine"
-    )
-    p_resolve.add_argument("--locks", required=True)
-    p_resolve.add_argument("--domain", required=True)
-    p_resolve.add_argument("--system", required=True)
-    p_resolve.set_defaults(func=cmd_claim_resolve)
-
-    p_release = sub.add_parser("release", help="remove our own lock")
-    p_release.add_argument("--locks", required=True)
-    p_release.add_argument("--domain", required=True)
-    p_release.add_argument("--system", required=True)
-    p_release.set_defaults(func=cmd_release)
-
-    p_locks = sub.add_parser("locks", help="list active audit locks")
-    p_locks.add_argument("--locks", required=True)
-    p_locks.add_argument("--domain", default=None)
-    p_locks.set_defaults(func=cmd_locks)
 
     p_meta = sub.add_parser("meta-plan", help="which meta audits are due?")
     p_meta.add_argument("--reports", required=True)

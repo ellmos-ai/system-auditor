@@ -1,6 +1,5 @@
 """Development over time -- new, persistent, resolved, recurring."""
 
-from system_auditor.audit_lock import utcnow
 from system_auditor.compare import AuditRun, Finding
 from system_auditor.report import ReportHeader
 from system_auditor.timeseries import (
@@ -12,7 +11,7 @@ from system_auditor.timeseries import (
     build_timeseries,
     render_markdown,
 )
-from system_auditor.tokens import TIMESERIES, TIMESERIES_RATER
+from system_auditor.tokens import TIMESERIES, TIMESERIES_RATER, utcnow
 
 PLACE = "<HOME>/x/AGENTS.md"
 COVERAGE = ["<HOME>/x"]

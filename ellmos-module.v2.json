@@ -9,21 +9,18 @@
   "provides": [
     "control.audit",
     "control.meta-audit",
-    "protocol.audit-host-lock",
     "workflow.system-integrity"
   ],
   "requires": [],
   "optional": [
     "control.tickets",
-    "control.locks",
     "discovery.system-map"
   ],
   "conflicts": [],
   "surfaces": [
     "library",
     "cli",
-    "workflow",
-    "protocol"
+    "workflow"
   ],
   "state": {
     "ownership": "external",
@@ -55,12 +52,6 @@
       "direction": "inbound",
       "optional": true,
       "note": "Systemkarte/Coverage als Beleg-A-Quelle, z. B. system-explorer."
-    },
-    {
-      "name": "audit-host-lock",
-      "direction": "outbound",
-      "optional": true,
-      "note": "Protokoll-Spec zur Uebernahme durch ein Lock-System. Erzeuger ist dieses Modul; ein Erkenner ist optional."
     }
   ]
 }

@@ -39,8 +39,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .audit_lock import format_ts, parse_ts
-from .tokens import AuditIdentity
+from .tokens import AuditIdentity, format_ts, parse_ts
 
 SELF_FILENAME_RE = re.compile(
     r"^AUDIT-(?P<time>[A-Za-z0-9_-]+?)--(?P<domain>[A-Za-z0-9_-]+?)"

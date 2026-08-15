@@ -1,6 +1,6 @@
 # system-auditor
 
-[![tests](https://img.shields.io/badge/pytest-126%20bestanden-brightgreen)](tests/)
+[![tests](https://img.shields.io/badge/pytest-109%20bestanden-brightgreen)](tests/)
 [![python](https://img.shields.io/badge/python-3.10%2B-blue)](pyproject.toml)
 [![license](https://img.shields.io/badge/lizenz-MIT-green)](LICENSE)
 [![dependencies](https://img.shields.io/badge/abh%C3%A4ngigkeiten-keine-lightgrey)](pyproject.toml)
@@ -117,25 +117,25 @@ kann.
 
 ---
 
-## Der Lock ist ein Präsenzsignal, keine Schranke
+## Kein Lock — und warum keiner nötig ist
 
-Weil parallele Einzelaudits *erwünscht* sind, schließt der Audit-Lock niemanden aus:
+Parallele Audits einer Domäne sind die *Voraussetzung* eines Meta-Audits, keine Kollision.
+Es gibt nichts auszuschließen, deshalb hält dieses Modul überhaupt keine Locks.
 
-| Modus | Bedeutung |
-|---|---|
-| `presence` | „Auf System X läuft ein Selbstaudit dieser Domäne" — informativ; **nie** ein Grund, eine Domäne zu überspringen, und nie ein Grund für andere, die Arbeit einzustellen |
-| `claim` | „Ich baue das Meta-Audit über genau diese Eingaben" — hier ist Redundanz wertlos, deshalb schließen sich Claims gegenseitig aus |
+Das ist keine überdeckte Lücke, sondern eine gemessene Eigenschaft:
 
-Ein Lock allein überlebt einen synchronisierten Ordner nicht: Bei 30 s – 5 min Latenz
-schauen beide Maschinen, sehen nichts und sperren beide. Claims tragen deshalb eine
-deterministische Auflösung — Quarantäne, erneutes Lesen, frühestes `created` gewinnt,
-Host-Ordnung bricht exakte Gleichstände. Beide Seiten kommen bei gleicher Datenlage zum
-selben Urteil, ohne Server.
+- **Meta-Audits sind idempotent.** Zwei Maschinen, die dasselbe Bündel rechnen, erzeugen
+  identische Klassifikation; die Artefakte unterscheiden sich nur darin, wer sie schrieb.
+- **Doppelarbeit verhindert schon die Planung.** `plan_metas` liefert `skip`, sobald das
+  Artefakt eines Schlüssels auf denselben Eingaben ruht. Wer später kommt, rechnet gar
+  nicht erst.
+- **Das Audit selbst ist read-only.** In der geprüften Domäne kann nichts kollidieren.
 
-Die Dateien nutzen die vorhandene Lock-Grammatik des Ökosystems
-(`LOCK.audit.<domäne>.<host>.txt`), bestehende Scanner sehen sie ohne Codeänderung. Volles
-Protokoll: [`protocols/audit-host-lock/SPEC.md`](protocols/audit-host-lock/SPEC.md) —
-selbsttragend, von Hand ausführbar, ohne Bibliothek.
+Eine frühere Fassung trug ein vollständiges Claim-Protokoll (Quarantäne, deterministische
+Verlierer-Regel). Es schützte, wie sich zeigte, Rechenzeit und eine mögliche Konfliktkopie
+— nicht die Korrektheit — und ist deshalb **nach `lock-master` verlegt**
+(`pure-locking/contested.py`), wo Ausschluss der Zweck ist statt ein Ärgernis. Die
+Entwurfsgeschichte steht im Git-Log dieses Repositoriums.
 
 ---
 
@@ -150,9 +150,6 @@ system-auditor time-token --period 7d
 # Welche Domäne ist in meiner eigenen Rotation als nächste dran?
 system-auditor next-domain --domains "bundles,skills,mcp" --reports ./reports --system $HOSTNAME
 
-# Anwesenheit melden (schließt niemanden aus)
-system-auditor claim --locks ./_locks --domain bundles --system $HOSTNAME --mode presence
-
 # Wo liegen die Regeln dieser Domäne — auf welchem System auch immer?
 system-auditor discover --domain-path /pfad/zur/domaene
 
@@ -162,8 +159,6 @@ system-auditor meta-plan --reports ./reports --aggregation interrater
 
 # Welche meiner Audits gehören zu einem früheren Fenster?
 system-auditor stale --reports ./reports --system $HOSTNAME
-
-system-auditor release --locks ./_locks --domain bundles --system $HOSTNAME
 ```
 
 Der Rollen-Prompt für Agenten: [`prompts/AUDITOR.de.md`](prompts/AUDITOR.de.md).
@@ -173,9 +168,9 @@ Konfiguration: `config/system-auditor.config.example.json` kopieren.
 
 ## Entwurfsentscheidungen
 
-* **Keine Abhängigkeiten.** Nur Standardbibliothek; das Lock-Format ist Klartext, der
-  Berichtskopf wird von einem bewusst minimalen Leser geparst — so kann die Spezifikation
-  nicht mehr versprechen, als der Parser annimmt.
+* **Keine Abhängigkeiten.** Nur Standardbibliothek; der Berichtskopf wird von einem
+  bewusst minimalen Leser geparst — so kann das Format nicht mehr versprechen, als der
+  Parser annimmt.
 * **Kein zweites System.** Kein neues Dateiformat, keine Status-Registry, keine Datenbank.
   Ein früherer Versuch mit einer parallelen „in Arbeit"-Registry musste in diesem
   Ökosystem zurückgebaut werden; die Lehre steht in der Spec.
@@ -185,7 +180,7 @@ Konfiguration: `config/system-auditor.config.example.json` kopieren.
 ## Entwicklung
 
 ```bash
-python -m pytest -q     # 126 Tests
+python -m pytest -q     # 109 Tests
 ruff check src tests
 ```
 

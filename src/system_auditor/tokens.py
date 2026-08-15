@@ -99,6 +99,35 @@ def as_utc(moment: datetime) -> datetime:
     return moment.astimezone(timezone.utc)
 
 
+#: Timestamps are written UTC and second-granular. Seconds matter wherever two
+#: statements have to be ordered against each other; a minute-granular stamp
+#: pushes near-simultaneous events into an arbitrary tiebreak.
+TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S"
+
+
+class TimestampError(ValueError):
+    """Raised when a timestamp cannot be parsed."""
+
+
+def utcnow() -> datetime:
+    return datetime.now(timezone.utc).replace(microsecond=0)
+
+
+def format_ts(moment: datetime) -> str:
+    return as_utc(moment).strftime(TIMESTAMP_FORMAT) + "Z"
+
+
+def parse_ts(raw: str) -> datetime:
+    """Read a timestamp, seconds optional (older artefacts wrote minutes)."""
+    text = (raw or "").strip().rstrip("Z")
+    for fmt in (TIMESTAMP_FORMAT, "%Y-%m-%dT%H:%M"):
+        try:
+            return datetime.strptime(text, fmt).replace(tzinfo=timezone.utc)
+        except ValueError:
+            continue
+    raise TimestampError(f"unparsable timestamp: {raw!r}")
+
+
 def parse_period(raw: str) -> timedelta:
     match = _PERIOD_RE.match(raw or "")
     if not match:
