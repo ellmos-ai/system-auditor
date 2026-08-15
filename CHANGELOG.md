@@ -3,6 +3,52 @@
 Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [SemVer](https://semver.org/lang/de/).
 
+## [0.4.1] - 2026-08-15
+
+Behebt die kritischen Funde des zweiten Codex-Reviews
+(`_review/CODEX-REVIEW-2_2026-08-15.md`, Fokus Logik statt Robustheit).
+
+### Behoben -- kritisch
+
+- **Ein veralteter Schreiber konnte ein neueres Meta-Audit zerstoeren** (Fund 9).
+  Reproduziert: Lauf A plant meta-3 aus `r1,r2,r3`; Lauf B sieht inzwischen `r4`
+  und schreibt meta-4; danach schreibt A sein altes meta-3 darueber -- der
+  veroeffentlichte Stand verliert `r4`. `ACTION_SKIP` konnte das nie verhindern,
+  weil es nur einen Lauf stoppt, der NACH dem neueren Artefakt startet, nicht
+  einen, der frueher geplant und spaeter schreibt.
+
+  **Damit war die Begruendung fuer den vollstaendigen Lock-Verzicht in 0.4.0
+  unvollstaendig.** Sie stimmte fuer die Klassifikation (deterministisch) und
+  nicht fuer den Schreibvorgang. Neu: `write_meta()` liest das Ziel vor dem
+  Schreiben erneut und verweigert, wenn die Datei bereits auf einer Obermenge
+  der geplanten Eingaben ruht. Eine Schreibsicherung, kein Lock: ein
+  Lesevorgang, blockiert niemanden, braucht keine Abstimmung.
+- **`full-system` verglich Rater ueber die Regel statt ueber den Ort** (Fund 5).
+  Die Aggregation deklariert `group_by=rule`, weil die Domaene variieren DARF.
+  Sind die konkreten Teilnehmer aber zwei Modelle EINER Domaene, wurde
+  "dieselbe Regel an verschiedenen Orten" faelschlich als Uebereinstimmung
+  gewertet. `effective_group_by()` entscheidet jetzt nach dem, was in den Daten
+  tatsaechlich variiert -- die deklarierte Achse sagt, was variieren darf, erst
+  die Daten sagen, was variiert.
+
+### Behoben -- wichtig
+
+- **Dieselbe Menge in anderer Reihenfolge ergab ein anderes Artefakt** (Fund 10):
+  repraesentativer Titel und `present_on`-Reihenfolge haengen von der
+  Eingabereihenfolge ab. `build_meta()` ordnet die Laeufe jetzt kanonisch.
+  "Deterministisch" war ohne das nicht "bitgleich".
+
+### Offen (dem Eigentuemer vorgelegt, nicht im Alleingang geaendert)
+
+Fund 1 (`cross-system-rater` fehlt), Fund 2 (`full-system` als Inferenz nicht
+identifizierbar -- Vorschlag: nur noch deskriptive Matrix), Fund 3 (Klassen sind
+Prioritaetsprojektion statt disjunkt), Fund 4 (Regelmatching kann Abwesenheit
+nicht belegen), Fund 6 (`new`/`persistent` behaupten mehr als beobachtet),
+Fund 7 (`net_change` zaehlt Lebenslaufklassen statt Uebergaenge), Fund 8
+(Agreement ist positive Unanimity, nicht Interrater-Agreement), Fund 11
+(Historienbehauptung gilt nicht fuer Zeitreihen), Fund 12 (die einzige
+`always`-Stufe ist die konfundierteste).
+
 ## [0.4.0] - 2026-08-15
 
 ### Entfernt

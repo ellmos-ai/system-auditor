@@ -1,7 +1,7 @@
 # system-auditor
 
 > Belegbasierte Systemaudits ueber mehrere Maschinen, mit Meta-Buendelung.
-> Last-checked: 2026-08-15 | Version: 0.4.0 | Tests: 109 passed | Lint: ruff clean
+> Last-checked: 2026-08-15 | Version: 0.4.1 | Tests: 115 passed | Lint: ruff clean
 
 ## Was es ist
 

@@ -341,3 +341,64 @@ def test_thresholds_are_per_aggregation(tmp_path):
 
 def test_unknown_config_names_are_ignored():
     assert resolve_policy({"does-not-exist": {"mode": MODE_ALWAYS}}) == resolve_policy()
+
+
+# --- Regression aus dem Codex-Logik-Review (Fund 9, kritisch) ---------------
+
+def test_a_stale_writer_never_overwrites_a_newer_artefact(tmp_path):
+    """Reproduziert aus Review 2: Lauf A plant meta-3 aus r1,r2,r3; Lauf B sieht
+    inzwischen r4 und schreibt meta-4; danach schrieb A sein veraltetes meta-3
+    darueber -- der veroeffentlichte Stand verlor r4.
+
+    ACTION_SKIP kann das nicht verhindern: Es stoppt nur einen Lauf, der NACH
+    dem neueren Artefakt startet, nicht einen, der frueher geplant und spaeter
+    geschrieben hat."""
+    from system_auditor.meta import write_meta
+
+    def _header(level, inputs):
+        return ReportHeader(
+            domain="", system="H1", time_token=WINDOW, audit_mode=MODE_META,
+            aggregation="cross-system", meta_level=level, inputs=inputs,
+            scope=[WINDOW, DOMAIN], finished_utc=utcnow(),
+        )
+
+    # Lauf B ist schneller und schreibt den neueren Stand
+    newer = write_meta(tmp_path, _header(4, ["r1", "r2", "r3", "r4"]), "meta-4")
+    assert newer.written
+
+    # Lauf A hatte frueher geplant und schreibt jetzt -- darf nicht durchkommen
+    stale = write_meta(tmp_path, _header(3, ["r1", "r2", "r3"]), "meta-3")
+    assert stale.written is False
+    assert "stale" in stale.reason
+
+    from system_auditor.report import read_report
+    assert read_report(newer.path).inputs == ["r1", "r2", "r3", "r4"]
+
+
+def test_a_genuinely_newer_artefact_does_get_written(tmp_path):
+    from system_auditor.meta import write_meta
+
+    def _header(level, inputs):
+        return ReportHeader(
+            domain="", system="H1", time_token=WINDOW, audit_mode=MODE_META,
+            aggregation="cross-system", meta_level=level, inputs=inputs,
+            scope=[WINDOW, DOMAIN], finished_utc=utcnow(),
+        )
+
+    assert write_meta(tmp_path, _header(2, ["r1", "r2"]), "meta-2").written
+    grown = write_meta(tmp_path, _header(3, ["r1", "r2", "r3"]), "meta-3")
+    assert grown.written
+
+
+def test_rewriting_the_identical_state_is_skipped(tmp_path):
+    from system_auditor.meta import write_meta
+
+    header = ReportHeader(
+        domain="", system="H1", time_token=WINDOW, audit_mode=MODE_META,
+        aggregation="cross-system", meta_level=2, inputs=["r1", "r2"],
+        scope=[WINDOW, DOMAIN], finished_utc=utcnow(),
+    )
+    assert write_meta(tmp_path, header, "body").written
+    again = write_meta(tmp_path, header, "body")
+    assert again.written is False
+    assert "already current" in again.reason

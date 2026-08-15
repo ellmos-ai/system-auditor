@@ -14,13 +14,15 @@ itself the problem?).
 Nothing here requires its neighbours. Detected, they are used; absent, the
 auditor degrades to reading directly and writing files.
 
-**No lock.** Parallel audits of one domain are the *premise* of a meta audit,
-not a collision, so there is nothing to exclude. And a meta audit is
-idempotent: two machines computing the same bundle produce identical
-classification, while ``plan_metas`` returns ``skip`` as soon as the artefact
-already rests on the same inputs. The coordination protocol that used to live
-here moved to ``lock-master`` (``pure-locking/contested.py``), where exclusion
-is the purpose rather than a nuisance.
+**No lock, but a guarded write.** Parallel audits of one domain are the
+*premise* of a meta audit, not a collision, so there is nothing to exclude --
+and the classification is deterministic. That is not the same as being safe to
+write blindly: a run that planned earlier can overwrite a newer artefact that
+another machine published in the meantime. ``write_meta`` therefore re-reads
+the target before writing and refuses when the file on disk already rests on a
+superset of the planned inputs. The coordination *protocol* moved to
+``lock-master`` (``pure-locking/contested.py``), where exclusion is the purpose
+rather than a nuisance.
 """
 
 from .compare import (
@@ -95,7 +97,7 @@ from .tokens import (
     utcnow,
 )
 
-__version__ = "0.4.0"
+__version__ = "0.4.1"
 
 __all__ = [
     "__version__",
@@ -160,6 +162,7 @@ __all__ = [
     "current_single_audits",
     "existing_meta",
     "stale_windows",
+    "write_meta",
     "ACTION_CREATE",
     "ACTION_UPDATE",
     "ACTION_SKIP",
