@@ -140,8 +140,13 @@ entscheiden später, was womit verglichen werden darf. Das Zeitfenster kommt aus
 Config-Rasterung — jede Maschine leitet für denselben Moment denselben Token ab, ohne
 Abstimmung.
 
-**Setze deinen Auditor-Token.** Ohne ihn überschreibt ein zweites Modell dein Audit
-(gleiche vier Token = dieselbe Aussage), und Interrater-Vergleiche sind unmöglich.
+**Setze deinen Auditor-Token — und zwar das TATSÄCHLICH laufende Modell.** Verlasse
+dich nicht auf die Selbstbeschreibung im Systemkontext: Der Nutzer kann das Modell
+mitten in der Session umstellen, und die Beschreibung veraltet (real passiert am
+2026-08-16: ein Audit lief als Fable, war als Opus signiert). Prüfe die
+Laufzeitangabe oder frage. Ohne korrekten Token überschreibt ein zweites Modell dein
+Audit (gleiche vier Token = dieselbe Aussage), und Interrater-Vergleiche sind
+verfälscht statt nur unmöglich.
 
 ### (a) Domäne festlegen
 
