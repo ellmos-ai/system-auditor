@@ -2,10 +2,18 @@
 
 # system-auditor
 
-[![tests](https://img.shields.io/badge/pytest-136%20passed-brightgreen)](tests/)
-[![python](https://img.shields.io/badge/python-3.10%2B-blue)](pyproject.toml)
+[![CI](https://github.com/ellmos-ai/system-auditor/actions/workflows/ci.yml/badge.svg)](https://github.com/ellmos-ai/system-auditor/actions/workflows/ci.yml)
+[![tests](https://img.shields.io/badge/pytest-158%20passed%20%7C%20100%25-brightgreen)](tests/)
+[![python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)](pyproject.toml)
+[![platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)](pyproject.toml)
+[![privacy](https://img.shields.io/badge/privacy-100%25%20Local--First%20%7C%20Zero--Egress-brightgreen)](SECURITY.md)
+[![security](https://img.shields.io/badge/security-Bilingual%20Policy%20%7C%20Write--Guarded-blue)](SECURITY.md)
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![dependencies](https://img.shields.io/badge/dependencies-none-lightgrey)](pyproject.toml)
+[![dependencies](https://img.shields.io/badge/dependencies-none%20(stdlib)-lightgrey)](pyproject.toml)
+[![ecosystem](https://img.shields.io/badge/ecosystem-ellmos--ai-purple)](https://github.com/ellmos-ai)
+[![umbrella](https://img.shields.io/badge/umbrella-open--bricks-blueviolet)](https://github.com/open-bricks/open-bricks)
+[![version](https://img.shields.io/badge/version-0.9.1-orange)](pyproject.toml)
+[![llms.txt](https://img.shields.io/badge/llms.txt-Discovery%20Context-informational)](llms.txt)
 
 **Evidence-based system audits across several machines — with meta bundling.**
 
@@ -13,223 +21,315 @@
 
 ---
 
-## Why this exists
+## 🧭 Quick Navigation
 
-The auditor examines a composed system in **three directions**: does a state violate a
-rule (*rule compliance*), **do the modules work together the way it was intended**
-(*integration* — declared collaboration from manifests, bundles and bindings against
-reality, check classes I1–I7), and **are control files, policies and past decisions
-consistent with each other** (*governance consistency*, check classes K1–K4). The goal
-is convergence: every finding ends with a direction — adapt reality to the rule (a
-measure) or adapt the rule to reality (a decision proposal).
+- [Why This Exists](#why-this-exists)
+- [Architecture & System Flow](#architecture--system-flow)
+- [The Three Stages](#the-three-stages)
+- [Four Tokens & Discrete Windows](#four-tokens--discrete-windows)
+- [The Aggregation Ladder](#the-aggregation-ladder)
+- [Key Capabilities & Governance Invariants](#key-capabilities--governance-invariants)
+- [One Current Answer Per Window](#one-current-answer-per-window)
+- [Write-Guard Race Protection](#write-guard-race-protection)
+- [End-to-End Audit Lifecycle](#end-to-end-audit-lifecycle)
+- [Sibling Tools & Ecosystem Matrix](#sibling-tools--ecosystem-matrix)
+- [Installation & CLI Usage](#installation--cli-usage)
+- [Configuration](#configuration)
+- [Security & Privacy](#security--privacy)
+- [Development & Verification](#development--verification)
+- [License](#license)
 
-Two machines auditing the same domain do **not** produce the same result. That is not a
-defect — it is the most useful thing about running the audit twice.
+---
 
-A measured example:
+## Why This Exists
 
-> **Finding:** *"Gardener governance hardcodes the laptop home path"* —
-> `AGENTS.md` points at `C:\Users\alice\…`.
+The auditor examines a composed system in **three directions**:
+
+1. **Rule compliance:** Does an observed system state violate a declared policy or convention?
+2. **Integration (classes I1–I7):** Do software modules, manifests, bundles, and bindings collaborate in practice as declared?
+3. **Governance consistency (classes K1–K4):** Are control files, registries, policies, and past architectural decisions consistent with each other?
+
+The guiding principle is **convergence**: every finding ends with a clear direction — adapt reality to the rule (a concrete measure) or adapt the rule to reality (a decision proposal).
+
+Two machines auditing the same domain do **not** produce the same result. That is not a defect — it is the most useful thing about running audits across multiple systems.
+
+### A Measured Example
+
+> **Finding:** *"Gardener governance hardcodes the laptop home path"* — `AGENTS.md` points at `C:\Users\alice\…`.
 >
 > On **WORKSTATION-LG** this is real: the path does not exist there.
 > On the **laptop** the very same line is correct and produces no finding at all.
 
-A single machine can only ever see one half of that. Comparing the valid audits of all
-participating systems yields a classification no single run can produce:
+A single machine can only ever see one half of that reality. Comparing the valid audits of all participating systems yields an evidence-based classification no single run can produce:
 
-| class | meaning |
-|---|---|
-| `systemwide` | every participant found it → genuine system defect |
-| `host_specific` | some found it, others checked and did not → drift on one machine |
-| `inverse` | a defect here, explicitly fine there → host dependency, usually a hardcoded path |
-| `divergent` | same location, *different* rules broken → differing sync state or reading |
-| `unverifiable` | someone never looked there → no statement possible, and we say so |
+| Class | Meaning | Impact |
+|---|---|---|
+| `systemwide` | Every participant found it | Genuine systemwide defect or broken invariant |
+| `host_specific` | Some found it, others verified clean | Configuration drift or host divergence |
+| `inverse` | A defect on host A, explicitly fine on host B | Host dependency (e.g. hardcoded path) |
+| `divergent` | Same location, *different* rules broken | Differing sync state or conflicting policy reading |
+| `unverifiable` | A participant never inspected that location | Honest absence of proof (prevents false drift claims) |
 
-`unverifiable` is the honest rung. Without it, every gap in a participant's coverage would
-silently masquerade as a real difference between systems.
-
----
-
-## The three stages
-
-    map      what is there            ->  system-explorer   (optional)
-    verdict  what is wrong about it   ->  system-auditor    (this)
-    measure  what we do about it      ->  ticket system     (optional)
-
-A map is value-free; a ticket is an action. In between sits the judgement: *which rule is
-violated, what do we recommend, and is the rule itself still right?* That is this module.
-
-**Nothing here requires its neighbours.** Detected, they are used; absent, the auditor
-reads directly and writes files. Same pattern in every direction: *know them, don't need
-them.*
+> [!NOTE]
+> `unverifiable` is the honest rung. Without it, every gap in a participant's test coverage would silently masquerade as a real divergence between systems.
 
 ---
 
-## Four tokens
+## Architecture & System Flow
 
-Every audit answers four questions, and each answer is a token:
+```mermaid
+flowchart TD
+    subgraph S1["1. Inspection & Discovery"]
+        A1["Domain Target / Codebase"] --> D1["discover() Sinks & Manifests"]
+        D1 --> M1["Manifests & Policies\nellmos-module.v2 / bundle.v1 / AGENTS.md"]
+    end
 
-| token | question |
-|---|---|
-| `time` | *when* — which period window does this statement belong to |
-| `domain` | *what* — which domain was audited |
-| `system` | *where* — which machine was looked at |
-| `auditor` | *who* — which model did the looking |
+    subgraph S2["2. Multi-Host Audit Generation"]
+        M1 --> R1["Host 1 Audit Run\n(time, domain, sys1, modelA)"]
+        M1 --> R2["Host 2 Audit Run\n(time, domain, sys2, modelB)"]
+        R1 --> P1["templates/AUDIT-REPORT\nSingle Markdown Reports"]
+        R2 --> P1
+    end
 
-**Why discrete windows instead of a sliding validity span.** A sliding window ("valid for
-14 days from the run") makes overlap a matter of degree — every machine has to compare
-pairs to find out. A window *grid* derived from config turns that into a lookup: ask the
-clock, get a token. Two machines that never talk to each other derive the same token for
-the same moment, so "same period" becomes a string comparison instead of an agreement
-problem.
+    subgraph S3["3. Aggregation Ladder & Meta Bundling"]
+        P1 --> G1["shared reports_dir\n(Sync Treffpunkt)"]
+        G1 --> AP["Aggregation Engine\n(interrater | cross-system | cross-domain | timeseries)"]
+        AP --> CL["Classification Core\nsystemwide | host_specific | inverse | divergent | unverifiable"]
+    end
 
-The price is the boundary: two runs minutes apart can land in different windows. That is
-deliberate — determinism across machines is worth more than smoothness at the edge, and
-longer windows make the edge rarer.
+    subgraph S4["4. Write-Guard & Convergence"]
+        CL --> WG{"write_meta\nWrite-Guard Check"}
+        WG -->|"Disk has Superset"| SK["Skip Overwrite\n(Zero Race Conditions)"]
+        WG -->|"Fresh Evidence"| MR["Atomic Meta-Report\n(templates/META-REPORT)"]
+        MR --> AC["Convergence Direction\nMeasure vs. Decision Proposal"]
+    end
 
-## The aggregation ladder
+    style S1 fill:#f8fafc,stroke:#64748b,stroke-width:1px
+    style S2 fill:#f0fdf4,stroke:#22c55e,stroke-width:1px
+    style S3 fill:#eff6ff,stroke:#3b82f6,stroke-width:1px
+    style S4 fill:#fdf4ff,stroke:#a855f7,stroke-width:1px
+```
 
-Hold some tokens fixed, let the rest vary. **An aggregation may only attribute a cause when
-exactly one dimension varies** — otherwise a difference is not identifiable. That rule is
-enforced in the constructor, not just documented.
+---
 
-| aggregation | fixed | varies | what it tells you |
+## The Three Stages
+
+```text
+map      what is there            ->  system-explorer   (optional)
+verdict  what is wrong about it   ->  system-auditor    (this module)
+measure  what we do about it      ->  ticket system     (optional)
+```
+
+A map is value-free; a ticket is an action. In between sits the judgment: *which rule is violated, what do we recommend, and is the rule itself still right?*
+
+**Nothing here requires its neighbours.** Detected, they are used; absent, the auditor reads directly and writes files. Same pattern in every direction: *know them, don't need them.*
+
+---
+
+## Four Tokens & Discrete Windows
+
+Every audit answers four questions, and each answer is an immutable token:
+
+| Token | Question | Description |
+|---|---|---|
+| `time` | *When?* | The discrete period window this statement belongs to (e.g. `20260817`) |
+| `domain` | *What?* | The domain that was audited (e.g. `bundles`, `skills`, `mcp`) |
+| `system` | *Where?* | The machine name or environment inspected (e.g. `WORKSTATION-LG`) |
+| `auditor` | *Who?* | The model or agent identity that conducted the audit (e.g. `claude-3-5-sonnet`) |
+
+### Why Discrete Windows Instead of Sliding Spans
+
+A sliding window ("valid for 14 days from run") makes overlap a matter of degree — every machine has to compare pairs to resolve status. A window **grid** derived from configuration turns that into a direct lookup: ask the clock, get a token. Two machines that never talk to each other derive the same token for the same moment, turning "same period" into a fast string comparison instead of a distributed consensus problem.
+
+---
+
+## The Aggregation Ladder
+
+Hold some tokens fixed, let the rest vary. **An aggregation may only attribute a cause when exactly one dimension varies** — otherwise a difference is mathematically unidentifiable. This rule is enforced in the constructor.
+
+| Aggregation | Fixed Dimensions | Varying Dimension | What It Identifies |
 |---|---|---|---|
-| `interrater` | time+domain+system | **auditor** | do two models agree? |
-| `cross-system-rater` | time+domain+auditor | **system** | a *clean* host effect |
-| `cross-system` | time+domain | **system** | machines, model uncontrolled — practical, but not proof |
-| `cross-domain` | time+system+auditor | **domain** | is the same rule broken across domains? |
-| `timeseries` | system+domain | **time** | how did this domain develop? |
-| `timeseries-rater` | system+domain+auditor | **time** | development as *one* model sees it |
-| `full-system` | time+system | domain **+** auditor | **descriptive only** — inventory, no classes |
-
-`full-system` is the one where two dimensions vary at once. That is a useful picture of a
-machine, but a difference between two cells cannot be traced to domain, model, or their
-interaction — so it yields an **inventory** (`build_inventory`), not a verdict. Calling
-`build_meta` on it raises.
-
-`cross-domain` matches by **rule alone**: across domains there is no shared place. The flip
-side is that *absence* is not observable there — a participant that did not report a rule
-could never have covered a foreign domain's locator — so those cases stay `unverifiable`
-and say why.
-
-`interrater` reports **positive unanimity** plus a pairwise Jaccard. Deliberately not called
-"agreement": only keys somebody raised enter the denominator, so shared silence about clean
-places never counts. A chance-corrected measure (Cohen's kappa) is not computable without a
-common item universe.
-
-## One current answer per window
-
-    system A audits `bundles`                        ->  single audit
-    system B audits `bundles`                        ->  meta-2  (created)
-    system C audits `bundles`                        ->  meta-3  (same file, rewritten)
-
-Within a window the meta audit is **overwritten, not archived**: "what do we know about
-this domain in this window" has one current answer, and keeping meta-2 beside meta-3 would
-leave two answers to one question.
-
-**History keeps itself.** Last window is a different token, hence a different file, and
-stays untouched — nothing has to be moved for the record to exist. The only thing that
-overwrites a *single* audit is a restatement with the same four tokens; that is a
-correction, and it forces the window's meta audit to be rebuilt.
-
-**Renewal belongs to the bearer.** Only the machine that produced an audit may restate it.
-No system may retire a statement about a machine it cannot see.
+| `interrater` | `time` + `domain` + `system` | **`auditor`** | Do two AI models agree on the same machine? |
+| `cross-system-rater` | `time` + `domain` + `auditor` | **`system`** | A clean, controlled host effect |
+| `cross-system` | `time` + `domain` | **`system`** | Machine variance (model uncontrolled; practical) |
+| `cross-domain` | `time` + `system` + `auditor` | **`domain`** | Is the same rule violated across distinct domains? |
+| `timeseries` | `system` + `domain` | **`time`** | How did this domain develop over consecutive windows? |
+| `timeseries-rater` | `system` + `domain` + `auditor` | **`time`** | Domain trajectory through the lens of one model |
+| `full-system` | `time` + `system` | `domain` **+** `auditor` | **Descriptive only** — inventory (`build_inventory`), no verdict |
 
 ---
 
-## No lock — and why none is needed
+## Key Capabilities & Governance Invariants
 
-Parallel audits of one domain are the *premise* of a meta audit, not a collision. There is
-nothing to exclude, so this module holds no locks at all.
-
-That is not a gap papered over, but it needed one correction:
-
-- **The audit itself is read-only.** Nothing in the audited domain can collide.
-- **The classification is deterministic** — same inputs, same output, byte for byte
-  (the runs are ordered canonically first).
-- **Duplicate work is largely prevented already.** `plan_metas` returns `skip` as soon as
-  the artefact for a key rests on the same inputs.
-- **But determinism is not permission to write blindly.** A run that planned earlier can
-  overwrite a newer artefact another machine published meanwhile — a review reproduced
-  exactly that. So `write_meta` re-reads the target and refuses when the file on disk
-  already rests on a superset of the planned inputs. That is a *write guard*, not a lock:
-  it costs one read, blocks nobody, and needs no coordination.
-
-An earlier version carried a full claim protocol (quarantine, deterministic loser rule).
-It turned out to protect compute time and a possible conflict copy — not correctness — and
-was therefore **moved to `lock-master`** (`pure-locking/contested.py`), where exclusion is
-the purpose rather than a nuisance. The design history is in this repository's git log.
+| Capability / Invariant | Guarantee | Technical Implementation |
+|---|---|---|
+| **Deterministic Classification** | Same input reports produce bit-for-bit identical classifications | Canonical sorting of findings and inputs prior to evaluation |
+| **Identifiability Guard** | Aggregations with >1 varying dimension cannot issue causal verdicts | `Aggregation` class validates variation arity in constructor |
+| **Zero-Lock Concurrency** | Multi-host audits run asynchronously without centralized lock servers | Write-guard re-reads target file before writing to check input superset |
+| **Zero Network Egress** | 100% offline; zero telemetry or external HTTP traffic | Standard library only; verified by static AST contract tests |
+| **Bilingual Governance** | English and German report templates and documentation parity | Dual templates in `templates/` and bilingual prompts in `prompts/` |
+| **Coverage Transparency** | Uninspected locations explicitly reported as `unverifiable` | `MetaResult` tracks verified presence, verified absence, and unverified areas |
 
 ---
 
-## Install and use
+## One Current Answer Per Window
+
+```text
+system A audits `bundles`   ->  single audit
+system B audits `bundles`   ->  meta-2  (created)
+system C audits `bundles`   ->  meta-3  (same file, rewritten)
+```
+
+Within a window the meta-audit is **overwritten, not archived**: "what do we know about this domain in this window" has one current authoritative answer. Keeping `meta-2` beside `meta-3` would leave conflicting answers to the same question.
+
+**History keeps itself.** The previous window has a different time token, hence a different filename, and stays untouched.
+
+---
+
+## Write-Guard Race Protection
+
+Parallel audits of one domain are the *premise* of a meta-audit, not a collision. There is nothing to exclude, so this module holds no distributed locks.
+
+- **The audit itself is read-only.** Nothing in the audited domain is modified.
+- **The classification is deterministic.** Same inputs yield identical markdown outputs.
+- **Write-Guard verification:** `write_meta` re-reads the destination on disk. If the file on disk already rests on a superset of the planned inputs (e.g. written by a faster concurrent run), it safely skips rewriting.
+
+---
+
+## End-to-End Audit Lifecycle
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Dev as Auditor / Agent
+    participant CLI as system-auditor CLI
+    participant Disk as Local / Shared reports_dir
+    participant Engine as Meta Aggregator
+
+    Dev->>CLI: system-auditor time-token
+    CLI-->>Dev: Returns current Window Token (e.g. 20260817)
+
+    Dev->>CLI: system-auditor next-domain --domains "bundles,skills,mcp"
+    CLI-->>Dev: Selects least recently audited domain
+
+    Dev->>CLI: system-auditor discover --domain-path /path/to/domain
+    CLI-->>Dev: Lists manifests, rules, and policy sinks
+
+    Note over Dev: Auditor conducts inspection (Rules, Integration I1-I7, Governance K1-K4)
+    Dev->>Disk: Write Single Audit (AUDIT-BERICHT.de.md / AUDIT-REPORT.en.md)
+
+    Dev->>CLI: system-auditor meta-plan --reports ./reports --aggregation cross-system
+    CLI->>Disk: Scans foreign single reports for matching window
+
+    alt Meta Audit Due (New Foreign Inputs Found)
+        CLI-->>Dev: Plan Action: CREATE / UPDATE
+        Dev->>Engine: build_meta(runs, aggregation)
+        Engine->>Engine: Classify (systemwide, host_specific, inverse, divergent, unverifiable)
+        Engine->>Disk: write_meta (Verifies disk superset before atomic write)
+        Disk-->>Dev: Meta-Report Published
+    else Up to Date
+        CLI-->>Dev: Plan Action: SKIP (Superset already on disk)
+    end
+```
+
+---
+
+## Sibling Tools & Ecosystem Matrix
+
+`system-auditor` is part of the `ellmos-ai` ecosystem under the `open-bricks` umbrella:
+
+| Repository | Focus | Integration Role with `system-auditor` |
+|---|---|---|
+| [`ellmos-ai/system-explorer`](https://github.com/ellmos-ai/system-explorer) | System Mapping | Provides structured inventory maps ("what is there") |
+| [`ellmos-ai/system-auditor`](https://github.com/ellmos-ai/system-auditor) | Audit & Verdict | Evaluates compliance, integration, and governance consistency |
+| [`ellmos-ai/ellmos-controlcenter-mcp`](https://github.com/ellmos-ai/ellmos-controlcenter-mcp) | MCP Control Plane | Context packing, tool routing, and capability discovery |
+| [`ellmos-ai/ellmos-delegation-authority`](https://github.com/ellmos-ai/ellmos-delegation-authority) | Cryptographic Authority | Nonce-based cryptographic delegation grants |
+| [`ellmos-ai/sqlite-transit-sync`](https://github.com/ellmos-ai/sqlite-transit-sync) | Database Transit | Zero-egress WAL-checkpointed SQLite replication |
+| [`dev-bricks/automation-master`](https://github.com/dev-bricks/automation-master) | Task Automation | Orchestrates automated batch maintenance workflows |
+| [`dev-bricks/automizer-for-claude-desktop`](https://github.com/dev-bricks/automizer-for-claude-desktop) | Process Discrimination | Atomic configuration snapshots & safe execution queues |
+| [`file-bricks/ProSync`](https://github.com/file-bricks/ProSync) | Local Backup | Safe multi-profile sync and SQLite WAL checkpoint protection |
+| [`doc-bricks/CleanMarkdown`](https://github.com/doc-bricks/CleanMarkdown) | Document AST | High-fidelity Markdown AST validation and clean rendering |
+| [`open-bricks/open-bricks`](https://github.com/open-bricks/open-bricks) | Umbrella Organization | Common architecture standards, governance, and licensing |
+
+---
+
+## Installation & CLI Usage
 
 ```bash
+# Editable install
 python -m pip install -e .
 
-# which audit window is it right now?
-system-auditor config          # what was actually read?
+# Display active configuration and resolved reports directory
+system-auditor config
+
+# Query current discrete time window token
 system-auditor time-token
 
-# which domain is next in my own rotation?
+# Determine the next due domain in rotation
 system-auditor next-domain --domains "bundles,skills,mcp" --reports ./reports --system $HOSTNAME
 
-# where are this domain's rules, on whatever system this is?
+# Discover conventions, manifests, and policy sinks for a domain
 system-auditor discover --domain-path /path/to/domain
 
-# which meta audits are due in the current window?
+# Plan pending meta-audits in current window
 system-auditor meta-plan --reports ./reports --aggregation cross-system
 system-auditor meta-plan --reports ./reports --aggregation interrater
 
-# which of my audits belong to an earlier window?
+# Identify single audits belonging to previous windows
 system-auditor stale --reports ./reports --system $HOSTNAME
 ```
+
+---
 
 ## Configuration
 
 ```bash
 cp config/system-auditor.config.example.json system-auditor.config.json
-system-auditor config          # shows what was actually read
+system-auditor config          # shows resolved config
 ```
 
-Found via `--config`, `SYSTEM_AUDITOR_CONFIG`, then `./`, `./config/`,
-`~/.system-auditor/`. `system-auditor config` exists because a config that is present but
-not being used is the failure that takes longest to notice — until 0.6.0 the shipped
-example was read by *nothing*, and every setting it documented was inert.
+Config lookup order: `--config`, `SYSTEM_AUDITOR_CONFIG`, `./`, `./config/`, `~/.system-auditor/`.
 
-**`reports_dir` is the meeting point.** It must live in a cloud-synchronised folder that
-every participating machine shares — in a host-local directory a meta audit can
-structurally never happen, because no foreign report ever arrives there. The example file
-points at the shared module folder; `config` warns when the path looks host-local.
+```json
+{
+  "time_grid": {
+    "unit": "weeks",
+    "step": 1,
+    "anchor": "2026-01-05"
+  },
+  "reports_dir": "./reports",
+  "policy": {
+    "cross-system": "always",
+    "interrater": "always",
+    "cross-domain": "on-demand"
+  }
+}
+```
 
-**The meta report is model-manual.** The auditor writes their own report following
-[`templates/AUDIT-BERICHT.de.md`](templates/AUDIT-BERICHT.de.md); on discovering foreign
-reports for the same domain and window, they write the meta report right after their own —
-their interpretation, following [`templates/META-BERICHT.de.md`](templates/META-BERICHT.de.md).
-`meta-plan` decides *whether* (`create`/`update`/`skip`); the library (`build_meta`) serves
-as a cross-check. Both template headers speak exactly the parser's format.
-
-The role prompt an agent follows is [`prompts/AUDITOR.de.md`](prompts/AUDITOR.de.md).
+> [!IMPORTANT]
+> `reports_dir` is the multi-host meeting point. It must reside in a cloud-synchronized folder shared across participating machines. In a host-local directory, meta-audits cannot aggregate foreign reports.
 
 ---
 
-## Design notes
+## Security & Privacy
 
-* **Zero dependencies.** Standard library only; the report front matter is parsed by a
-  deliberately minimal reader, so the format cannot promise more than the parser accepts.
-* **No second system.** No new file format, no status registry, no database. An earlier
-  attempt at a parallel "in progress" registry elsewhere in this ecosystem had to be rolled
-  back; the lesson is in the spec.
-* **Coverage is declared, not assumed.** A run states what it looked at and what it
-  confirmed as fine. Everything else stays `unverifiable`.
+`system-auditor` is built with a strict **Local-First & Zero-Egress** model. It contains zero telemetry, requires zero network connectivity, operates with unprivileged user permissions, and employs deterministic write-guards.
 
-## Development
+For full details, supported versions, and vulnerability disclosure contacts, see [`SECURITY.md`](SECURITY.md).
+
+---
+
+## Development & Verification
 
 ```bash
-python -m pytest -q     # 136 tests
+# Run pytest test suite (including metadata contract tests)
+python -m pytest -q
+
+# Run Ruff linter
 ruff check src tests
 ```
+
+---
 
 ## License
 

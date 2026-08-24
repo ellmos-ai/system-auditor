@@ -1,7 +1,7 @@
 # system-auditor
 
 > Belegbasierte Systemaudits ueber mehrere Maschinen, mit Meta-Buendelung.
-> Last-checked: 2026-08-16 | Version: 0.9.0 | Tests: 148 passed | Lint: ruff clean
+> Last-checked: 2026-08-24 | Version: 0.9.1 | Tests: 158 passed | Lint: ruff clean
 
 ## Was es ist
 
@@ -59,11 +59,14 @@ Gefunden ueber --config, SYSTEM_AUDITOR_CONFIG, ./, ./config/, ~/.system-auditor
 
 ## Einstiegspunkte
 
+- README.md & README_de.md       Vollstaendige Dokumentation mit Mermaid-Architektur- und Sequenzdiagrammen
+- SECURITY.md                   Zweisprachige Sicherheitsrichtlinie (Local-First, Zero-Egress, Non-Elevation)
 - prompts/AUDITOR.de.md + .en.md   Rollen-Prompt fuer Agenten (DE/EN)
 - templates/                    Berichts- und Meta-Templates (parser-kompatibel)
 - config/system-auditor.config.example.json   Konfigurationsvorlage
-- src/system_auditor/           tokens, report, meta, compare, timeseries,
-                                config, discovery, sinks, cli
+- src/system_auditor/           tokens, report, meta, compare, timeseries, config, discovery, sinks, cli
+- tests/test_metadata.py        Automatisierte Metadaten-, Dokumentations- und Sicherheitsvertrags-Testsuite
+- .github/workflows/ci.yml      GitHub Actions CI Matrix (Ubuntu, Windows, macOS / Python 3.10-3.13)
 - CLI: system-auditor config|time-token|next-domain|meta-plan|reports|stale|discover
 
 ## Modellmanuell by design

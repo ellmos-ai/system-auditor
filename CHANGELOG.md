@@ -3,6 +3,50 @@
 Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [SemVer](https://semver.org/lang/de/).
 
+## [0.9.1] - 2026-08-24
+
+Discoverability, Visual System Flowcharts, Multi-Host Lifecycle Sequence Diagrams,
+Bilingual Security Policy, Multi-OS CI Matrix & Automated Contract Parity Testsuite.
+
+### Hinzugefuegt
+
+- **Interaktive Dual-Mermaid-Diagramme (`README.md` & `README_de.md`):**
+  Zweisprachige Diagramme fuer Systemfluss & Aggregationsleiter (`flowchart TD` von
+  Manifesten/Sinks ueber Multi-Host Einzelläufe, geteilten `reports_dir`,
+  Aggregations-Engine zu Schreibsicherungs-Pruefung und Konvergenz) sowie
+  End-to-End Audit- & Meta-Buendelungs-Lebenszyklus (`sequenceDiagram` mit
+  Zeitraster-Token, Domänen-Rotation, `meta-plan`, Klassifikation und Platten-Obermengen-Pruefung).
+- **Zweisprachige Sicherheitsrichtlinie (`SECURITY.md`):**
+  Vollstaendige bilinguale Security Policy (EN/DE) mit Local-First- & Zero-Egress-Garantien
+  (100% Offline-Betrieb, 0 Telemetrie/Tracking, reine Standardbibliothek), unprivilegiertem
+  User-Mode (Non-Elevation), Dateisystem-Grenzen, Treffpunkt-Hygiene und direkten
+  Sicherheitskontaktadressen (`security@ellmos.ai`, `lukas@open-bricks.org`, `support@lukasgeiger.com`)
+  sowie GitHub Security Advisories.
+- **Geschwisterwerkzeuge- & Oekosystem-Matrix:**
+  Tabelle mit 10 Partner-Repositories ueber `ellmos-ai` (system-explorer, ellmos-controlcenter-mcp,
+  ellmos-delegation-authority, sqlite-transit-sync), `dev-bricks` (automation-master,
+  automizer-for-claude-desktop), `file-bricks` (ProSync), `doc-bricks` (CleanMarkdown) und den
+  Dachverband `open-bricks`.
+- **Multi-OS GitHub Actions CI Workflow (`.github/workflows/ci.yml`):**
+  Matrix ueber Betriebssysteme (`ubuntu-latest`, `windows-latest`, `macos-latest`) und
+  Python-Versionen (`3.10`, `3.11`, `3.12`, `3.13`) mit Linter-Pruefung (`ruff check`) und
+  vollstaendiger Pytest-Suite inkl. Concurrency-Steuerung (`cancel-in-progress: true`).
+- **Automatisierte Metadaten-Vertragstestsuite (`tests/test_metadata.py`):**
+  10 Contract-Tests fuer Dokumenten-Praesenz, Versionsparitaet, Badge-Paritaet,
+  Mermaid-Diagrammsyntax, Schnellnavigation-Anker, zweisprachige Security-Policy,
+  Geschwister-URLs, PEP 621 Classifiers & URLs, statische Offline-Invariante (0 Netzwerk-Imports)
+  und CI-Workflow-Integritaet.
+- **Badges & Strukturierte Schnellnavigation (`README.md` & `README_de.md`):**
+  Shields.io Badges um CI-Status, Test-Status (158 passed | 100%), Python Matrix (`3.10-3.13`),
+  Plattformen (`Windows | Linux | macOS`), Datenschutz (`100% Local-First | Zero-Egress`),
+  Sicherheit (`Bilingual Policy | Write-Guarded`), `ellmos-ai` Oekosystem, `open-bricks`
+  Dachverband, `llms.txt` Discovery-Kontext und Version (`0.9.1`) erweitert; strukturierte
+  Schnellnavigation mit Sprungmarken integriert.
+- **PEP 621 Metadaten (`pyproject.toml`):**
+  Standard-Classifiers (Betriebssysteme, Testen, Systems Administration, Security) und
+  vollstaendige `[project.urls]` (`Homepage`, `Documentation`, `Repository`, `Issues`,
+  `Changelog`, `Security`, `Umbrella`) ergaenzt.
+
 ## [0.9.0] - 2026-08-16
 
 Zweck-Schaerfung (Nutzerklaerung): Der Auditor prueft nicht nur Regeltreue,
