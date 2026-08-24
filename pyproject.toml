@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "system-auditor"
-version = "0.9.0"
+version = "0.9.1"
 description = "Evidence-based system audits across several machines, with meta bundling"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -17,15 +17,26 @@ keywords = [
     "meta-audit",
     "governance",
     "drift-detection",
+    "compliance",
+    "local-first",
 ]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: MacOS",
     "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Software Development :: Testing",
+    "Topic :: System :: Systems Administration",
+    "Topic :: Security",
 ]
 dependencies = []
 
@@ -34,7 +45,12 @@ system-auditor = "system_auditor.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/ellmos-ai/system-auditor"
+Documentation = "https://github.com/ellmos-ai/system-auditor#readme"
+Repository = "https://github.com/ellmos-ai/system-auditor"
+Issues = "https://github.com/ellmos-ai/system-auditor/issues"
 Changelog = "https://github.com/ellmos-ai/system-auditor/blob/main/CHANGELOG.md"
+Security = "https://github.com/ellmos-ai/system-auditor/blob/main/SECURITY.md"
+Umbrella = "https://github.com/open-bricks/open-bricks"
 
 [tool.setuptools.packages.find]
 where = ["src"]
