@@ -205,6 +205,31 @@ class ReportHeader:
     path: Path | None = field(default=None, compare=False)
 
     @property
+    def auditor_token(self) -> str:
+        """The auditor as it appears IN THE FILE NAME -- deliberately not in the
+        identity.
+
+        The two answer different questions, and conflating them was tried and
+        reverted:
+
+        * The name must be distinct, or one audit overwrites another and the
+          work is gone.
+        * The identity must NOT be distinct, because without a model name there
+          is no distinguishable voice -- that is the very rule this ticket
+          added, and ``check_comparability`` enforces it. Two unidentified runs
+          are one statement of unknown origin, not two raters agreeing.
+
+        Making the identity distinct also broke the migration case: a legacy
+        report carries no header and therefore no stand-in, so a restatement of
+        the same audit would have counted as a second one.
+        """
+        if is_identified_auditor(self.auditor):
+            return self.auditor
+        if self.audit_mode == MODE_META:
+            return UNSPECIFIED_AUDITOR
+        return self.unidentified_token()
+
+    @property
     def identity(self) -> AuditIdentity:
         return AuditIdentity(
             time=self.time_token,
@@ -264,7 +289,7 @@ class ReportHeader:
         # filename, and write_report overwrites a repeated identity by design --
         # so the second audit silently deleted the first. Naming them apart
         # costs one path segment and keeps both.
-        name += f".{_slug(self.auditor if is_identified_auditor(self.auditor) else self.unidentified_token())}"
+        name += f".{_slug(self.auditor_token)}"
         return name + ".md"
 
     def unidentified_token(self) -> str:

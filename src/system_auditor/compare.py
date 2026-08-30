@@ -39,7 +39,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
-from .report import is_identified_auditor, ReportHeader
+from .report import ReportHeader, is_identified_auditor
 from .tokens import (
     CROSS_SYSTEM,
     DIM_DOMAIN,

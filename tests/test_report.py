@@ -349,3 +349,33 @@ def test_a_named_auditor_writes_without_a_warning(tmp_path):
         target = write_report(tmp_path, header, "# x\n\nbody")
     assert not [item for item in caught if "identified auditor" in str(item.message)]
     assert target.name.endswith(".opus-5.md")
+
+
+def test_rescued_unknown_audits_keep_two_files_but_one_identity(tmp_path):
+    """Beide Haelften der Trennung auf einmal -- sie gehoeren zusammen.
+
+    Die Datei muss eindeutig sein, sonst loescht ein Audit das andere. Die
+    Identitaet darf es NICHT sein: ohne Modellnamen liegt keine unterscheidbare
+    Stimme vor, und zwei davon duerfen sich nicht als zwei uebereinstimmende
+    Rater lesen. Ein frueherer Anlauf machte beides eindeutig und brach damit die
+    Migration -- ein Legacy-Bericht ohne Kopf kann keinen Stand-in tragen, also
+    haette eine Neuformulierung derselben Aussage als zweiter Bericht gezaehlt.
+    """
+    import warnings as _w
+
+    def _run(run_id):
+        header = ReportHeader(
+            domain="bundles",
+            system="ASUS-GEI",
+            time_token=W0810,
+            run_id=run_id,
+            started_utc=utcnow(),
+            finished_utc=utcnow(),
+        )
+        with _w.catch_warnings():
+            _w.simplefilter("ignore")
+            return write_report(tmp_path, header, "body")
+
+    first, second = _run("lauf-a"), _run("lauf-b")
+    assert first != second and first.exists() and second.exists()
+    assert len({header.identity for header in list_reports(tmp_path)}) == 1
