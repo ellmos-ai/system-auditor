@@ -60,6 +60,7 @@ from .meta import (
     stale_windows,
     write_meta,
 )
+from .pages_drift import PagesDriftError, PagesDriftResult, audit_pages_drift
 from .report import (
     MODE_META,
     MODE_SELF,
@@ -173,6 +174,10 @@ __all__ = [
     "ACTION_CREATE",
     "ACTION_UPDATE",
     "ACTION_SKIP",
+    # deterministic domain checks
+    "audit_pages_drift",
+    "PagesDriftResult",
+    "PagesDriftError",
     # discovery + sinks
     "discover",
     "DiscoveryResult",

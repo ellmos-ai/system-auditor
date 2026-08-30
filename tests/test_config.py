@@ -22,7 +22,11 @@ def test_the_shipped_example_actually_loads(tmp_path):
 
     config = load(target, home="C:/Users/testuser")
     assert config.grid.period == "7d"
-    assert config.domain_names() == ["beispiel-domaene", "beispiel-integrationspfad"]
+    assert config.domain_names() == [
+        "pages-drift",
+        "beispiel-domaene",
+        "beispiel-integrationspfad",
+    ]
     assert config.policy["cross-system-rater"]["mode"] == "always"
     assert config.policy_stores  # not empty
 

@@ -3,7 +3,7 @@
 # system-auditor
 
 [![CI](https://github.com/ellmos-ai/system-auditor/actions/workflows/ci.yml/badge.svg)](https://github.com/ellmos-ai/system-auditor/actions/workflows/ci.yml)
-[![tests](https://img.shields.io/badge/pytest-158%20passed%20%7C%20100%25-brightgreen)](tests/)
+[![tests](https://img.shields.io/badge/pytest-161%20passed%20%7C%20100%25-brightgreen)](tests/)
 [![python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)](pyproject.toml)
 [![platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)](pyproject.toml)
 [![privacy](https://img.shields.io/badge/privacy-100%25%20Local--First%20%7C%20Zero--Egress-brightgreen)](SECURITY.md)
@@ -277,7 +277,19 @@ system-auditor meta-plan --reports ./reports --aggregation interrater
 
 # Identify single audits belonging to previous windows
 system-auditor stale --reports ./reports --system $HOSTNAME
+
+# Deterministic catalog-to-Pages check for the pages-drift example domain
+system-auditor --json pages-drift \
+  --modules-catalog "<HOME>/OneDrive/.TOPICS/.AI/.MODULES/modules.catalog.json" \
+  --skills-registry "<HOME>/OneDrive/.TOPICS/.AI/.SKILLS/registry/components.json" \
+  --bundles-catalog "<HOME>/OneDrive/.TOPICS/.AI/.BUNDLES/bundles.catalog.v1.json" \
+  --site-dir "C:/_Local_DEV/repos/ellmos-ai.github.io"
 ```
+
+`pages-drift` returns exit 0 without drift, exit 1 for evidenced mismatches, and exit 2 for
+incomplete or unreadable inputs. It compares the three catalog counts and public module IDs,
+and enforces that a recipe released on `bundles.html` cannot name a non-public module. The domain
+is added to the example configuration only; no host-local live configuration is invented.
 
 ---
 

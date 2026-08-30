@@ -19,6 +19,7 @@ from . import __version__
 from .config import load as load_config
 from .discovery import discover
 from .meta import due_aggregations, plan_all, stale_windows
+from .pages_drift import PagesDriftError, audit_pages_drift
 from .report import list_reports, next_domain
 from .tokens import AGGREGATIONS, TimeGrid, utcnow
 
@@ -247,6 +248,21 @@ def cmd_config(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_pages_drift(args: argparse.Namespace) -> int:
+    try:
+        result = audit_pages_drift(
+            Path(args.modules_catalog),
+            Path(args.skills_registry),
+            Path(args.bundles_catalog),
+            Path(args.site_dir),
+        )
+    except PagesDriftError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 2
+    _print(result.as_dict(), args.json)
+    return 0 if result.ok else 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="system-auditor",
@@ -311,6 +327,15 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_config = sub.add_parser("config", help="show the resolved configuration")
     p_config.set_defaults(func=cmd_config)
+
+    p_pages = sub.add_parser(
+        "pages-drift", help="compare module/skill/bundle catalogs with the generated Pages site"
+    )
+    p_pages.add_argument("--modules-catalog", required=True)
+    p_pages.add_argument("--skills-registry", required=True)
+    p_pages.add_argument("--bundles-catalog", required=True)
+    p_pages.add_argument("--site-dir", required=True)
+    p_pages.set_defaults(func=cmd_pages_drift)
 
     return parser
 

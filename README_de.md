@@ -3,7 +3,7 @@
 # system-auditor
 
 [![CI](https://github.com/ellmos-ai/system-auditor/actions/workflows/ci.yml/badge.svg)](https://github.com/ellmos-ai/system-auditor/actions/workflows/ci.yml)
-[![tests](https://img.shields.io/badge/pytest-158%20bestanden%20%7C%20100%25-brightgreen)](tests/)
+[![tests](https://img.shields.io/badge/pytest-161%20bestanden%20%7C%20100%25-brightgreen)](tests/)
 [![python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)](pyproject.toml)
 [![platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)](pyproject.toml)
 [![privacy](https://img.shields.io/badge/datenschutz-100%25%20Local--First%20%7C%20Zero--Egress-brightgreen)](SECURITY.md)
@@ -277,7 +277,20 @@ system-auditor meta-plan --reports ./reports --aggregation interrater
 
 # Einzelaudits aus früheren Zeitfenstern identifizieren
 system-auditor stale --reports ./reports --system $HOSTNAME
+
+# Deterministischer Katalog-gegen-Pages-Check der Beispiel-Domäne pages-drift
+system-auditor --json pages-drift \
+  --modules-catalog "<HOME>/OneDrive/.TOPICS/.AI/.MODULES/modules.catalog.json" \
+  --skills-registry "<HOME>/OneDrive/.TOPICS/.AI/.SKILLS/registry/components.json" \
+  --bundles-catalog "<HOME>/OneDrive/.TOPICS/.AI/.BUNDLES/bundles.catalog.v1.json" \
+  --site-dir "C:/_Local_DEV/repos/ellmos-ai.github.io"
 ```
+
+`pages-drift` liefert Exit 0 ohne Drift, Exit 1 bei belegten Abweichungen und Exit 2 bei
+unvollständigen/unlesbaren Eingaben. Neben Zahlen und öffentlichen Modul-IDs prüft der Befehl
+die Regel: Ein auf `bundles.html` freigegebenes Rezept darf kein nichtöffentliches Modul nennen.
+Der passende `domains[]`-Eintrag steht ausschließlich in der Beispielkonfiguration; eine nicht
+vorhandene lokale Live-Config wird nicht erfunden.
 
 ---
 

@@ -65,6 +65,10 @@ liefert bei Verletzung einen normalen ABC-Fund):
 - **I2 Referenz-Auflösbarkeit** — jede Komponenten-Referenz (Bundle → Modul, Stack →
   Bundle) löst gegen die Registry auf; keine Referenz ohne Binding oder
   declared-only-Begründung.
+  Für die Domäne `pages-drift` gilt zusätzlich: Katalog-/Registry-Zahlen und die IDs aller
+  öffentlichen Module müssen mit der projizierten Site übereinstimmen. Nennt ein auf der Site
+  freigegebenes Rezept ein nichtöffentliches Modul, ist das ein normaler I2/K1-Fund — keine
+  Ausnahme- oder Sperrliste von Hand führen.
 - **I3 Naht-Ehrlichkeit** — eine Schnittstelle, die als kanonisch deklariert ist,
   schreibt wirklich in die kanonische Senke (kein stilles Ausweichen in eine
   Zweitablage).

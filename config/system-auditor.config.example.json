@@ -42,6 +42,17 @@
 
   "domains": [
     {
+      "name": "pages-drift",
+      "path": "<HOME>/OneDrive/.TOPICS/.AI",
+      "focus": "K1/I2: Katalog-Modulzahl, Skill-Registry-Zahl und Bundle-Zahl gegen die in index.html genannten Zahlen pruefen; IDs aller public-Module gegen die projizierten Site-Modul-IDs pruefen; jedes auf bundles.html freigegebene Rezept muss aufloesbare public-Module nennen -- ein nicht-oeffentliches Mitglied ist ein Fund.",
+      "members": [
+        "<HOME>/OneDrive/.TOPICS/.AI/.MODULES/modules.catalog.json",
+        "<HOME>/OneDrive/.TOPICS/.AI/.SKILLS/registry/components.json",
+        "<HOME>/OneDrive/.TOPICS/.AI/.BUNDLES/bundles.catalog.v1.json",
+        "C:/_Local_DEV/repos/ellmos-ai.github.io"
+      ]
+    },
+    {
       "name": "beispiel-domaene",
       "path": "<HOME>/pfad/zur/domaene",
       "focus": "Woran diese Domaene geprueft wird. Grosse Baeume hier ausdruecklich auf ihre Steuerungsebene begrenzen, damit ein Lauf ehrlich sagen kann, was er abgedeckt hat."
