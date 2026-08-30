@@ -9,7 +9,14 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-import tomllib
+import pytest
+
+# tomllib ist erst ab 3.11 in der stdlib, pyproject sagt requires-python >=3.10
+# und die CI-Matrix testet 3.10 -- dort brach die Sammlung des ganzen Moduls ab.
+# Ueberspringen statt tomli als Testabhaengigkeit aufzunehmen: die geprueften
+# Invarianten sind repoweit, nicht versionsabhaengig, und werden auf 3.11-3.13
+# weiterhin gepruft. Ein Skip meldet sich, ein ImportError toetet den Lauf.
+tomllib = pytest.importorskip("tomllib", reason="stdlib erst ab Python 3.11")
 
 ROOT = Path(__file__).resolve().parent.parent
 
