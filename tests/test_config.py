@@ -1,7 +1,7 @@
 """Configuration -- a file that nothing reads is worse than none."""
 import json
 
-from system_auditor.config import load
+from system_auditor.config import live_host, load
 from system_auditor.tokens import utcnow
 
 
@@ -193,3 +193,30 @@ def test_unknown_live_host_does_not_claim_a_mismatch(tmp_path, monkeypatch):
     cfg = cfgmod.load(_write_host_cfg(tmp_path, system="FOREIGN-HOST"))
 
     assert cfg.host_mismatch is None
+
+
+def test_auditor_policy_per_run_reads_as_a_decision_not_an_oversight(tmp_path):
+    """T-20260830-966677444: Absicht und Versaeumnis waren nicht unterscheidbar.
+
+    Die alte Zeile ("a second model would overwrite this one's audit") stand bei
+    JEDEM Aufruf -- auch bei reinen Leseabfragen, wo ein fehlender Token folgenlos
+    ist. Ein Leser ohne Modulkenntnis hat sie daraufhin als Fehlkonfiguration
+    gemeldet. Das ist tatsaechlich passiert und der Anlass dieses Tickets.
+    """
+    path = tmp_path / "system-auditor.config.json"
+    path.write_text(
+        json.dumps({"system": live_host() or "H1", "auditor_policy": "per-run"}),
+        encoding="utf-8",
+    )
+    notes = " ".join(load(path).notes)
+    assert "by design" in notes
+    assert "would overwrite" not in notes
+
+
+def test_without_the_policy_the_note_still_asks_for_a_token(tmp_path):
+    """Ein wirklich vergessener Token muss weiterhin auffallen."""
+    path = tmp_path / "system-auditor.config.json"
+    path.write_text(json.dumps({"system": live_host() or "H1"}), encoding="utf-8")
+    notes = " ".join(load(path).notes)
+    assert "auditor is unset" in notes
+    assert "per-run" in notes  # nennt den Ausweg, statt nur zu klagen

@@ -250,3 +250,102 @@ def test_window_start_drives_chronology_not_the_token(tmp_path):
     )
     assert result.windows == ["sprint-9", "sprint-10"]
     assert result.items[0].classification == "resolved"  # not "new"
+
+
+# --- T-20260830-966677444: der unbekannte Auditor ---------------------------
+
+
+def test_two_unknown_auditors_do_not_overwrite_each_other(tmp_path):
+    """Der eigentliche Datenverlust: gleiche vier Token, kein Auditor.
+
+    Vor dem Fix liess filename() den Auditor-Teil weg, sobald er 'unspecified'
+    war. Zwei verschiedene Laeufe derselben Domaene/Maschine/Zeit trafen damit
+    denselben Dateinamen, und write_report ueberschreibt eine wiederholte
+    Identitaet mit Absicht -- der erste Bericht war weg, ohne dass irgendetwas
+    es sagte. Genau hier schwieg die Warnung, waehrend sie bei jeder harmlosen
+    Leseabfrage feuerte.
+    """
+    import warnings as _w
+
+    def _run(run_id, body):
+        header = ReportHeader(
+            domain="bundles",
+            system="ASUS-GEI",
+            time_token=W0810,
+            run_id=run_id,
+            started_utc=utcnow(),
+            finished_utc=utcnow(),
+        )
+        with _w.catch_warnings():
+            _w.simplefilter("ignore")
+            return write_report(tmp_path, header, body)
+
+    first = _run("lauf-a", "# a\n\nerster")
+    second = _run("lauf-b", "# b\n\nzweiter")
+
+    assert first != second, "zwei unbekannte Auditoren teilen sich einen Dateinamen"
+    assert first.exists() and second.exists()
+    assert "erster" in first.read_text(encoding="utf-8")
+
+
+def test_the_same_run_still_overwrites_its_own_artefact(tmp_path):
+    """Die Kehrseite: Eindeutigkeit darf die Korrektur nicht kaputtmachen.
+
+    Ein wiederholter Lauf mit derselben run_id ist eine Richtigstellung
+    derselben Aussage und muss weiterhin dieselbe Datei treffen -- sonst
+    sammelt jeder Rerun eine neue Karteileiche an.
+    """
+    import warnings as _w
+
+    def _run(body):
+        header = ReportHeader(
+            domain="bundles",
+            system="ASUS-GEI",
+            time_token=W0810,
+            run_id="derselbe-lauf",
+            started_utc=utcnow(),
+            finished_utc=utcnow(),
+        )
+        with _w.catch_warnings():
+            _w.simplefilter("ignore")
+            return write_report(tmp_path, header, body)
+
+    assert _run("# x\n\nalt") == _run("# x\n\nneu")
+
+
+def test_writing_without_an_auditor_says_so_where_it_matters(tmp_path):
+    """Die Warnung gehoert an die schreibende Stelle -- und nur dorthin."""
+    import warnings as _w
+
+    header = ReportHeader(
+        domain="bundles",
+        system="ASUS-GEI",
+        time_token=W0810,
+        run_id="x",
+        started_utc=utcnow(),
+        finished_utc=utcnow(),
+    )
+    with _w.catch_warnings(record=True) as caught:
+        _w.simplefilter("always")
+        write_report(tmp_path, header, "# x\n\nbody")
+    assert any("identified auditor" in str(item.message) for item in caught)
+
+
+def test_a_named_auditor_writes_without_a_warning(tmp_path):
+    """Sonst waere die neue Meldung genauso wertlos wie die alte Dauerwarnung."""
+    import warnings as _w
+
+    header = ReportHeader(
+        domain="bundles",
+        system="ASUS-GEI",
+        time_token=W0810,
+        run_id="x",
+        auditor="opus-5",
+        started_utc=utcnow(),
+        finished_utc=utcnow(),
+    )
+    with _w.catch_warnings(record=True) as caught:
+        _w.simplefilter("always")
+        target = write_report(tmp_path, header, "# x\n\nbody")
+    assert not [item for item in caught if "identified auditor" in str(item.message)]
+    assert target.name.endswith(".opus-5.md")

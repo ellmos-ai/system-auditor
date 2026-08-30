@@ -55,6 +55,10 @@ class Config:
     convention_max_depth: int = 2
     measure_sink: dict = field(default_factory=lambda: {"kind": "file"})
     evidence_level_default: int = 1
+    #: T-20260830-966677444: "per-run" says the empty auditor field is a decision,
+    #: not an oversight -- the token is model-dependent and belongs to the run,
+    #: so a shared host config deliberately declines to guess one.
+    auditor_policy: str = ""
     source: str = "defaults"
     notes: list[str] = field(default_factory=list)
     # T-20260830-419610437: (konfigurierter Host, tatsaechlicher Host), sonst None.
@@ -220,6 +224,7 @@ def load(path: str | Path | None = None, home: str | None = None) -> Config:
         convention_max_depth=int(data.get("convention_max_depth", 2) or 2),
         measure_sink=dict(data.get("measure_sink") or {"kind": "file"}),
         evidence_level_default=int(data.get("evidence_level_default", 1) or 1),
+        auditor_policy=str(data.get("auditor_policy", "")),
         source=str(found),
         notes=notes,
     )
@@ -254,8 +259,21 @@ def load(path: str | Path | None = None, home: str | None = None) -> Config:
                 "host name"
             )
     if config.auditor in ("", "unspecified", "<MODELL-ODER-AGENT>"):
-        config.notes.append(
-            "auditor is unset -- a second model would overwrite this one's audit "
-            "and interrater comparison is impossible"
-        )
+        # T-20260830-966677444: the old text was a standing alarm. It fired on
+        # every read-only query -- where a missing token has no consequence at
+        # all -- and it could not tell a forgotten value from a deliberate one.
+        # A reader who did not know the module's internals reasonably read it as
+        # a misconfiguration and reported it as a blocker. That happened. A
+        # warning that is always on is not information.
+        if config.auditor_policy == "per-run":
+            config.notes.append(
+                "auditor is set per run by design (auditor_policy=per-run) -- "
+                "pass --auditor or SYSTEM_AUDITOR_AUDITOR before writing an audit"
+            )
+        else:
+            config.notes.append(
+                "auditor is unset -- pass --auditor or SYSTEM_AUDITOR_AUDITOR "
+                "before writing an audit, or declare auditor_policy=\"per-run\" "
+                "if leaving it to the run is intended"
+            )
     return config

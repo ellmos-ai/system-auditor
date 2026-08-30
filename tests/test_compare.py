@@ -329,3 +329,29 @@ def test_build_meta_refuses_a_timeseries():
     runs = [_run("H1", [Finding(GARDENER, "drift")]), _run("H2", [Finding(GARDENER, "drift")])]
     with pytest.raises(ValueError, match="build_timeseries"):
         build_meta(runs, TIMESERIES)
+
+
+def test_an_unidentified_auditor_cannot_stand_as_a_rater():
+    """T-20260830-966677444: zwei Berichte ohne Modellnamen sind nicht zwei Rater.
+
+    Vor dem Fix verglich interrater sie klaglos -- und ein Ergebnis, das in
+    Wahrheit dasselbe Modell zweimal zeigt, liest sich als Uebereinstimmung
+    zweier Modelle. Blockieren statt still verwerfen: eine Panelanalyse, die
+    einen Teilnehmer verschweigt, sieht vollstaendig aus.
+    """
+    runs = [
+        _run("H1", [Finding(GARDENER, "pointer-drift")], auditor="opus"),
+        _run("H1", [Finding(GARDENER, "pointer-drift")], auditor=""),
+    ]
+    result = build_meta(runs, INTERRATER)
+    assert not result.comparability.ok
+    assert any("auditor not identified" in b for b in result.comparability.blockers)
+
+
+def test_identified_raters_still_compare_normally():
+    """Gegenprobe -- der Blocker darf nicht jeden Interrater-Vergleich toeten."""
+    runs = [
+        _run("H1", [Finding(GARDENER, "pointer-drift")], auditor="opus"),
+        _run("H1", [Finding(GARDENER, "pointer-drift")], auditor="sonnet"),
+    ]
+    assert build_meta(runs, INTERRATER).comparability.ok

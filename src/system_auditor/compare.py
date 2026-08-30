@@ -39,7 +39,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
-from .report import ReportHeader
+from .report import is_identified_auditor, ReportHeader
 from .tokens import (
     CROSS_SYSTEM,
     DIM_DOMAIN,
@@ -288,6 +288,22 @@ def check_comparability(runs: list[AuditRun], aggregation: Aggregation) -> Compa
             blockers.append(
                 f"participants differ in fixed dimension {dimension}: "
                 + ", ".join(sorted(values))
+            )
+
+    # An unidentified auditor cannot stand as a voice of its own. Blocking is
+    # deliberate rather than quietly dropping the run: a comparison that silently
+    # omits a participant still reads as a complete rater panel. Naming the run
+    # lets the operator supply --auditor and rerun.
+    if "auditor" in aggregation.varying:
+        unidentified = sorted(
+            run.header.identity.value("system") + "/" + (run.header.auditor or "")
+            for run in runs
+            if not is_identified_auditor(run.header.auditor)
+        )
+        if unidentified:
+            blockers.append(
+                "auditor not identified for: " + ", ".join(unidentified)
+                + " -- an unknown model cannot be compared against another model"
             )
 
     participants = [run.participant(aggregation) for run in runs]

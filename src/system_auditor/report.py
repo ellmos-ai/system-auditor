@@ -34,8 +34,10 @@ Legacy ``SIG-TU-*.md`` reports without front matter are still read and flagged.
 
 from __future__ import annotations
 
+import hashlib
 import re
 import unicodedata
+import warnings
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -59,6 +61,30 @@ MODE_SELF = "self"
 MODE_META = "meta"
 
 UNSPECIFIED_AUDITOR = "unspecified"
+
+#: The auditor could not be determined for this run. Deliberately distinct from
+#: UNSPECIFIED: ".AI/GLOSSARY.md" separates "nothing found" (empty) from "could
+#: not look" (unavailable), and this is the second. A model cannot introspect
+#: its own deployment name -- it only knows what the harness told it -- so an
+#: honest "unknown" beats a plausible guess. What it must never do is look like
+#: a rater: see is_identified_auditor().
+UNKNOWN_AUDITOR = "unknown"
+
+
+def is_identified_auditor(token: str) -> bool:
+    """Does this token name a model that can stand as its own rater?
+
+    False for the empty string, for ``unspecified`` and for every ``unknown``
+    form including the disambiguated ``unknown-<hash>``. The distinction is not
+    cosmetic: an unidentified run may still be written and read, but it must not
+    be counted as an independent voice in an interrater comparison -- two audits
+    that agree because they came from the same model would otherwise read as
+    agreement between two models.
+    """
+    value = (token or "").strip().casefold()
+    if not value or value == UNSPECIFIED_AUDITOR:
+        return False
+    return not (value == UNKNOWN_AUDITOR or value.startswith(UNKNOWN_AUDITOR + "-"))
 
 #: 1 = read the domain directly · 2 = a system map narrowed the search
 #: 3 = additionally backed by receipts.  Declared per run so a later, deeper
@@ -233,9 +259,30 @@ class ReportHeader:
             + _KEY_SEPARATOR.join((_slug(self.time_token), _slug(self.domain)))
             + f".{_slug(self.system)}"
         )
-        if self.auditor and self.auditor != UNSPECIFIED_AUDITOR:
-            name += f".{_slug(self.auditor)}"
+        # An unidentified auditor used to be omitted from the name. That made
+        # two unknown raters of the same window/domain/machine collide on one
+        # filename, and write_report overwrites a repeated identity by design --
+        # so the second audit silently deleted the first. Naming them apart
+        # costs one path segment and keeps both.
+        name += f".{_slug(self.auditor if is_identified_auditor(self.auditor) else self.unidentified_token())}"
         return name + ".md"
+
+    def unidentified_token(self) -> str:
+        """A distinct, *stable* stand-in for a run whose auditor is unknown.
+
+        Stable matters twice over: a corrected rerun of the same audit must
+        overwrite its own artefact (that is what write_report is for), while a
+        different run must not. The run id is the natural seed; the start time
+        is the fallback. With neither, the bare token is all that is honest --
+        two such runs still collide, but nothing better is knowable.
+        """
+        given = (self.auditor or "").strip()
+        if given.casefold().startswith(UNKNOWN_AUDITOR):
+            return given
+        seed = self.run_id or (self.started_utc.isoformat() if self.started_utc else "")
+        if not seed:
+            return UNKNOWN_AUDITOR
+        return f"{UNKNOWN_AUDITOR}-{hashlib.sha256(seed.encode('utf-8')).hexdigest()[:8]}"
 
 
 def meta_filename(aggregation: str, key: list[str]) -> str:
@@ -426,6 +473,17 @@ def write_report(reports_dir: Path, header: ReportHeader, body: str) -> Path:
     directory = Path(reports_dir)
     directory.mkdir(parents=True, exist_ok=True)
     target = directory / header.filename()
+    if header.audit_mode != MODE_META and not is_identified_auditor(header.auditor):
+        # This is the one moment the missing token has consequences, and it was
+        # the one moment nothing said so: the CLI warned on every read-only
+        # query instead. warnings, not stderr -- a library must not decide where
+        # a caller's diagnostics go.
+        warnings.warn(
+            f"writing an audit without an identified auditor (filed as "
+            f"{header.filename()}); it will not count as a rater in interrater "
+            f"comparisons -- pass --auditor or set SYSTEM_AUDITOR_AUDITOR",
+            stacklevel=2,
+        )
     target.write_text(header.to_front_matter() + "\n" + body.rstrip() + "\n", encoding="utf-8")
     header.path = target
     return target
