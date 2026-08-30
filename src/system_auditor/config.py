@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import json
 import os
+import platform
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -56,6 +57,10 @@ class Config:
     evidence_level_default: int = 1
     source: str = "defaults"
     notes: list[str] = field(default_factory=list)
+    # T-20260830-419610437: (konfigurierter Host, tatsaechlicher Host), sonst None.
+    # Schreibende Laeufe muessen hierauf fail-closed reagieren; Leseabfragen duerfen
+    # weiterlaufen, muessen die Abweichung aber melden.
+    host_mismatch: tuple[str, str] | None = None
 
     def domain_names(self) -> list[str]:
         return [str(entry.get("name", "")) for entry in self.domains if entry.get("name")]
@@ -109,6 +114,21 @@ _SHARED_HINTS = (
     "onedrive", "dropbox", "nextcloud", "owncloud", "google drive", "googledrive",
     "syncthing", "icloud", "cloudstation", "/.sync", "\\.sync",
 )
+
+
+def live_host() -> str:
+    """The name this machine actually answers to, or "" if it cannot be determined.
+
+    Deliberately the OS, not the environment and not the session: ``COMPUTERNAME`` and
+    ``HOSTNAME`` are inherited by child processes and can therefore carry a foreign
+    value into a run that has nothing to do with them. ``platform.node()`` asks the
+    machine.  Returns "" rather than raising -- an unanswerable question must not abort
+    a read-only sweep; the caller decides what an unknown host means.
+    """
+    try:
+        return platform.node() or ""
+    except Exception:
+        return ""
 
 
 def _looks_shared(path: str) -> bool:
@@ -215,6 +235,24 @@ def load(path: str | Path | None = None, home: str | None = None) -> Config:
             "system is unset or still the placeholder -- reports would be filed "
             "under a name no other machine recognises"
         )
+    else:
+        # T-20260830-419610437: the old check caught only the forgetful case (empty or
+        # placeholder). It did not catch the more dangerous one -- a value that is set,
+        # plausible and simply wrong. That happens by copying a config: the shared
+        # findings ask for a host-local file "from a template", and a forgotten
+        # `system` survives that unnoticed. The host is one of the four tokens an audit
+        # is identified by, so a wrong one makes two reports of the SAME machine look
+        # like two systems -- and cross-system aggregation would then claim an
+        # agreement that never happened. Unlike the model token, the true value is
+        # cheap and reliable to obtain: the OS knows it. So we ask.
+        live = live_host()
+        if live and config.system.strip().casefold() != live.strip().casefold():
+            config.host_mismatch = (config.system, live)
+            config.notes.append(
+                f"system is {config.system!r} but this machine reports {live!r} -- "
+                "a copied config; reports and locks would be filed under a foreign "
+                "host name"
+            )
     if config.auditor in ("", "unspecified", "<MODELL-ODER-AGENT>"):
         config.notes.append(
             "auditor is unset -- a second model would overwrite this one's audit "

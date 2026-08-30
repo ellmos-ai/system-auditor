@@ -141,3 +141,55 @@ def test_the_aggregation_policy_comes_from_the_file(tmp_path):
     policy = load(path).policy
     assert policy["timeseries"]["mode"] == "always"
     assert policy["cross-system-rater"]["mode"] == "always"  # default kept
+
+
+# --- T-20260830-419610437: deterministische Hostbestimmung -------------------
+
+def _write_host_cfg(tmp_path, **over):
+    import json
+    cfg = {"system": "SOME-HOST", "reports_dir": "X:/onedrive/reports"}
+    cfg.update(over)
+    target = tmp_path / "system-auditor.config.json"
+    target.write_text(json.dumps(cfg), encoding="utf-8")
+    return target
+
+
+def test_host_mismatch_is_detected_and_named(tmp_path, monkeypatch):
+    """Ein gesetzter, plausibler, aber FALSCHER Host muss auffallen.
+
+    Der alte Check fing nur leer/Platzhalter ab -- also den vergesslichen Fall.
+    Dieser hier ist der gefaehrliche: eine kopierte Config traegt den Hostnamen
+    der Quellmaschine und besteht jede Plausibilitaetspruefung.
+    """
+    from system_auditor import config as cfgmod
+
+    monkeypatch.setattr(cfgmod, "live_host", lambda: "REAL-HOST")
+    cfg = cfgmod.load(_write_host_cfg(tmp_path, system="FOREIGN-HOST"))
+
+    assert cfg.host_mismatch == ("FOREIGN-HOST", "REAL-HOST")
+    assert any("FOREIGN-HOST" in n and "REAL-HOST" in n for n in cfg.notes)
+
+
+def test_matching_host_is_silent(tmp_path, monkeypatch):
+    """Stimmt der Host, darf nichts gemeldet werden -- sonst wird die Meldung Rauschen."""
+    from system_auditor import config as cfgmod
+
+    monkeypatch.setattr(cfgmod, "live_host", lambda: "REAL-HOST")
+    cfg = cfgmod.load(_write_host_cfg(tmp_path, system="real-host"))  # Gross/Klein egal
+
+    assert cfg.host_mismatch is None
+    assert not any("reports" in n and "foreign host" in n for n in cfg.notes)
+
+
+def test_unknown_live_host_does_not_claim_a_mismatch(tmp_path, monkeypatch):
+    """Laesst sich der Host nicht ermitteln, ist das KEIN Fehlbefund.
+
+    'nicht feststellbar' und 'stimmt nicht' sind verschiedene Aussagen; sie zu
+    vermischen wuerde einen stillen Fehler in einen lauten Fehlalarm verwandeln.
+    """
+    from system_auditor import config as cfgmod
+
+    monkeypatch.setattr(cfgmod, "live_host", lambda: "")
+    cfg = cfgmod.load(_write_host_cfg(tmp_path, system="FOREIGN-HOST"))
+
+    assert cfg.host_mismatch is None
