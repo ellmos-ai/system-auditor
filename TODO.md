@@ -4,13 +4,13 @@
 
 | Category | Status |
 |---|---|
-| Tests / Lint | 161 passed, ruff sauber, keine Abhängigkeiten |
+| Tests / Lint | 175 passed, ruff sauber, keine Abhängigkeiten |
 | Sprachstufe (P-006) | Core erfüllt: README + Rollen-Prompt + Templates je DE und EN |
 | Release-Gate | Lauf siehe RELEASE_GATE.md |
 | Bewusste Entscheidung | Kern-Doku zweisprachig DE/EN (CHANGELOG/TODO deutsch — internes Arbeitsjournal, absichtlich); `_review/`-Berichte bleiben lokal (gitignored): interne Systemdetails, kein Release-Inhalt |
 
 
-Stand: 2026-08-30 · Version 0.9.1 · 161 Tests grün, ruff sauber, keine Abhängigkeiten
+Stand: 2026-09-07 · Version 0.9.1 · 175 Tests grün, ruff sauber, keine Abhängigkeiten
 
 Drei externe Reviews sind eingearbeitet und liegen unter `_review/`:
 Codex 1 (Robustheit, 12 Funde), Codex 2 (Logik, 12 Funde), Fable (Benutzbarkeit).

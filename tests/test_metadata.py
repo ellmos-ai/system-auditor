@@ -6,6 +6,7 @@ invariants remain strictly synchronized and adhere to ecosystem standards.
 
 from __future__ import annotations
 
+import argparse
 import re
 from pathlib import Path
 
@@ -67,7 +68,7 @@ def test_readme_badges_parity():
     readme_de = (ROOT / "README_de.md").read_text(encoding="utf-8")
 
     expected_badges = [
-        "https://img.shields.io/badge/pytest-",
+        "https://img.shields.io/badge/pytest-175",
         "https://github.com/ellmos-ai/system-auditor/actions/workflows/ci.yml/badge.svg",
         "https://img.shields.io/badge/python-3.10",
         "https://img.shields.io/badge/ecosystem-ellmos--ai-purple",
@@ -237,3 +238,39 @@ def test_ci_workflow_integrity():
     assert "3.13" in ci_content
     assert "ruff check" in ci_content
     assert "pytest" in ci_content
+
+
+def test_cli_subcommands_registration():
+    """Verify that all standard subcommands are registered in CLI argument parser."""
+    from system_auditor.cli import build_parser
+
+    parser = build_parser()
+    subparsers_actions = [
+        action for action in parser._actions if isinstance(action, argparse._SubParsersAction)
+    ]
+    assert len(subparsers_actions) == 1
+    subparsers = subparsers_actions[0]
+    expected_commands = {
+        "config",
+        "time-token",
+        "next-domain",
+        "meta-plan",
+        "reports",
+        "stale",
+        "discover",
+        "pages-drift",
+    }
+    for cmd in expected_commands:
+        assert cmd in subparsers.choices, f"Subcommand '{cmd}' not found in CLI parser"
+
+
+def test_pages_drift_exports_and_contract():
+    """Verify deterministic pages-drift domain exports and invariants."""
+    import system_auditor
+
+    assert hasattr(system_auditor, "audit_pages_drift")
+    assert hasattr(system_auditor, "PagesDriftResult")
+    assert hasattr(system_auditor, "PagesDriftError")
+    assert "audit_pages_drift" in system_auditor.__all__
+    assert "PagesDriftResult" in system_auditor.__all__
+    assert "PagesDriftError" in system_auditor.__all__

@@ -3,6 +3,29 @@
 Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [SemVer](https://semver.org/lang/de/).
 
+## [0.9.1] - 2026-09-07
+
+Pfad A Repository-Hygiene, PEP 621 Master-Branch-URL-Angleichung, deterministische
+Pages-Drift-Domäne und Erweiterung der automatisierten Vertragstestsuite.
+
+### Hinzugefuegt
+
+- **Deterministische Pages-Drift-Audit-Domäne (`system_auditor/pages_drift.py` & CLI):**
+  Prüfung auf Drift zwischen Modul-, Skill- und Bundle-Katalogen und den generierten Pages-Statistiken
+  mit strukturierten Typen `PagesDriftResult` und `PagesDriftError` sowie Subcommand `system-auditor pages-drift`.
+- **Vertragstests für CLI-Subcommands und Export-Invarianten (`tests/test_metadata.py`):**
+  Zwei neue automatisierte Vertragstests (`test_cli_subcommands_registration` und
+  `test_pages_drift_exports_and_contract`), Gesamtzahl der Tests auf 175 gehoben (100% grün).
+
+### Geaendert
+
+- **PEP 621 Projekt-URLs (`pyproject.toml`):**
+  Angleichung der Dokumentations- und Security-Links (`Changelog`, `Security`) an den kanonischen
+  Standard-Branch `master` (anstelle von `main`).
+- **Dokumentations- und Metadaten-Parität:**
+  Aktualisierung der Shields.io Test-Badges in `README.md` und `README_de.md` (175 passed / bestanden | 100%),
+  maschinenlesbarem Kontext `llms.txt`, `TODO.md` und `RELEASE_GATE.md`.
+
 ## [0.9.1] - 2026-08-24
 
 Discoverability, Visual System Flowcharts, Multi-Host Lifecycle Sequence Diagrams,

@@ -48,8 +48,8 @@ Homepage = "https://github.com/ellmos-ai/system-auditor"
 Documentation = "https://github.com/ellmos-ai/system-auditor#readme"
 Repository = "https://github.com/ellmos-ai/system-auditor"
 Issues = "https://github.com/ellmos-ai/system-auditor/issues"
-Changelog = "https://github.com/ellmos-ai/system-auditor/blob/main/CHANGELOG.md"
-Security = "https://github.com/ellmos-ai/system-auditor/blob/main/SECURITY.md"
+Changelog = "https://github.com/ellmos-ai/system-auditor/blob/master/CHANGELOG.md"
+Security = "https://github.com/ellmos-ai/system-auditor/blob/master/SECURITY.md"
 Umbrella = "https://github.com/open-bricks/open-bricks"
 
 [tool.setuptools.packages.find]
