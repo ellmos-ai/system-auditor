@@ -9,6 +9,10 @@ Pfad B Discoverability, Branding, Dual Mermaid & Governance Invariants Hardening
 
 ### Hinzugefuegt
 
+- **Drittanbieter- & Lizenzinventar (`THIRD_PARTY_LICENSES.md`):**
+  Explizite Dokumentation der 100% Zero-External-Runtime-Dependencies-Garantie (`dependencies = []`), standardisierte Erfassung der Dev- und Build-Werkzeuge (`pytest`, `ruff`, `setuptools`, `build`, Python stdlib) sowie vollständige Lizenztexte (MIT, Apache-2.0, PSF).
+- **Automatisierte Vertragstests für Supply-Chain & Lizenzen (`tests/test_metadata.py`):**
+  3 neue automatisierte Vertragstests für `THIRD_PARTY_LICENSES.md`, PEP 639 `license-files` und erweiterte Secret-Ausschlussmuster in `.gitignore`; Gesamtzahl der Tests auf 184 gehoben (100% grün).
 - **Lokales Marketing- & Audit-Ledger (`MARKETING-LOG.txt`):**
   Strukturierte Dokumentation der Discoverability-Maßnahmen, Paritätskriterien und Roadmap-Empfehlungen.
 - **Tabelle der 10 Governance- & Laufzeit-Invarianten (`README.md` & `README_de.md`):**
@@ -18,6 +22,12 @@ Pfad B Discoverability, Branding, Dual Mermaid & Governance Invariants Hardening
 
 ### Geaendert
 
+- **PEP 639 Standard-Metadaten & optionale Dev-Dependencies (`pyproject.toml`):**
+  Verankerung von `license-files = ["LICENSE", "THIRD_PARTY_LICENSES.md"]` sowie Deklaration von `[project.optional-dependencies]` für `dev`.
+- **Supply-Chain & Secret-Härtung (`.gitignore`):**
+  Erweiterung um Ausschlüsse für TLS/SSL-Zertifikate und private Schlüssel (`*.pem`, `*.key`, `*.pfx`, `*.p12`), Package-Manager-Auth (`.npmrc`, `.pypirc`), generische Secret- und Token-Muster sowie Merge-Reste (`*.orig`, `*.rej`).
+- **Maschinenlesbarer LLM-Kontext (`llms.txt`):**
+  Aufnahme des Einstiegspunkts `THIRD_PARTY_LICENSES.md`, Aktualisierung des Teststands (184 passed) und Bereinigung auf echte deutsche Umlaute (ä, ö, ü, ß).
 - **Sicherheitsrichtlinie (`SECURITY.md`):**
   Erweiterung um `security@open-bricks.org` sowie verbindliche 48h Eingangsbestätigungs-SLA und 5-Werktage-Triage-Zusage.
 - **CI/CD Bytecode Compilation Gate (`.github/workflows/ci.yml`):**
@@ -27,7 +37,7 @@ Pfad B Discoverability, Branding, Dual Mermaid & Governance Invariants Hardening
 - **PEP 621 Projekt-URLs & Pytest-Optionen (`pyproject.toml`):**
   Aufnahme von `Parent Organization` und `Umbrella Ecosystem` URLs sowie `addopts = "-v"`.
 - **Ecosystem Matrix & Badges (`README.md` & `README_de.md`):**
-  Erweiterung auf 16 vernetzte Repositories über 8 Partner-Organisationen und Aktualisierung der Badges auf 181 Tests.
+  Erweiterung auf 16 vernetzte Repositories über 8 Partner-Organisationen und Aktualisierung der Badges auf 184 Tests.
 
 ## [0.9.1] - 2026-09-07
 

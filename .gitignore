@@ -40,10 +40,34 @@ LOCK*.txt
 
 # Release-Hygiene (Final Gate)
 .env
+.env.*
+!.env.example
 *.db
 .idea/
 .vscode/
 data/
+
+# Secrets, Tokens & Private Keys (Supply-Chain & Privacy Protection)
+*.pem
+*.key
+*.pfx
+*.p12
+*.crt
+*.cert
+*.token
+*.secret
+*token*
+*secret*
+.npmrc
+.pypirc
+credentials.json
+secrets.json
+id_rsa*
+id_ed25519*
+
+# Merge-Konflikt-Reste
+*.orig
+*.rej
 
 # Interne Review-Berichte (lokal wertvoll, nicht Teil des Release)
 _review/

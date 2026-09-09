@@ -1,45 +1,45 @@
 # system-auditor
 
-> Belegbasierte Systemaudits ueber mehrere Maschinen, mit Meta-Buendelung.
-> Last-checked: 2026-09-09 | Version: 0.9.1 | Tests: 181 passed | Lint: ruff clean
+> Belegbasierte Systemaudits über mehrere Maschinen, mit Meta-Bündelung.
+> Last-checked: 2026-09-09 | Version: 0.9.1 | Tests: 184 passed | Lint: ruff clean
 
 ## Was es ist
 
 Die mittlere Stufe einer Kette: Karte (system-explorer, optional) -> URTEIL
-(dieses Modul) -> Massnahme (Ticketsystem, optional). Drei Pruefrichtungen:
+(dieses Modul) -> Maßnahme (Ticketsystem, optional). Drei Prüfrichtungen:
 Regeltreue (Zustand vs. Regel), INTEGRATION (arbeiten die Module zusammen wie
-deklariert -- Pruefklassen I1-I7 ueber Manifeste/Bundles/Bindings/Proben) und
+deklariert -- Prüfklassen I1-I7 über Manifeste/Bundles/Bindings/Proben) und
 STEUERUNGS-KONSISTENZ (Steuerdateien, Policies und Entscheidungen untereinander --
-K1-K4: Quellen-Widerspruch, Entscheidungs-Kollision, Register-Aktualitaet,
+K1-K4: Quellen-Widerspruch, Entscheidungs-Kollision, Register-Aktualität,
 Duplikat-Standard). Konvergenz-Prinzip: jeder Fund endet mit einer Richtung --
-Realitaet an die Regel ODER Regel an die Realitaet (Entscheidungsvorlage).
+Realität an die Regel ODER Regel an die Realität (Entscheidungsvorlage).
 
 ## Kernidee
 
-Zwei Maschinen, die dieselbe Domaene auditieren, kommen NICHT zum selben
+Zwei Maschinen, die dieselbe Domäne auditieren, kommen NICHT zum selben
 Ergebnis -- das ist der Nutzen, nicht der Fehler. Gemessenes Beispiel: ein
 hartkodierter Pfad C:\Users\alice\... ist auf dem einen Host ein Befund und auf
 dem anderen korrekt.
 
 ## Vier Token, eine Regel
 
-Jedes Audit traegt time, domain, system, auditor. Meta-Audits entstehen, indem
+Jedes Audit trägt time, domain, system, auditor. Meta-Audits entstehen, indem
 Token festgehalten werden. IDENTIFIZIERBARKEIT: Eine Ursache darf nur
-zuschreiben, wer genau EINE Dimension variieren laesst -- im Konstruktor
+zuschreiben, wer genau EINE Dimension variieren lässt -- im Konstruktor
 erzwungen. Variieren zwei, ist die Aggregation deskriptiv (Bestandsaufnahme
 statt Urteil).
 
 Inferenziell: interrater (Modelle), cross-system-rater (Maschinen bei
 festgehaltenem Modell -- die stehende Stufe), cross-system (Maschinen, Modell
-unkontrolliert), cross-domain (Domaenen, ueber die Regel), timeseries /
-timeseries-rater (ueber Fenster, eigene Klassen).
-Deskriptiv: full-system (Domaene und Auditor variieren zugleich).
+unkontrolliert), cross-domain (Domänen, über die Regel), timeseries /
+timeseries-rater (über Fenster, eigene Klassen).
+Deskriptiv: full-system (Domäne und Auditor variieren zugleich).
 
 ## Klassen
 
 Momentaufnahme: systemwide / host_specific / inverse / divergent /
-unverifiable -- eine Prioritaetsprojektion, keine Partition; MetaFinding.also
-nennt die gleichzeitig vorliegenden Evidenzzustaende.
+unverifiable -- eine Prioritätsprojektion, keine Partition; MetaFinding.also
+nennt die gleichzeitig vorliegenden Evidenzzustände.
 Zeitreihe: new / persistent / resolved / recurring / unverifiable, mit den Flags
 first_absence_verified und continuity_verified.
 
@@ -54,15 +54,16 @@ geplanten Eingaben liegt. Das Koordinationsprotokoll liegt in lock-master
 ## Konfiguration
 
 config/system-auditor.config.example.json -> system-auditor.config.json.
-Gefunden ueber --config, SYSTEM_AUDITOR_CONFIG, ./, ./config/, ~/.system-auditor/.
-`system-auditor config` zeigt, was tatsaechlich gelesen wurde.
+Gefunden über --config, SYSTEM_AUDITOR_CONFIG, ./, ./config/, ~/.system-auditor/.
+`system-auditor config` zeigt, was tatsächlich gelesen wurde.
 
 ## Einstiegspunkte
 
-- README.md & README_de.md       Vollstaendige Dokumentation mit Mermaid-Architektur- und Sequenzdiagrammen
+- README.md & README_de.md       Vollständige Dokumentation mit Mermaid-Architektur- und Sequenzdiagrammen
 - SECURITY.md                   Zweisprachige Sicherheitsrichtlinie (Local-First, Zero-Egress, Non-Elevation)
-- MARKETING-LOG.txt             Audit-Ledger fuer Discoverability, Visual Architecture & Governance-Paritaet
-- prompts/AUDITOR.de.md + .en.md   Rollen-Prompt fuer Agenten (DE/EN)
+- THIRD_PARTY_LICENSES.md        Vollständiges Drittanbieter- und Lizenzinventar (Zero-Dependency-Kern & Dev-Tools)
+- MARKETING-LOG.txt             Audit-Ledger für Discoverability, Visual Architecture & Governance-Parität
+- prompts/AUDITOR.de.md + .en.md   Rollen-Prompt für Agenten (DE/EN)
 - templates/                    Berichts- und Meta-Templates (parser-kompatibel)
 - config/system-auditor.config.example.json   Konfigurationsvorlage
 - src/system_auditor/           tokens, report, meta, compare, timeseries, config, discovery, sinks, cli
@@ -73,13 +74,13 @@ Gefunden ueber --config, SYSTEM_AUDITOR_CONFIG, ./, ./config/, ~/.system-auditor
 ## Modellmanuell by design
 
 Das Meta-Audit ist die Interpretation des Auditors, kein Maschinenprodukt:
-Entdeckt ein Auditor Fremdberichte derselben Domaene im selben Fenster, schreibt
+Entdeckt ein Auditor Fremdberichte derselben Domäne im selben Fenster, schreibt
 er den Meta-Bericht direkt mit -- nach templates/META-BERICHT.de.md. meta-plan
 entscheidet OB (create/update/skip), build_meta dient der Kontrolle. reports_dir
 MUSS in einem cloud-geteilten Ordner liegen (Treffpunkt der Maschinen); `config`
 warnt bei host-lokalem Pfad.
 
-## Abhaengigkeiten
+## Abhängigkeiten
 
 Keine. Python 3.10+, nur Standardbibliothek. Alle Nachbarmodule sind optional
 und werden per Probe erkannt, nie vorausgesetzt.

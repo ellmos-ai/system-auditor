@@ -9,7 +9,7 @@ description = "Evidence-based system audits across several machines, with meta b
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
-license-files = ["LICENSE"]
+license-files = ["LICENSE", "THIRD_PARTY_LICENSES.md"]
 authors = [{ name = "Lukas Geiger" }]
 keywords = [
     "audit",
@@ -39,6 +39,13 @@ classifiers = [
     "Topic :: Security",
 ]
 dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6.0",
+    "build>=1.2.0",
+]
 
 [project.scripts]
 system-auditor = "system_auditor.cli:main"

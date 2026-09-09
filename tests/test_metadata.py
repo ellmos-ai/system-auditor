@@ -29,6 +29,7 @@ def test_required_root_documents_exist():
         "README_de.md",
         "SECURITY.md",
         "LICENSE",
+        "THIRD_PARTY_LICENSES.md",
         "CHANGELOG.md",
         "MARKETING-LOG.txt",
         "llms.txt",
@@ -69,7 +70,7 @@ def test_readme_badges_parity():
     readme_de = (ROOT / "README_de.md").read_text(encoding="utf-8")
 
     expected_badges = [
-        "https://img.shields.io/badge/pytest-181",
+        "https://img.shields.io/badge/pytest-184",
         "https://github.com/ellmos-ai/system-auditor/actions/workflows/ci.yml/badge.svg",
         "https://img.shields.io/badge/python-3.10",
         "https://img.shields.io/badge/ecosystem-ellmos--ai-purple",
@@ -374,3 +375,44 @@ def test_pyproject_pytest_addopts_and_ecosystem_urls():
 
     pytest_opts = pyproject.get("tool", {}).get("pytest", {}).get("ini_options", {})
     assert pytest_opts.get("addopts") == "-v"
+
+
+def test_third_party_licenses_inventory_and_zero_dependencies():
+    """Verify THIRD_PARTY_LICENSES.md presence, zero runtime dependencies, and license texts."""
+    target = ROOT / "THIRD_PARTY_LICENSES.md"
+    assert target.is_file(), "THIRD_PARTY_LICENSES.md is missing"
+
+    content = target.read_text(encoding="utf-8")
+    assert "Zero-Runtime-Dependency Guarantee" in content
+    assert "dependencies = []" in content
+    assert "pytest" in content
+    assert "ruff" in content
+    assert "setuptools" in content
+    assert "build" in content
+    assert "MIT License" in content
+    assert "Apache License 2.0" in content
+    assert "Python Software Foundation License" in content
+
+
+def test_pep639_license_files_metadata():
+    """Verify PEP 639 license-files declaration and optional dev dependencies in pyproject.toml."""
+    pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    license_files = pyproject.get("project", {}).get("license-files", [])
+    assert "LICENSE" in license_files
+    assert "THIRD_PARTY_LICENSES.md" in license_files
+
+    optional_deps = pyproject.get("project", {}).get("optional-dependencies", {})
+    assert "dev" in optional_deps
+    assert any("pytest" in d for d in optional_deps["dev"])
+
+
+def test_gitignore_secret_and_credential_patterns():
+    """Verify that .gitignore excludes secrets, private keys, tokens, certs, and merge residue."""
+    gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
+    assert "*.pem" in gitignore
+    assert "*.key" in gitignore
+    assert "*.token" in gitignore
+    assert "*.p12" in gitignore
+    assert ".npmrc" in gitignore
+    assert ".pypirc" in gitignore
+    assert "*.orig" in gitignore
