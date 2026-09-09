@@ -1,7 +1,7 @@
 # system-auditor
 
 > Belegbasierte Systemaudits ueber mehrere Maschinen, mit Meta-Buendelung.
-> Last-checked: 2026-09-07 | Version: 0.9.1 | Tests: 175 passed | Lint: ruff clean
+> Last-checked: 2026-09-09 | Version: 0.9.1 | Tests: 181 passed | Lint: ruff clean
 
 ## Was es ist
 
@@ -61,6 +61,7 @@ Gefunden ueber --config, SYSTEM_AUDITOR_CONFIG, ./, ./config/, ~/.system-auditor
 
 - README.md & README_de.md       Vollstaendige Dokumentation mit Mermaid-Architektur- und Sequenzdiagrammen
 - SECURITY.md                   Zweisprachige Sicherheitsrichtlinie (Local-First, Zero-Egress, Non-Elevation)
+- MARKETING-LOG.txt             Audit-Ledger fuer Discoverability, Visual Architecture & Governance-Paritaet
 - prompts/AUDITOR.de.md + .en.md   Rollen-Prompt fuer Agenten (DE/EN)
 - templates/                    Berichts- und Meta-Templates (parser-kompatibel)
 - config/system-auditor.config.example.json   Konfigurationsvorlage

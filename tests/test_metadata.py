@@ -30,6 +30,7 @@ def test_required_root_documents_exist():
         "SECURITY.md",
         "LICENSE",
         "CHANGELOG.md",
+        "MARKETING-LOG.txt",
         "llms.txt",
         "pyproject.toml",
         "ellmos-module.v2.json",
@@ -68,13 +69,16 @@ def test_readme_badges_parity():
     readme_de = (ROOT / "README_de.md").read_text(encoding="utf-8")
 
     expected_badges = [
-        "https://img.shields.io/badge/pytest-175",
+        "https://img.shields.io/badge/pytest-181",
         "https://github.com/ellmos-ai/system-auditor/actions/workflows/ci.yml/badge.svg",
         "https://img.shields.io/badge/python-3.10",
         "https://img.shields.io/badge/ecosystem-ellmos--ai-purple",
         "https://img.shields.io/badge/umbrella-open--bricks-blueviolet",
         "https://img.shields.io/badge/version-0.9.1",
         "https://img.shields.io/badge/llms.txt-Discovery%20Context-informational",
+        "https://img.shields.io/badge/security%20SLA-48h%20response%20%7C%205d%20triage-blue",
+        "https://img.shields.io/badge/code%20style-ruff-000000.svg",
+        "https://img.shields.io/badge/last%20checked-2026--09--09-informational",
     ]
 
     for badge in expected_badges:
@@ -135,6 +139,7 @@ def test_security_policy_and_invariants():
     assert "## Deutsch" in security
     assert "`0.9.x`" in security
     assert "security@ellmos.ai" in security
+    assert "security@open-bricks.org" in security
     assert "lukas@open-bricks.org" in security
     assert "support@lukasgeiger.com" in security
     assert "github.com/ellmos-ai/system-auditor/security/advisories" in security
@@ -152,10 +157,16 @@ def test_sibling_ecosystem_and_urls():
         "ellmos-controlcenter-mcp",
         "ellmos-delegation-authority",
         "sqlite-transit-sync",
+        "ellmos-voice-io",
+        "memoryhooker-provenance",
+        "workflowhooker-provenance",
         "automation-master",
         "automizer-for-claude-desktop",
+        "WikiStub-Seed",
         "ProSync",
         "CleanMarkdown",
+        "PrivacyMailDesk",
+        "prompt-archaeology-casestudy2",
         "open-bricks",
     ]
 
@@ -237,6 +248,7 @@ def test_ci_workflow_integrity():
     assert "3.12" in ci_content
     assert "3.13" in ci_content
     assert "ruff check" in ci_content
+    assert "compileall" in ci_content
     assert "pytest" in ci_content
 
 
@@ -274,3 +286,91 @@ def test_pages_drift_exports_and_contract():
     assert "audit_pages_drift" in system_auditor.__all__
     assert "PagesDriftResult" in system_auditor.__all__
     assert "PagesDriftError" in system_auditor.__all__
+
+
+def test_governance_invariants_10_points_matrix():
+    """Verify that both English and German READMEs contain all 10 invariants."""
+    readme_en = (ROOT / "README.md").read_text(encoding="utf-8")
+    readme_de = (ROOT / "README_de.md").read_text(encoding="utf-8")
+
+    en_keys = [
+        "1. 100% Local-First & Zero-Egress",
+        "2. Unprivileged Non-Elevation",
+        "3. Deterministic Classification",
+        "4. Identifiability Guard",
+        "5. Write-Guard Race Protection",
+        "6. Discrete Window Tokens",
+        "7. One Current Answer Per Window",
+        "8. Coverage Transparency Floor",
+        "9. Multi-Host & Lock Hardening",
+        "10. 48h Security & 5-Day Triage SLA",
+    ]
+    for key in en_keys:
+        assert key in readme_en, f"Invariant '{key}' missing in README.md"
+
+    de_keys = [
+        "1. 100% Local-First & Zero-Egress",
+        "2. Unprivilegierte Non-Elevation",
+        "3. Deterministische Klassifikation",
+        "4. Identifizierbarkeits-Schutz",
+        "5. Schreibsicherung (Write-Guard)",
+        "6. Diskrete Zeitfenster-Token",
+        "7. Eine gültige Antwort je Fenster",
+        "8. Ehrliche Nicht-Belegbarkeit",
+        "9. Multi-Host- & Lock-Härtung",
+        "10. 48h Sicherheits- & 5-Tage-Triage-SLA",
+    ]
+    for key in de_keys:
+        assert key in readme_de, f"Invariant '{key}' missing in README_de.md"
+
+
+def test_security_policy_triage_and_open_bricks_contact():
+    """Verify triage SLA commitments and open-bricks security contacts in SECURITY.md."""
+    security = (ROOT / "SECURITY.md").read_text(encoding="utf-8")
+    assert "security@open-bricks.org" in security
+    assert "5 business days" in security
+    assert "5 Werktagen" in security
+    assert "48 hours" in security
+    assert "48 Stunden" in security
+
+
+def test_ci_bytecode_compilation_gate():
+    """Verify that CI workflow enforces bytecode compilation gate before testing."""
+    ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    assert "python -m compileall -q src tests" in ci
+
+
+def test_gitignore_hygiene_patterns():
+    """Verify that .gitignore guards against multi-host conflict files, lock tokens, and caches."""
+    gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
+    assert "*-conflict-*" in gitignore
+    assert "*.sync-temp-*" in gitignore
+    assert "LOCK.*" in gitignore
+    assert ".pytest_cache" in gitignore
+    assert ".ruff_cache" in gitignore
+
+
+def test_local_marketing_log_present():
+    """Verify presence and structure of local MARKETING-LOG.txt."""
+    log_file = ROOT / "MARKETING-LOG.txt"
+    assert log_file.is_file()
+    content = log_file.read_text(encoding="utf-8")
+    assert (
+        "Pfad B: Discoverability, Branding, Dual Mermaid & Governance Invariants Hardening"
+        in content
+    )
+    assert "100% Local-First & Zero-Egress" in content
+    assert "2026-09-09" in content
+
+
+def test_pyproject_pytest_addopts_and_ecosystem_urls():
+    """Verify pytest addopts and PEP 621 ecosystem URLs in pyproject.toml."""
+    pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    urls = pyproject.get("project", {}).get("urls", {})
+    assert "Parent Organization" in urls
+    assert urls["Parent Organization"] == "https://github.com/ellmos-ai"
+    assert "Umbrella Ecosystem" in urls
+    assert urls["Umbrella Ecosystem"] == "https://github.com/open-bricks"
+
+    pytest_opts = pyproject.get("tool", {}).get("pytest", {}).get("ini_options", {})
+    assert pytest_opts.get("addopts") == "-v"

@@ -3,6 +3,32 @@
 Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [SemVer](https://semver.org/lang/de/).
 
+## [0.9.1] - 2026-09-09
+
+Pfad B Discoverability, Branding, Dual Mermaid & Governance Invariants Hardening.
+
+### Hinzugefuegt
+
+- **Lokales Marketing- & Audit-Ledger (`MARKETING-LOG.txt`):**
+  Strukturierte Dokumentation der Discoverability-Maßnahmen, Paritätskriterien und Roadmap-Empfehlungen.
+- **Tabelle der 10 Governance- & Laufzeit-Invarianten (`README.md` & `README_de.md`):**
+  Explizite tabellarische Aufstellung aller 10 Kern-Garantien (Local-First, Non-Elevation, Deterministische Klassifikation, Identifiability Guard, Write-Guard, Window Tokens, Single Authoritative Answer, Coverage Transparency, Multi-Host Härtung, 48h/5d SLA).
+- **Automatisierte Vertragstests für Discoverability & Governance (`tests/test_metadata.py`):**
+  6 neue Vertragstests für 10 Governance-Invarianten, Security SLA & Open-Bricks-Kontakt, CI Bytecode Compilation Gate, Gitignore-Härtungsmuster, lokales MARKETING-LOG und PEP 621 Pytest Options; Gesamtanzahl auf 181 Tests gehoben (100% grün).
+
+### Geaendert
+
+- **Sicherheitsrichtlinie (`SECURITY.md`):**
+  Erweiterung um `security@open-bricks.org` sowie verbindliche 48h Eingangsbestätigungs-SLA und 5-Werktage-Triage-Zusage.
+- **CI/CD Bytecode Compilation Gate (`.github/workflows/ci.yml`):**
+  Erweiterung des CI-Workflows um `python -m compileall -q src tests` vor der Testsuite.
+- **Multi-Host & Multi-Agent Gitignore-Härtung (`.gitignore`):**
+  Ausschluss von `*-conflict-*`, `*.sync-temp-*`, `*.sync-conflict-*` und Lock-Dateien.
+- **PEP 621 Projekt-URLs & Pytest-Optionen (`pyproject.toml`):**
+  Aufnahme von `Parent Organization` und `Umbrella Ecosystem` URLs sowie `addopts = "-v"`.
+- **Ecosystem Matrix & Badges (`README.md` & `README_de.md`):**
+  Erweiterung auf 16 vernetzte Repositories über 8 Partner-Organisationen und Aktualisierung der Badges auf 181 Tests.
+
 ## [0.9.1] - 2026-09-07
 
 Pfad A Repository-Hygiene, PEP 621 Master-Branch-URL-Angleichung, deterministische

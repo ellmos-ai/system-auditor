@@ -1,0 +1,48 @@
+﻿# MARKETING-LOG.txt — system-auditor
+# Lokales Audit-, Discoverability- und Marketing-Logbuch
+
+## 2026-09-09 — Pfad B: Discoverability, Branding, Dual Mermaid & Governance Invariants Hardening
+
+### 1. Ausgangslage & Kriterien
+- Repository: ellmos-ai/system-auditor (C:\_Local_DEV\repos\system-auditor)
+- Version: 0.9.1
+- Kategorie: Evidence-Based Multi-Host Audit Engine & Meta Bundling
+- Initialer Status: Clean working tree auf Branch `master`, 0 aktive Locks, 56h Ruhezustand (>24h Cooldown).
+
+### 2. Umgesetzte Marketing- & Discoverability-Maßnahmen
+1. Zweisprachige README-Architektur (README.md & README_de.md):
+   - Vollständige Synchronisation von deutscher und englischer Fassung mit 100%iger Anker-Parität.
+   - 14-Punkte-Schnellnavigation mit direkten Sprungmarken zu allen Hauptkapiteln.
+   - Shields.io Badges: Version 0.9.1, CI Passing, Pytest Passing (181 passed | 100%), Python 3.10-3.13, Linux/Windows/macOS, 100% Offline / Zero-Egress, Write-Guarded Security, 48h Response / 5d Triage SLA, Ruff Code Style, MIT License, llms.txt Ready, ellmos-ai Ecosystem, open-bricks Umbrella, Last Checked 2026-09-09.
+2. Dual Mermaid-Diagramme:
+   - Systemarchitektur & Aggregationsleiter (flowchart TD).
+   - End-to-End Multi-Host Audit- & Meta-Bündelungs-Lebenszyklus (sequenceDiagram mit autonumber).
+3. Tabelle der Governance- & Laufzeit-Invarianten (10 Kern-Garantien):
+   - 100% Local-First & Zero-Egress, Unprivilegierte Non-Elevation (RunAsInvoker), Deterministische Klassifikation, Identifizierbarkeits-Schutz (Identifiability Guard), Schreibsicherung (Write-Guard Race Protection), Diskrete Zeitfenster-Token (Window Token Grid), Eine gültige Antwort je Zeitfenster (Authoritative Current Answer), Ehrliche Nicht-Belegbarkeit (Coverage Transparency Floor), Multi-Host- & Lock-Härtung (.gitignore & atomare Dateisystemoperationen), 48h Sicherheits- & 5-Tage-Triage-SLA.
+4. Geschwister-Ökosystem & Partner-Matrix:
+   - 16 vernetzte Repositories über ellmos-ai, dev-bricks, file-bricks, doc-bricks, assistassets-ai, research-line und open-bricks verlinkt.
+5. Zweisprachige Sicherheitsrichtlinie (SECURITY.md):
+   - Offizieller Dachorganisations-Kontakt security@open-bricks.org neben security@ellmos.ai, support@lukasgeiger.com und lukas@open-bricks.org.
+   - Verbindliche 48h-Eingangsbestätigungs-SLA und 5-Werktage-Triage-Zusage.
+   - GitHub Security Advisories Reporting-Link.
+6. CI/CD Concurrency & Bytecode-Validierungsgate (.github/workflows/ci.yml):
+   - Bytecode-Validierungsgate erweitert auf `python -m compileall -q src tests`.
+   - Concurrency cancel-in-progress: true aktiv.
+7. Repository- & Sync-Hygiene (.gitignore):
+   - Schutz vor Cloud-Sync-Konflikten (*.sync-conflict-*, *.conflict, *-CONFLIT-*, *-conflict-*, *.sync-temp-*).
+   - Multi-Agent Mutex-Lock-Muster (LOCK.*, *.lock, LOCK*.txt).
+   - Build- und Test-Caches (.pytest_cache/, .ruff_cache/, .coverage, htmlcov/, .wheel-smoke/, wheelhouse/, *.tmp, *.bak, *.swp, *~, *.log).
+8. PEP 621 Standard-Metadaten (pyproject.toml):
+   - Standardisierte [project.urls] für Parent Organization und Umbrella Ecosystem.
+   - Standard-Pytest-Option addopts = "-v".
+9. Maschinenlesbarer Kontext (llms.txt):
+   - Aktualisiert auf Stand 2026-09-09, verifizierte Testsuite (181 passed), 10 Governance-Invarianten, Dual-Mermaid und lokales MARKETING-LOG.txt.
+10. Release-Protokollierung (CHANGELOG.md):
+    - Release 0.9.1 Discoverability- und Pfad-B-Eintrag ergänzt.
+11. Automatisierte Vertragstestsuite (tests/test_metadata.py):
+    - Erweiterung der Tests auf 18 Contract-Tests zur kontinuierlichen Absicherung aller Discoverability-, Paritäts-, Governance- und Sicherheitsstandards.
+
+### 3. Zukünftige Discoverability-Empfehlungen
+- Veröffentlichung einer Case-Study zur Multi-Host Konsens- und Drift-Erkennung in dezentralen AI-Entwicklungsumgebungen.
+- Einreichung bei Awesome-System-Auditing und Open-Source-Governance Katalogen.
+- Interaktive Visualisierung von Meta-Audit-Zeitreihen per HTML-Report-Generator.

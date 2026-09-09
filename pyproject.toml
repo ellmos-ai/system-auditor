@@ -51,6 +51,8 @@ Issues = "https://github.com/ellmos-ai/system-auditor/issues"
 Changelog = "https://github.com/ellmos-ai/system-auditor/blob/master/CHANGELOG.md"
 Security = "https://github.com/ellmos-ai/system-auditor/blob/master/SECURITY.md"
 Umbrella = "https://github.com/open-bricks/open-bricks"
+"Parent Organization" = "https://github.com/ellmos-ai"
+"Umbrella Ecosystem" = "https://github.com/open-bricks"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -58,6 +60,7 @@ where = ["src"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
+addopts = "-v"
 
 [tool.ruff]
 target-version = "py310"

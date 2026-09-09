@@ -7,16 +7,33 @@ dist/
 venv/
 .pytest_cache/
 .ruff_cache/
+.coverage
+coverage/
+htmlcov/
+.wheel-smoke/
+wheelhouse/
+*.tmp
+*.bak
+*.swp
+*~
+*.log
 
 # Laufzeitdaten und lokale Konfiguration
 config/system-auditor.config.json
 reports/
 findings/
 _locks/
+LOCK.*
+*.lock
 LOCK*.txt
 !protocols/**/LOCK*.txt
 
-# Host-spezifische Kopien (OneDrive-Konfliktmuster)
+# Multi-Host Sync-Konflikte & OneDrive-Muster
+*-conflict-*
+*.sync-temp-*
+*.sync-conflict-*
+*-CONFLIT-*
+*.conflict
 *-WORKSTATION-LG.*
 *-ASUS-GEI.*
 *-LAPTOP.*

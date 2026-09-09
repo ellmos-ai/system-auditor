@@ -3,17 +3,20 @@
 # system-auditor
 
 [![CI](https://github.com/ellmos-ai/system-auditor/actions/workflows/ci.yml/badge.svg)](https://github.com/ellmos-ai/system-auditor/actions/workflows/ci.yml)
-[![tests](https://img.shields.io/badge/pytest-175%20passed%20%7C%20100%25-brightgreen)](tests/)
+[![tests](https://img.shields.io/badge/pytest-181%20passed%20%7C%20100%25-brightgreen)](tests/)
 [![python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)](pyproject.toml)
 [![platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)](pyproject.toml)
 [![privacy](https://img.shields.io/badge/privacy-100%25%20Local--First%20%7C%20Zero--Egress-brightgreen)](SECURITY.md)
 [![security](https://img.shields.io/badge/security-Bilingual%20Policy%20%7C%20Write--Guarded-blue)](SECURITY.md)
+[![security SLA](https://img.shields.io/badge/security%20SLA-48h%20response%20%7C%205d%20triage-blue)](SECURITY.md)
+[![code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![dependencies](https://img.shields.io/badge/dependencies-none%20(stdlib)-lightgrey)](pyproject.toml)
 [![ecosystem](https://img.shields.io/badge/ecosystem-ellmos--ai-purple)](https://github.com/ellmos-ai)
 [![umbrella](https://img.shields.io/badge/umbrella-open--bricks-blueviolet)](https://github.com/open-bricks/open-bricks)
 [![version](https://img.shields.io/badge/version-0.9.1-orange)](pyproject.toml)
 [![llms.txt](https://img.shields.io/badge/llms.txt-Discovery%20Context-informational)](llms.txt)
+[![last checked](https://img.shields.io/badge/last%20checked-2026--09--09-informational)](MARKETING-LOG.txt)
 
 **Evidence-based system audits across several machines — with meta bundling.**
 
@@ -161,14 +164,18 @@ Hold some tokens fixed, let the rest vary. **An aggregation may only attribute a
 
 ## Key Capabilities & Governance Invariants
 
-| Capability / Invariant | Guarantee | Technical Implementation |
+| Invariant / Capability | Guarantee | Verification & Technical Implementation |
 |---|---|---|
-| **Deterministic Classification** | Same input reports produce bit-for-bit identical classifications | Canonical sorting of findings and inputs prior to evaluation |
-| **Identifiability Guard** | Aggregations with >1 varying dimension cannot issue causal verdicts | `Aggregation` class validates variation arity in constructor |
-| **Zero-Lock Concurrency** | Multi-host audits run asynchronously without centralized lock servers | Write-guard re-reads target file before writing to check input superset |
-| **Zero Network Egress** | 100% offline; zero telemetry or external HTTP traffic | Standard library only; verified by static AST contract tests |
-| **Bilingual Governance** | English and German report templates and documentation parity | Dual templates in `templates/` and bilingual prompts in `prompts/` |
-| **Coverage Transparency** | Uninspected locations explicitly reported as `unverifiable` | `MetaResult` tracks verified presence, verified absence, and unverified areas |
+| **1. 100% Local-First & Zero-Egress** | Zero telemetry, analytics, remote HTTP requests, or external data leaks | Offline execution via standard library; verified by AST import scan in `test_offline_and_zero_egress_invariants` |
+| **2. Unprivileged Non-Elevation** | Strict user-mode execution; no administrator/root escalation or system modifications | Safe execution boundaries; zero privilege elevation requirements (`RunAsInvoker`) |
+| **3. Deterministic Classification** | Identical inputs produce bit-for-bit identical multi-host audit verdicts | Canonical sorting of findings and inputs prior to aggregation in `system_auditor.meta` |
+| **4. Identifiability Guard** | Invariant that aggregations with >1 varying dimension cannot emit causal verdicts | Strict dimension arity validation in `Aggregation` class constructor |
+| **5. Write-Guard Race Protection** | Safe concurrent runs across machines without centralized lock daemons | Pre-write disk re-read in `write_meta`; skips overwrite if on-disk report is already a superset |
+| **6. Discrete Window Tokens** | Deterministic temporal alignment without distributed consensus protocols | Config-driven calendar window calculation (`system_auditor.tokens`) derived directly from clock |
+| **7. One Current Answer Per Window** | Single authoritative multi-host answer per window, avoiding stale duplicate reports | Window-level rewriting of meta reports; historical versions preserve themselves via window tokens |
+| **8. Coverage Transparency Floor** | Honest absence-of-proof prevents uninspected paths from masquerading as divergence | `unverifiable` classification tier tracks verified presence, absence, and unvisited sinks |
+| **9. Multi-Host & Lock Hardening** | Immune to cloud-sync conflict files and multi-agent lock contamination | Hardened `.gitignore` ignoring `*-conflict-*`, `*.sync-temp-*`, and `LOCK.*` tokens |
+| **10. 48h Security & 5-Day Triage SLA** | Committed vulnerability disclosure response and transparent patch lifecycle | Documented SLA in `SECURITY.md`, coordinated triage within 5 business days via `security@open-bricks.org` |
 
 ---
 
@@ -245,10 +252,16 @@ sequenceDiagram
 | [`ellmos-ai/ellmos-controlcenter-mcp`](https://github.com/ellmos-ai/ellmos-controlcenter-mcp) | MCP Control Plane | Context packing, tool routing, and capability discovery |
 | [`ellmos-ai/ellmos-delegation-authority`](https://github.com/ellmos-ai/ellmos-delegation-authority) | Cryptographic Authority | Nonce-based cryptographic delegation grants |
 | [`ellmos-ai/sqlite-transit-sync`](https://github.com/ellmos-ai/sqlite-transit-sync) | Database Transit | Zero-egress WAL-checkpointed SQLite replication |
+| [`ellmos-ai/ellmos-voice-io`](https://github.com/ellmos-ai/ellmos-voice-io) | Voice Interface | Zero-egress local speech synthesis and audio telemetry |
+| [`ellmos-ai/memoryhooker-provenance`](https://github.com/ellmos-ai/memoryhooker-provenance) | Provenance Tracking | Cryptographic evidence hashes and audit trail validation |
+| [`ellmos-ai/workflowhooker-provenance`](https://github.com/ellmos-ai/workflowhooker-provenance) | Workflow Attestation | Immutable execution logs and cross-system workflow verification |
 | [`dev-bricks/automation-master`](https://github.com/dev-bricks/automation-master) | Task Automation | Orchestrates automated batch maintenance workflows |
 | [`dev-bricks/automizer-for-claude-desktop`](https://github.com/dev-bricks/automizer-for-claude-desktop) | Process Discrimination | Atomic configuration snapshots & safe execution queues |
+| [`dev-bricks/WikiStub-Seed`](https://github.com/dev-bricks/WikiStub-Seed) | Documentation Seeding | Structural wiki generation and documentation scaffolding |
 | [`file-bricks/ProSync`](https://github.com/file-bricks/ProSync) | Local Backup | Safe multi-profile sync and SQLite WAL checkpoint protection |
 | [`doc-bricks/CleanMarkdown`](https://github.com/doc-bricks/CleanMarkdown) | Document AST | High-fidelity Markdown AST validation and clean rendering |
+| [`assistassets-ai/PrivacyMailDesk`](https://github.com/assistassets-ai/PrivacyMailDesk) | Local Privacy Mail | Zero-egress mail evaluation and attachment hygiene |
+| [`research-line/prompt-archaeology-casestudy2`](https://github.com/research-line/prompt-archaeology-casestudy2) | Prompt Archaeology | Scientific methodology and empirical prompt evolution logs |
 | [`open-bricks/open-bricks`](https://github.com/open-bricks/open-bricks) | Umbrella Organization | Common architecture standards, governance, and licensing |
 
 ---

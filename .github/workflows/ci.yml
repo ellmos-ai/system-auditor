@@ -40,6 +40,10 @@ jobs:
         run: |
           ruff check src tests
 
+      - name: Verify Bytecode Compilation
+        run: |
+          python -m compileall -q src tests
+
       - name: Run Test Suite
         run: |
           pytest -v

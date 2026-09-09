@@ -49,7 +49,7 @@ The following versions of `system-auditor` currently receive security updates an
 If you discover a potential security vulnerability, privilege escalation path, or data isolation issue in `system-auditor`:
 
 - **Maintainer Contact**: `security@ellmos.ai`
-- **Umbrella Security**: `lukas@open-bricks.org` / `support@lukasgeiger.com`
+- **Umbrella Security**: `security@open-bricks.org` / `lukas@open-bricks.org` / `support@lukasgeiger.com`
 - **GitHub Security Advisory**: [Report a Vulnerability](https://github.com/ellmos-ai/system-auditor/security/advisories)
 
 Please include:
@@ -57,7 +57,7 @@ Please include:
 2. Operating system, Python version, and `system-auditor` version.
 3. Impact assessment and suggested remediation if known.
 
-We acknowledge incoming reports within **24 to 48 hours** and coordinate coordinated disclosure and patch releases via GitHub Security Advisories.
+We acknowledge incoming reports within **24 to 48 hours**, provide an initial triage assessment within **5 business days**, and coordinate coordinated disclosure and patch releases via GitHub Security Advisories.
 
 ---
 
@@ -106,7 +106,7 @@ Folgende Versionen von `system-auditor` erhalten aktiv Sicherheits- und Wartungs
 Wenn Sie eine Sicherheitslücke oder ein Datenschutzproblem in `system-auditor` feststellen:
 
 - **Maintainer-Kontakt**: `security@ellmos.ai`
-- **Dachverband-Kontakt**: `lukas@open-bricks.org` / `support@lukasgeiger.com`
+- **Dachverband-Kontakt**: `security@open-bricks.org` / `lukas@open-bricks.org` / `support@lukasgeiger.com`
 - **GitHub Security Advisory**: [Sicherheitslücke melden](https://github.com/ellmos-ai/system-auditor/security/advisories)
 
-Erstmeldungen werden innerhalb von **24 bis 48 Stunden** gesichtet und Patches über GitHub Security Advisories koordiniert bereitgestellt.
+Erstmeldungen werden innerhalb von **24 bis 48 Stunden** bestätigt, eine qualifizierte Triage-Einschätzung erfolgt innerhalb von **5 Werktagen**, und Patches werden über GitHub Security Advisories koordiniert bereitgestellt.
