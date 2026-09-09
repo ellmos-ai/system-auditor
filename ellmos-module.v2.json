@@ -42,5 +42,14 @@
     "path": ".",
     "repository": "https://github.com/ellmos-ai/system-auditor"
   },
-  "adapters": []
+  "adapters": [],
+  "roles": [
+    {
+      "id": "system-auditor",
+      "label": "System Auditor",
+      "prompt": "prompts/AUDITOR.en.md",
+      "request": "Read and follow the system-auditor role prompt for the requested audit scope.",
+      "modes": []
+    }
+  ]
 }
