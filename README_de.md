@@ -361,3 +361,17 @@ ruff check src tests
 
 MIT — siehe [LICENSE](LICENSE) und [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
 
+
+## Starter
+
+Dieses Modul liefert die anbieterneutralen Rollenstarter `START.bat` und `start.sh` im
+Wurzelverzeichnis. Sie werden aus `roles[]` in `ellmos-module.v2.json` von COMA erzeugt
+(`python -m coma starters generate --manifest ellmos-module.v2.json --output-dir .`) und
+deshalb neu erzeugt statt von Hand bearbeitet. Jeder Starter bevorzugt die unified-gui-Konsole
+und fällt auf COMA zurück, das beim Start Anbieter, Modell und Reasoning-Aufwand abfragt.
+
+Anbieterspezifische Starter unter `bin/providers/` gibt es hier bewusst **nicht** -- anders als
+bei ticket-master: Der Auditor hat keinen eigenen handgeschriebenen Dispatcher, eine Datei je
+Anbieter würde also nur argv-Wissen verdoppeln, das COMA bereits hält. Der Start über eine
+Task-Rolle (`taskplan launch --label system-auditor`) bleibt gleichwertig und nutzt dieselbe
+Deklaration. Entschieden in Ticket T-20260906-249053451.
