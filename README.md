@@ -331,6 +331,35 @@ Config lookup order: `--config`, `SYSTEM_AUDITOR_CONFIG`, `./`, `./config/`, `~/
 }
 ```
 
+### Where findings go: the public handover contract
+
+The auditor knows exactly **one** outbound interface. It appends
+`--title <title> --body <text>` to whatever command the sink was configured with,
+and knows nothing about ticket formats, lifecycle folders, categories or model
+routing — that stays the ticket system's business, so both sides can improve
+independently.
+
+```json
+{
+  "sink": {
+    "kind": "command",
+    "target": "python <path>/ticket-master/bin/ticket_master.py --intake --tickets-dir <queue>",
+    "enabled_probe": "python <path>/ticket-master/bin/ticket_master.py --list"
+  }
+}
+```
+
+Configure the **command prefix only** — the sink appends `--title`/`--body` itself.
+The consumer side of this contract is documented in ticket-master's README under
+"The public producer contract". Its `--intake` accepts the description either
+positionally or via `--body`; before 2026-09-12 it took only the positional form,
+so this public call went nowhere and only ticket-master's internal
+`lib/ticket_writer.py` wiring worked (measure `M-20260820-auditor-ticket-sink`).
+
+If no ticket system is installed, the probe fails, or the command errors, findings
+are written as files instead. **Nothing is lost, only the routing** — an absent
+ticket system is a normal state, not an error.
+
 > [!IMPORTANT]
 > `reports_dir` is the multi-host meeting point. It must reside in a cloud-synchronized folder shared across participating machines. In a host-local directory, meta-audits cannot aggregate foreign reports.
 

@@ -11,6 +11,7 @@ as files.  Nothing is lost, only the routing.
 
 from __future__ import annotations
 
+import os
 import shlex
 import subprocess
 from dataclasses import dataclass
@@ -48,6 +49,32 @@ def _probe(command: str, timeout: int = 20) -> bool:
         return False
 
 
+def split_command(command: str) -> list[str]:
+    """Split a configured command into argv, on Windows too.
+
+    `shlex.split` defaults to POSIX rules, where a backslash escapes the next
+    character. A native Windows target such as
+    `python C:\\_Local_DEV\\repos\\ticket-master\\bin\\ticket_master.py --intake`
+    therefore collapses into `C:_Local_DEVreposticket-masterbinticket_master.py`
+    -- a path that does not exist, so the sink fails and silently degrades to
+    files. That is one reason the public handover only ever worked through the
+    ticket system's internal wiring (M-20260820-auditor-ticket-sink).
+
+    On Windows we split with `posix=False`, which keeps backslashes, and strip
+    the surrounding quotes that mode leaves on quoted tokens -- so a path with
+    spaces still arrives as one argument.
+    """
+    if os.name != "nt":
+        return shlex.split(command)
+    parts = shlex.split(command, posix=False)
+    unquoted = []
+    for part in parts:
+        if len(part) >= 2 and part[0] == part[-1] and part[0] in "\"'":
+            part = part[1:-1]
+        unquoted.append(part)
+    return unquoted
+
+
 def _slug(text: str) -> str:
     keep = [char if char.isalnum() or char in "-_" else "-" for char in text.strip()]
     return "".join(keep).strip("-").lower()[:60] or "finding"
@@ -68,7 +95,7 @@ def emit_command(title: str, body: str, command: str, timeout: int = 120) -> Emi
     The command's stdout is treated as an opaque reference (an id or a path):
     the auditor deliberately does not parse the ticket system's output format.
     """
-    argv = shlex.split(command) + ["--title", title, "--body", body]
+    argv = split_command(command) + ["--title", title, "--body", body]
     try:
         completed = subprocess.run(
             argv, capture_output=True, text=True, timeout=timeout, check=False

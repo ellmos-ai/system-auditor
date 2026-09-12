@@ -1,5 +1,10 @@
 """Discovery degrades honestly; sinks degrade to files."""
 
+import json
+import os
+import shlex
+import sys
+
 from system_auditor.discovery import (
     TIER_CONFIGURED,
     TIER_CONVENTION,
@@ -7,7 +12,7 @@ from system_auditor.discovery import (
     TIER_NONE,
     discover,
 )
-from system_auditor.sinks import Sink, emit
+from system_auditor.sinks import Sink, emit, emit_command, split_command
 
 
 def test_configured_stores_win(tmp_path):
@@ -97,6 +102,60 @@ def test_file_sink_numbers_findings_of_one_run(tmp_path):
     emit("first", "b", Sink(), tmp_path, run_id="run-1")
     second = emit("second", "b", Sink(), tmp_path, run_id="run-1")
     assert "FINDING-02" in second.ref
+
+
+def test_command_split_survives_native_windows_paths():
+    """POSIX-Splitting frisst Backslashes -- und damit jeden Windows-Pfad.
+
+    `shlex.split` behandelt `\\` als Escape. Ein nativ konfiguriertes Ziel wie
+    `python C:\\_Local_DEV\\repos\\ticket-master\\bin\\ticket_master.py --intake`
+    zerfaellt dabei zu `C:_Local_DEVreposticket-masterbinticket_master.py` -- eine
+    Datei, die es nicht gibt. Die Senke scheitert, faellt still auf Dateien zurueck,
+    und die oeffentliche Uebergabe wirkt "kaputt", obwohl die Konfiguration stimmt.
+    Genau das ist ein Grund, warum nur die interne Verdrahtung des Ticketsystems je
+    funktionierte (M-20260820-auditor-ticket-sink).
+    """
+    target = r"python C:\_Local_DEV\repos\ticket-master\bin\ticket_master.py --intake"
+    parts = split_command(target)
+    if os.name == "nt":
+        assert parts == [
+            "python",
+            r"C:\_Local_DEV\repos\ticket-master\bin\ticket_master.py",
+            "--intake",
+        ]
+        # Pfad mit Leerzeichen bleibt EIN Argument und verliert seine Quotes.
+        quoted = r'"C:\Program Files\Python\python.exe" script.py --intake'
+        assert split_command(quoted) == [
+            r"C:\Program Files\Python\python.exe",
+            "script.py",
+            "--intake",
+        ]
+    else:
+        assert parts[0] == "python" and parts[-1] == "--intake"
+
+
+def test_command_sink_hands_over_title_and_body_verbatim(tmp_path):
+    """Der oeffentliche Produzenten-Vertrag, festgenagelt am echten argv.
+
+    Der Auditor kennt genau eine ausgehende Schnittstelle: er haengt an das
+    konfigurierte Kommando `--title <titel> --body <text>` an und weiss sonst
+    nichts ueber das Ticketsystem. Bis 2026-09-12 nahm `ticket_master.py --intake`
+    kein `--body` entgegen, sodass nur die interne Verdrahtung ueber
+    `lib/ticket_writer.py` funktionierte (M-20260820-auditor-ticket-sink).
+    Dieser Test prueft die Produzentenseite ohne Mock: das Stub-Kommando gibt
+    sein eigenes argv zurueck.
+    """
+    stub = (
+        f"{shlex.quote(sys.executable)} -c "
+        + shlex.quote("import json,sys; print(json.dumps(sys.argv[1:]))")
+    )
+    title = "Registry-Quellattestierung aktualisieren"
+    body = "Zeile eins\nZeile zwei mit Umlauten: aeoeue\nZeile drei"
+
+    result = emit_command(title, body, stub)
+
+    assert result.ok, result.detail
+    assert json.loads(result.ref) == ["--title", title, "--body", body]
 
 
 def test_command_sink_falls_back_to_files_when_absent(tmp_path):

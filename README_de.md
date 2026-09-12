@@ -335,6 +335,36 @@ Suchreihenfolge: `--config`, `SYSTEM_AUDITOR_CONFIG`, `./`, `./config/`, `~/.sys
 > [!IMPORTANT]
 > `reports_dir` ist der Treffpunkt aller Maschinen. Er muss in einem cloud-synchronisierten Ordner liegen, den alle teilnehmenden Systeme teilen. In einem rein host-lokalen Verzeichnis können keine Meta-Audits entstehen.
 
+
+### Wohin Befunde gehen: der öffentliche Übergabevertrag
+
+Der Auditor kennt genau **eine** ausgehende Schnittstelle. Er hängt an das
+konfigurierte Kommando `--title <titel> --body <text>` an und weiß nichts über
+Ticketformate, Lebenszyklusordner, Kategorien oder Modellrouting — das bleibt
+Sache des Ticketsystems, damit sich beide Seiten unabhängig verbessern können.
+
+```json
+{
+  "sink": {
+    "kind": "command",
+    "target": "python <pfad>/ticket-master/bin/ticket_master.py --intake --tickets-dir <queue>",
+    "enabled_probe": "python <pfad>/ticket-master/bin/ticket_master.py --list"
+  }
+}
+```
+
+Konfiguriert wird **nur das Kommando-Präfix** — `--title`/`--body` hängt die Senke
+selbst an. Die Konsumentenseite dieses Vertrags steht in der README des
+ticket-master unter „Der öffentliche Übergabevertrag". Dessen `--intake` nimmt die
+Beschreibung entweder positionell oder über `--body` entgegen; bis zum 2026-09-12
+kannte es nur die Positionsform, sodass dieser öffentliche Aufruf ins Leere lief
+und nur die interne Verdrahtung über `lib/ticket_writer.py` funktionierte
+(Maßnahme `M-20260820-auditor-ticket-sink`).
+
+Ist kein Ticketsystem installiert, scheitert die Probe oder das Kommando, werden
+Befunde stattdessen als Dateien geschrieben. **Verloren geht nichts, nur die
+Zustellung** — ein fehlendes Ticketsystem ist ein normaler Zustand, kein Fehler.
+
 ---
 
 ## Sicherheit & Datenschutz
