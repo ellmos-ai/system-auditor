@@ -7,11 +7,15 @@ dist/
 venv/
 .pytest_cache/
 .ruff_cache/
+.mypy_cache/
+.tox/
+.turbo/
 .coverage
 coverage/
 htmlcov/
 .wheel-smoke/
 wheelhouse/
+!package-lock.json
 *.tmp
 *.bak
 *.swp
@@ -36,7 +40,11 @@ LOCK*.txt
 *.conflict
 *-WORKSTATION-LG.*
 *-ASUS-GEI.*
+*-ASUS.*
 *-LAPTOP.*
+*-Mac Studio.*
+* (kopie)*
+* (copy)*
 
 # Release-Hygiene (Final Gate)
 .env

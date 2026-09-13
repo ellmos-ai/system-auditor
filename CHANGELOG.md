@@ -3,6 +3,30 @@
 Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [SemVer](https://semver.org/lang/de/).
 
+## [0.9.2] - 2026-09-13
+
+Pfad A Repository-Hygiene, CI-Matrix- & Timeout-Härtung, Stale-Workflow, Multi-Host-Gitignore-Schutz und Vertragstesterweiterung.
+
+### Hinzugefuegt
+
+- **CI/CD Timeout-Guardrails (`.github/workflows/ci.yml`):**
+  Explizite Härtung des Test-Matrix-Jobs mit `timeout-minutes: 15` zur Vermeidung hängender CI-Läufe auf Linux, Windows und macOS.
+- **Automatisierter Stale Issue & PR Workflow (`.github/workflows/stale.yml`):**
+  Turnusmäßige Kennzeichnung und Schließung inaktiver Issues und Pull Requests (`actions/stale@v9`, `timeout-minutes: 10`, täglicher Lauf um 01:30 UTC, Schließung nach 30+7 Tagen, Concurrency-Schutz).
+- **Multi-Host & OneDrive Konfliktschutz (`.gitignore`):**
+  Ausschluss von OneDrive-Konfliktmustern (`* (kopie)*`, `* (copy)*`, `*-ASUS.*`, `*-LAPTOP.*`, `*-Mac Studio.*`) sowie zusätzlichen Tooling- und Cache-Verzeichnissen (`.tox/`, `.turbo/`, `.mypy_cache/`) und Ausnahme für `!package-lock.json`.
+- **Automatisierte Vertragstests für Pfad-A-Standards (`tests/test_metadata.py`):**
+  4 neue Vertragstests für CI-Job-Timeouts, Stale-Workflow-Validität, Gitignore-Muster und Changelog-Release-Parität; Gesamtzahl der Tests auf 190 gehoben (100% grün).
+
+### Geaendert
+
+- **PEP 621 Standard-Metadaten & Versionierung (`pyproject.toml`, `src/system_auditor/__init__.py`):**
+  Version auf 0.9.2 angehoben.
+- **Maschinenlesbarer Kontext (`llms.txt`):**
+  Subcommand `pages-drift` in die CLI-Übersicht aufgenommen, Teststand auf 190 passed und Prüfdatum auf 2026-09-13 synchronisiert.
+- **Dokumentations- & Badge-Parität (`README.md`, `README_de.md`):**
+  Version auf 0.9.2, Test-Badge auf 190 passed und Prüfdatum auf 2026-09-13 synchronisiert.
+
 ## [0.9.1] - 2026-09-09
 
 Pfad B Discoverability, Branding, Dual Mermaid & Governance Invariants Hardening.

@@ -43,8 +43,8 @@ def test_required_root_documents_exist():
 
 
 def test_version_parity():
-    """Verify version 0.9.1 parity across code, manifests, and documentation."""
-    expected_version = "0.9.1"
+    """Verify version 0.9.2 parity across code, manifests, and documentation."""
+    expected_version = "0.9.2"
 
     # 1. Python package __version__
     import system_auditor
@@ -70,16 +70,16 @@ def test_readme_badges_parity():
     readme_de = (ROOT / "README_de.md").read_text(encoding="utf-8")
 
     expected_badges = [
-        "https://img.shields.io/badge/pytest-184",
+        "https://img.shields.io/badge/pytest-190",
         "https://github.com/ellmos-ai/system-auditor/actions/workflows/ci.yml/badge.svg",
         "https://img.shields.io/badge/python-3.10",
         "https://img.shields.io/badge/ecosystem-ellmos--ai-purple",
         "https://img.shields.io/badge/umbrella-open--bricks-blueviolet",
-        "https://img.shields.io/badge/version-0.9.1",
+        "https://img.shields.io/badge/version-0.9.2",
         "https://img.shields.io/badge/llms.txt-Discovery%20Context-informational",
         "https://img.shields.io/badge/security%20SLA-48h%20response%20%7C%205d%20triage-blue",
         "https://img.shields.io/badge/code%20style-ruff-000000.svg",
-        "https://img.shields.io/badge/last%20checked-2026--09--09-informational",
+        "https://img.shields.io/badge/last%20checked-2026--09--13-informational",
     ]
 
     for badge in expected_badges:
@@ -356,12 +356,13 @@ def test_local_marketing_log_present():
     log_file = ROOT / "MARKETING-LOG.txt"
     assert log_file.is_file()
     content = log_file.read_text(encoding="utf-8")
+    assert "Pfad A: Repository-Hygiene" in content
+    assert "2026-09-13" in content
     assert (
         "Pfad B: Discoverability, Branding, Dual Mermaid & Governance Invariants Hardening"
         in content
     )
     assert "100% Local-First & Zero-Egress" in content
-    assert "2026-09-09" in content
 
 
 def test_pyproject_pytest_addopts_and_ecosystem_urls():
@@ -416,3 +417,47 @@ def test_gitignore_secret_and_credential_patterns():
     assert ".npmrc" in gitignore
     assert ".pypirc" in gitignore
     assert "*.orig" in gitignore
+
+
+def test_ci_workflow_timeouts():
+    """Verify explicit timeout-minutes across all CI and automation workflows."""
+    ci_yml = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    assert "timeout-minutes: 15" in ci_yml, "ci.yml test job must have timeout-minutes: 15"
+
+    stale_yml = (ROOT / ".github" / "workflows" / "stale.yml").read_text(encoding="utf-8")
+    assert "timeout-minutes: 10" in stale_yml, "stale.yml must have timeout-minutes: 10"
+
+
+def test_stale_workflow_present_and_valid():
+    """Verify presence, schedule, and permissions of stale.yml workflow."""
+    stale_file = ROOT / ".github" / "workflows" / "stale.yml"
+    assert stale_file.is_file(), "stale.yml must exist"
+    content = stale_file.read_text(encoding="utf-8")
+    assert "actions/stale@v9" in content
+    assert "cron: '30 1 * * *'" in content
+    assert "issues: write" in content
+    assert "pull-requests: write" in content
+    assert "operations-per-run: 30" in content
+
+
+def test_gitignore_onedrive_conflict_and_cache_patterns():
+    """Verify that .gitignore excludes OneDrive conflict copies and caches."""
+    gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
+    assert "* (kopie)*" in gitignore
+    assert "* (copy)*" in gitignore
+    assert "*-ASUS.*" in gitignore
+    assert "*-LAPTOP.*" in gitignore
+    assert "*-Mac Studio.*" in gitignore
+    assert ".mypy_cache/" in gitignore
+    assert ".tox/" in gitignore
+    assert ".turbo/" in gitignore
+    assert "!package-lock.json" in gitignore
+
+
+def test_changelog_release_entry_and_date():
+    """Verify that CHANGELOG.md contains the current release entry and standard headings."""
+    changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    assert "## [0.9.2] - 2026-09-13" in changelog
+    assert "### Hinzugefuegt" in changelog
+    assert "### Geaendert" in changelog
+    assert "Pfad A Repository-Hygiene" in changelog
