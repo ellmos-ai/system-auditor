@@ -1,6 +1,31 @@
 # MARKETING-LOG.txt — system-auditor
 # Lokales Audit-, Discoverability- und Marketing-Logbuch
 
+## 2026-09-16 — Pfad B: Discoverability, GitHub-Metadaten, 3-Stufen Konvergenz-Diagramm & Paritäts-Härtung
+
+### 1. Ausgangslage & Kriterien
+- Repository: ellmos-ai/system-auditor (C:\_Local_DEV\repos\system-auditor)
+- Version: 0.9.2
+- Kategorie: Evidence-Based Multi-Host Audit Engine & Meta Bundling
+- Initialer Status: Clean working tree auf Branch `master`, 0 aktive Locks, 73h Ruhezustand (>24h Cooldown).
+
+### 2. Umgesetzte Marketing- & Discoverability-Maßnahmen
+1. GitHub-Metadaten & Topic-Erweiterung (`gh repo edit`):
+   - Homepage URL auf `https://ellmos-ai.github.io` gesetzt.
+   - Topics um 5 hochrelevante Discoverability-Tags erweitert: `zero-egress`, `local-first`, `verification`, `developer-tools`, `meta-audit` (insgesamt 14 kuratierte Tags).
+2. 3-Stufen Konvergenz-Sequenzdiagramm (Mermaid):
+   - Sequenzdiagramm für die 3-Stufen-Architektur (system-explorer / Karte -> system-auditor / Urteil -> Senke / Maßnahme vs. Governance / Entscheidung) in `README.md` und `README_de.md` integriert.
+   - Vollständige Syntax-Validierung via `_tools/lint_mermaid.py` (0 Fehler).
+3. Schnellnavigations- & Badge-Parität:
+   - Sprungmarke zu den Rollenstartern (`#starters` / `#starter`) in beiden READMEs in die Schnellnavigation aufgenommen.
+   - Shields.io `last checked` Badges auf `2026-09-16` aktualisiert.
+4. Maschinenlesbarer Kontext (`llms.txt`):
+   - Stand auf 2026-09-16, 191 passed Tests und 3 Mermaid-Diagramme aktualisiert.
+5. Vertragstests (`tests/test_metadata.py`):
+   - Test `test_readme_badges_parity` auf Prüfdatum 2026-09-16 aktualisiert.
+   - Test `test_mermaid_diagrams_syntax` auf mindestens 3 Diagramme pro README gehärtet und spezifische Prüfung für das 3-Stufen-Konvergenzdiagramm hinzugefügt.
+   - Gesamtstand der Testsuite auf 191 Tests (100% grün).
+
 ## 2026-09-13 — Pfad A: Repository-Hygiene, CI-Timeout- & Stale-Härtung, Multi-Host Gitignore & Vertragstests
 
 ### 1. Ausgangslage & Kriterien

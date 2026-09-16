@@ -79,7 +79,7 @@ def test_readme_badges_parity():
         "https://img.shields.io/badge/llms.txt-Discovery%20Context-informational",
         "https://img.shields.io/badge/security%20SLA-48h%20response%20%7C%205d%20triage-blue",
         "https://img.shields.io/badge/code%20style-ruff-000000.svg",
-        "https://img.shields.io/badge/last%20checked-2026--09--13-informational",
+        "https://img.shields.io/badge/last%20checked-2026--09--16-informational",
     ]
 
     for badge in expected_badges:
@@ -96,18 +96,37 @@ def test_mermaid_diagrams_syntax():
     for filename in ["README.md", "README_de.md"]:
         content = (ROOT / filename).read_text(encoding="utf-8")
         diagrams = re.findall(r"```mermaid\n(.*?)```", content, re.DOTALL)
-        assert len(diagrams) >= 2, f"Expected at least 2 Mermaid diagrams in {filename}"
+        assert len(diagrams) >= 3, f"Expected at least 3 Mermaid diagrams in {filename}"
 
         flowchart_found = any("flowchart" in d or "graph" in d for d in diagrams)
         sequence_found = any("sequenceDiagram" in d for d in diagrams)
 
         assert flowchart_found, f"Flowchart/Graph diagram missing in {filename}"
         assert sequence_found, f"Sequence diagram missing in {filename}"
+        assert sum(1 for d in diagrams if "sequenceDiagram" in d) >= 2, (
+            f"Expected at least 2 sequence diagrams in {filename}"
+        )
 
         for d in diagrams:
             # Check basic syntax balance
             assert d.count("(") == d.count(")"), f"Unbalanced parentheses in {filename} diagram"
             assert d.count("[") == d.count("]"), f"Unbalanced square brackets in {filename} diagram"
+
+
+def test_three_stages_convergence_diagram_parity():
+    """Verify the 3-stage convergence sequence diagram in both READMEs."""
+    readme_en = (ROOT / "README.md").read_text(encoding="utf-8")
+    readme_de = (ROOT / "README_de.md").read_text(encoding="utf-8")
+
+    assert 'participant Explorer as "system-explorer (Map)"' in readme_en
+    assert 'participant Auditor as "system-auditor (Verdict)"' in readme_en
+    assert 'participant Sink as "Handover Sink (Measure)"' in readme_en
+    assert 'participant Gov as "Governance & Maintainer (Decision)"' in readme_en
+
+    assert 'participant Explorer as "system-explorer (Karte)"' in readme_de
+    assert 'participant Auditor as "system-auditor (Urteil)"' in readme_de
+    assert 'participant Sink as "Handover-Senke (Maßnahme)"' in readme_de
+    assert 'participant Gov as "Governance & Maintainer (Entscheidung)"' in readme_de
 
 
 def test_quick_navigation_anchors():
@@ -358,6 +377,8 @@ def test_local_marketing_log_present():
     content = log_file.read_text(encoding="utf-8")
     assert "Pfad A: Repository-Hygiene" in content
     assert "2026-09-13" in content
+    assert "2026-09-16" in content
+    assert "Pfad B: Discoverability" in content
     assert (
         "Pfad B: Discoverability, Branding, Dual Mermaid & Governance Invariants Hardening"
         in content

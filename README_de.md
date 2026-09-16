@@ -16,11 +16,11 @@
 [![umbrella](https://img.shields.io/badge/umbrella-open--bricks-blueviolet)](https://github.com/open-bricks/open-bricks)
 [![version](https://img.shields.io/badge/version-0.9.2-orange)](pyproject.toml)
 [![llms.txt](https://img.shields.io/badge/llms.txt-Discovery%20Context-informational)](llms.txt)
-[![last checked](https://img.shields.io/badge/last%20checked-2026--09--13-informational)](MARKETING-LOG.txt)
+[![last checked](https://img.shields.io/badge/last%20checked-2026--09--16-informational)](MARKETING-LOG.txt)
 
 **Belegbasierte Systemaudits über mehrere Maschinen — mit Meta-Bündelung.**
 
-*[English version: `README.md`](README.md)*
+*[English Version: `README.md`](README.md)*
 
 ---
 
@@ -41,6 +41,7 @@
 - [Sicherheit & Datenschutz](#sicherheit--datenschutz)
 - [Entwicklung & Verifikation](#entwicklung--verifikation)
 - [Lizenz](#lizenz)
+- [Starter](#starter)
 
 ---
 
@@ -48,33 +49,33 @@
 
 Der Auditor prüft ein komponiertes System in **drei Richtungen**:
 
-1. **Regeltreue:** Verletzt ein beobachteter Systemzustand eine deklarierte Policy oder Konvention?
-2. **Integration (Prüfklassen I1–I7):** Arbeiten Softwaremodule, Manifeste, Bundles und Bindings in der Praxis tatsächlich wie deklariert zusammen?
-3. **Steuerungs-Konsistenz (Prüfklassen K1–K4):** Sind Steuerdateien, Register, Policies und bisherige Architekturentscheidungen untereinander widerspruchsfrei?
+1. **Regeltreue:** Verletzt ein beobachteter Systemzustand eine deklarierte Richtlinie oder Konvention?
+2. **Integration (Klassen I1–I7):** Arbeiten Software-Module, Manifeste, Bündel und Bindeglieder in der Praxis so zusammen wie deklariert?
+3. **Governance-Konsistenz (Klassen K1–K4):** Sind Steuerdateien, Register, Richtlinien und vergangene Architekturentscheidungen untereinander widerspruchsfrei?
 
-Das leitende Prinzip ist **Konvergenz**: Jeder Fund endet mit einer klaren Richtung — Realität an die Regel anpassen (eine konkrete Maßnahme) oder Regel an die Realität anpassen (eine Entscheidungsvorlage).
+Das Leitprinzip ist **Konvergenz**: Jeder Befund endet mit einer klaren Richtung — Realität an die Regel anpassen (eine konkrete Maßnahme) oder die Regel an die Realität anpassen (eine Entscheidungsvorlage).
 
-Zwei Maschinen, die dieselbe Domäne auditieren, kommen **nicht** zum selben Ergebnis. Das ist kein Mangel — es ist das Nützlichste daran, das Audit auf mehreren Systemen auszuführen.
+Zwei Maschinen, die dieselbe Domäne prüfen, liefern **nicht** dasselbe Ergebnis. Das ist kein Mangel — es ist der größte Nutzen verteilter Audits über mehrere Systeme.
 
 ### Ein gemessenes Beispiel
 
-> **Befund:** *„Gardener-Governance hartkodiert den Laptop-Home-Pfad"* — `AGENTS.md` verweist auf `C:\Users\alice\…`.
+> **Befund:** *„Gardener-Governance hardcodet den Laptop-Pfad"* — `AGENTS.md` verweist auf `C:\Users\alice\…`.
 >
-> Auf **WORKSTATION-LG** ist das real: Der Pfad existiert dort nicht.
-> Auf dem **Laptop** ist dieselbe Zeile korrekt und ergibt gar keinen Befund.
+> Auf **WORKSTATION-LG** existiert der Pfad nicht: Ein echter Fehler.
+> Auf dem **Laptop** ist exakt dieselbe Zeile korrekt und erzeugt keinerlei Befund.
 
-Eine einzelne Maschine sieht davon immer nur die Hälfte. Der Vergleich der gültigen Audits aller beteiligten Systeme liefert eine belegbare Einordnung, die ein Einzellauf strukturell nicht erzeugen kann:
+Eine einzelne Maschine sieht immer nur eine Hälfte der Realität. Der Vergleich der gültigen Audits aller teilnehmenden Systeme ermöglicht eine belegbasierte Klassifikation, die kein Einzellauf treffen kann:
 
 | Klasse | Bedeutung | Auswirkung |
 |---|---|---|
-| `systemwide` | Alle Teilnehmer fanden es | Echte Systeminkonsistenz oder gebrochene Invariante |
-| `host_specific` | Manche fanden es, andere haben fehlerfrei geprüft | Konfigurationsdrift oder Rechner-Divergenz |
-| `inverse` | Hier ein Mangel, dort ausdrücklich in Ordnung | Host-Abhängigkeit (z. B. hartkodierter Pfad) |
-| `divergent` | Gleicher Ort, *verschiedene* Regeln verletzt | Sync-Differenz oder divergierende Regelauslegung |
-| `unverifiable` | Ein Teilnehmer hat dort nie geprüft | Ehrliche Nicht-Belegbarkeit (verhindert Schein-Drift) |
+| `systemwide` | Auf allen Systemen aufgetreten | Echter systemweiter Defekt oder verletzte Invariante |
+| `host_specific` | Auf manchen gefunden, auf anderen sauber belegt | Konfigurations-Drift oder Host-Divergenz |
+| `inverse` | Auf Host A ein Defekt, auf Host B explizit in Ordnung | Host-Abhängigkeit (z. B. hardcodierter Pfad) |
+| `divergent` | Gleicher Ort, aber *verschiedene* Regeln verletzt | Unterschiedlicher Sync-Stand oder widersprüchliche Richtlinienauslegung |
+| `unverifiable` | Ein Teilnehmer hat diesen Ort nie geprüft | Ehrliche Abwesenheit von Belegen (verhindert Fehlalarme bezüglich Drift) |
 
 > [!NOTE]
-> `unverifiable` ist die ehrliche Klasse. Ohne sie würde jede Lücke in der Prüfabdeckung eines Teilnehmers stillschweigend als echter Rechner-Unterschied erscheinen.
+> `unverifiable` ist die ehrliche Stufe. Ohne sie würde jede Lücke in der Testabdeckung eines Teilnehmers fälschlicherweise als reale Divergenz zwischen Systemen gewertet.
 
 ---
 
@@ -83,14 +84,14 @@ Eine einzelne Maschine sieht davon immer nur die Hälfte. Der Vergleich der gül
 ```mermaid
 flowchart TD
     subgraph S1["1. Inspektion & Entdeckung"]
-        A1["Domänen-Ziel / Codebasis"] --> D1["discover() Sinks & Manifeste"]
+        A1["Domänen-Ziel / Codebasis"] --> D1["discover() Senken & Manifeste"]
         D1 --> M1["Manifeste & Richtlinien\nellmos-module.v2 / bundle.v1 / AGENTS.md"]
     end
 
     subgraph S2["2. Multi-Host Audit-Erzeugung"]
-        M1 --> R1["Host 1 Einzellauf\n(time, domain, sys1, modelA)"]
-        M1 --> R2["Host 2 Einzellauf\n(time, domain, sys2, modelB)"]
-        R1 --> P1["templates/AUDIT-BERICHT\nEinzelne Markdown-Berichte"]
+        M1 --> R1["Host 1 Audit-Lauf\n(time, domain, sys1, modelA)"]
+        M1 --> R2["Host 2 Audit-Lauf\n(time, domain, sys2, modelB)"]
+        R1 --> P1["templates/AUDIT-REPORT\nEinzelne Markdown-Berichte"]
         R2 --> P1
     end
 
@@ -102,8 +103,8 @@ flowchart TD
 
     subgraph S4["4. Schreibsicherung & Konvergenz"]
         CL --> WG{"write_meta\nSchreibsicherungs-Prüfung"}
-        WG -->|"Platte hat Obermenge"| SK["Überschreiben überspringen\n(Keine Race Conditions)"]
-        WG -->|"Neue Evidenz"| MR["Atomarer Meta-Bericht\n(templates/META-BERICHT)"]
+        WG -->|"Platte hat Obermenge"| SK["Überschreibe-Schutz\n(Null Race Conditions)"]
+        WG -->|"Neue Evidenz"| MR["Atomarer Meta-Bericht\n(templates/META-REPORT)"]
         MR --> AC["Konvergenz-Richtung\nMaßnahme vs. Entscheidungsvorlage"]
     end
 
@@ -118,14 +119,33 @@ flowchart TD
 ## Die drei Stufen
 
 ```text
-Karte     Was ist da?              ->  system-explorer   (optional)
-Urteil    Was ist daran falsch?    ->  system-auditor    (dieses Modul)
-Maßnahme  Was tun wir?             ->  Ticketsystem      (optional)
+Karte      Was ist da               ->  system-explorer   (optional)
+Urteil     Was stimmt daran nicht   ->  system-auditor    (dieses Modul)
+Maßnahme   Was tun wir dagegen      ->  Ticketsystem      (optional)
 ```
 
-Eine Karte ist wertfrei, ein Ticket ist eine Handlung. Dazwischen liegt das Urteil: *welche Regel ist verletzt, was empfehlen wir, und ist die Regel selbst noch richtig?*
+Eine Karte ist wertfrei; ein Ticket ist eine Handlung. Dazwischen liegt das Urteil: *Welche Regel ist verletzt, was empfehlen wir, und stimmt die Regel selbst überhaupt noch?*
 
-**Kein Nachbar ist Voraussetzung.** Erkannt werden sie genutzt; fehlen sie, liest der Auditor direkt und schreibt Dateien. In jede Richtung dasselbe Prinzip: *kennt sie, braucht sie nicht.*
+**Nichts hier setzt Nachbarn zwingend voraus.** Gefunden, werden sie genutzt; abwesend, liest der Auditor direkt und schreibt Dateien. Dasselbe Muster in jede Richtung: *Kenne sie, brauche sie nicht.*
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Explorer as "system-explorer (Karte)"
+    participant Auditor as "system-auditor (Urteil)"
+    participant Sink as "Handover-Senke (Maßnahme)"
+    participant Gov as "Governance & Maintainer (Entscheidung)"
+
+    Explorer->>Auditor: "Beobachteter Systemzustand und Manifest-Bestand"
+    Note over Auditor: Prüft Konformität, Integration (I1-I7) & Governance (K1-K4)
+    alt Realität verletzt gültige Regel
+        Auditor->>Sink: "Erzeuge Maßnahmen-Ticket (--title und --body)"
+        Sink-->>Auditor: "Ticket registriert (Passe Realität an Regel an)"
+    else Regel ist veraltet oder widersprüchlich
+        Auditor->>Gov: "Erzeuge Entscheidungsvorlage (TO-DECIDE-USER)"
+        Gov-->>Auditor: "Richtlinie aktualisiert (Passe Regel an Realität an)"
+    end
+```
 
 ---
 

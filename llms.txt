@@ -1,7 +1,7 @@
 # system-auditor
 
 > Belegbasierte Systemaudits über mehrere Maschinen, mit Meta-Bündelung.
-> Last-checked: 2026-09-13 | Version: 0.9.2 | Tests: 190 passed | Lint: ruff clean
+> Last-checked: 2026-09-16 | Version: 0.9.2 | Tests: 191 passed | Lint: ruff clean
 
 ## Was es ist
 
@@ -59,7 +59,7 @@ Gefunden über --config, SYSTEM_AUDITOR_CONFIG, ./, ./config/, ~/.system-auditor
 
 ## Einstiegspunkte
 
-- README.md & README_de.md       Vollständige Dokumentation mit Mermaid-Architektur- und Sequenzdiagrammen
+- README.md & README_de.md       Vollständige Dokumentation mit 3 Mermaid-Diagrammen (Architektur, Lebenszyklus, Konvergenz)
 - SECURITY.md                   Zweisprachige Sicherheitsrichtlinie (Local-First, Zero-Egress, Non-Elevation)
 - THIRD_PARTY_LICENSES.md        Vollständiges Drittanbieter- und Lizenzinventar (Zero-Dependency-Kern & Dev-Tools)
 - MARKETING-LOG.txt             Audit-Ledger für Discoverability, Visual Architecture & Governance-Parität

@@ -17,15 +17,19 @@ Pfad A Repository-Hygiene, CI-Matrix- & Timeout-Härtung, Stale-Workflow, Multi-
   Ausschluss von OneDrive-Konfliktmustern (`* (kopie)*`, `* (copy)*`, `*-ASUS.*`, `*-LAPTOP.*`, `*-Mac Studio.*`) sowie zusätzlichen Tooling- und Cache-Verzeichnissen (`.tox/`, `.turbo/`, `.mypy_cache/`) und Ausnahme für `!package-lock.json`.
 - **Automatisierte Vertragstests für Pfad-A-Standards (`tests/test_metadata.py`):**
   4 neue Vertragstests für CI-Job-Timeouts, Stale-Workflow-Validität, Gitignore-Muster und Changelog-Release-Parität; Gesamtzahl der Tests auf 190 gehoben (100% grün).
+- **3-Stufen Konvergenz-Sequenzdiagramm (Pfad B, 2026-09-16):**
+  Neues Mermaid-Sequenzdiagramm zur Visualisierung der 3-Stufen-Architektur (system-explorer / Karte -> system-auditor / Urteil -> Senke / Maßnahme vs. Governance / Entscheidungsvorlage) in `README.md` und `README_de.md`.
 
 ### Geaendert
 
 - **PEP 621 Standard-Metadaten & Versionierung (`pyproject.toml`, `src/system_auditor/__init__.py`):**
   Version auf 0.9.2 angehoben.
 - **Maschinenlesbarer Kontext (`llms.txt`):**
-  Subcommand `pages-drift` in die CLI-Übersicht aufgenommen, Teststand auf 190 passed und Prüfdatum auf 2026-09-13 synchronisiert.
+  Subcommand `pages-drift` in die CLI-Übersicht aufgenommen, Teststand auf 191 passed und Prüfdatum auf 2026-09-16 synchronisiert.
 - **Dokumentations- & Badge-Parität (`README.md`, `README_de.md`):**
-  Version auf 0.9.2, Test-Badge auf 190 passed und Prüfdatum auf 2026-09-13 synchronisiert.
+  Version auf 0.9.2, Shields.io `last checked` Badges auf 2026-09-16 und Rollenstarter-Links in die Schnellnavigation aufgenommen.
+- **GitHub Discoverability & Topics (2026-09-16):**
+  Homepage URL auf `https://ellmos-ai.github.io` verlinkt und Repo-Topics um `zero-egress`, `local-first`, `verification`, `developer-tools` und `meta-audit` erweitert.
 
 ## [0.9.1] - 2026-09-09
 

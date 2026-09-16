@@ -16,7 +16,7 @@
 [![umbrella](https://img.shields.io/badge/umbrella-open--bricks-blueviolet)](https://github.com/open-bricks/open-bricks)
 [![version](https://img.shields.io/badge/version-0.9.2-orange)](pyproject.toml)
 [![llms.txt](https://img.shields.io/badge/llms.txt-Discovery%20Context-informational)](llms.txt)
-[![last checked](https://img.shields.io/badge/last%20checked-2026--09--13-informational)](MARKETING-LOG.txt)
+[![last checked](https://img.shields.io/badge/last%20checked-2026--09--16-informational)](MARKETING-LOG.txt)
 
 **Evidence-based system audits across several machines — with meta bundling.**
 
@@ -41,6 +41,7 @@
 - [Security & Privacy](#security--privacy)
 - [Development & Verification](#development--verification)
 - [License](#license)
+- [Starters](#starters)
 
 ---
 
@@ -126,6 +127,25 @@ measure  what we do about it      ->  ticket system     (optional)
 A map is value-free; a ticket is an action. In between sits the judgment: *which rule is violated, what do we recommend, and is the rule itself still right?*
 
 **Nothing here requires its neighbours.** Detected, they are used; absent, the auditor reads directly and writes files. Same pattern in every direction: *know them, don't need them.*
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Explorer as "system-explorer (Map)"
+    participant Auditor as "system-auditor (Verdict)"
+    participant Sink as "Handover Sink (Measure)"
+    participant Gov as "Governance & Maintainer (Decision)"
+
+    Explorer->>Auditor: "Observed system state and manifest inventory"
+    Note over Auditor: Evaluates Compliance, Integration (I1-I7) & Governance (K1-K4)
+    alt Reality violates valid rule
+        Auditor->>Sink: "Emit Measure Ticket (--title and --body)"
+        Sink-->>Auditor: "Ticket registered (Adapt reality to rule)"
+    else Rule is obsolete or conflicting
+        Auditor->>Gov: "Emit Decision Proposal (TO-DECIDE-USER)"
+        Gov-->>Auditor: "Policy updated (Adapt rule to reality)"
+    end
+```
 
 ---
 
