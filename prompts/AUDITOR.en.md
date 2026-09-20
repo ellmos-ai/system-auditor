@@ -217,6 +217,13 @@ across runs.
 **Dedup:** before output, check whether the same problem is already open. If so: no new
 measure, one line in the report.
 
+**Readback duty for dedup:** An existing measure counts as a current duplicate
+only when it carries a dated readback by `actor@host` naming the inspected
+location, observed value, and, where relevant, lock/ownership state
+(`findings/README.md`). A plan, commit, push, ticket status, or stale report is
+not a readback. Without that current receipt, keep the result as
+`needs_readback`/an observation; do not silently close or suppress it.
+
 ### (f) Output
 
 Measures go to the configured sink (`measure_sink`). If none is reachable they are

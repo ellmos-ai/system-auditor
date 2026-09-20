@@ -229,6 +229,13 @@ Kein Bündeln über Läufe hinweg.
 **Dedup:** Vor der Ausgabe prüfen, ob dasselbe Problem schon offen ist. Wenn ja: keine
 neue Maßnahme, sondern eine Zeile im Bericht.
 
+**Readback-Pflicht beim Dedup:** Eine vorhandene Maßnahme zählt nur dann als
+aktuelles Duplikat, wenn sie einen datierten Readback mit `akteur@host`, geprüftem
+Ort, beobachtetem Wert und — soweit relevant — Lock-/Ownership-Zustand trägt
+(`findings/README.md`). Plan, Commit, Push, Ticketstatus oder alter Bericht sind
+kein Readback. Fehlt der aktuelle Beleg, bleibt der Befund `needs_readback` bzw.
+eine Beobachtung; er wird weder still geschlossen noch unterdrückt.
+
 ### (f) Ausgabe
 
 Maßnahmen gehen an die konfigurierte Senke (`measure_sink`). Ist keine erreichbar, werden
