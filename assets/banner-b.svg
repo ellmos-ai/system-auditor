@@ -1,0 +1,904 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2400 680" width="2400" height="680">
+  <defs>
+    <!-- Background Gradients -->
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#090e1a" />
+      <stop offset="45%" stop-color="#111c30" />
+      <stop offset="100%" stop-color="#0a101d" />
+    </linearGradient>
+
+    <linearGradient id="floor-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0a0f1c" />
+      <stop offset="25%" stop-color="#0e1728" />
+      <stop offset="100%" stop-color="#060911" />
+    </linearGradient>
+
+    <radialGradient id="ambient-light" cx="68%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.12" />
+      <stop offset="40%" stop-color="#818cf8" stop-opacity="0.05" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+    </radialGradient>
+
+    <radialGradient id="lamp-warmth" cx="82%" cy="42%" r="40%">
+      <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.14" />
+      <stop offset="50%" stop-color="#f59e0b" stop-opacity="0.04" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Brand Header -->
+    <linearGradient id="brand-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563eb" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+
+    <!-- Couch Gradients -->
+    <linearGradient id="couch-leather" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#b45309" />
+      <stop offset="40%" stop-color="#92400e" />
+      <stop offset="100%" stop-color="#713f12" />
+    </linearGradient>
+
+    <linearGradient id="couch-tuft" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#92400e" />
+      <stop offset="100%" stop-color="#582f0e" />
+    </linearGradient>
+
+    <linearGradient id="couch-wood" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#451a03" />
+      <stop offset="100%" stop-color="#1c0a00" />
+    </linearGradient>
+
+    <linearGradient id="pillow-velvet" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#d97706" />
+      <stop offset="50%" stop-color="#b45309" />
+      <stop offset="100%" stop-color="#78350f" />
+    </linearGradient>
+
+    <!-- Armchair Gradients -->
+    <linearGradient id="armchair-leather" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#991b1b" />
+      <stop offset="45%" stop-color="#7f1d1d" />
+      <stop offset="100%" stop-color="#450a0a" />
+    </linearGradient>
+
+    <linearGradient id="armchair-cushion" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#b91c1c" />
+      <stop offset="60%" stop-color="#7f1d1d" />
+      <stop offset="100%" stop-color="#3f0708" />
+    </linearGradient>
+
+    <!-- CRT Analyst Gradients -->
+    <linearGradient id="crt-case" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f1f5f9" />
+      <stop offset="40%" stop-color="#e2e8f0" />
+      <stop offset="85%" stop-color="#cbd5e1" />
+      <stop offset="100%" stop-color="#94a3b8" />
+    </linearGradient>
+
+    <linearGradient id="crt-bezel" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#cbd5e1" />
+      <stop offset="100%" stop-color="#64748b" />
+    </linearGradient>
+
+    <radialGradient id="crt-screen" cx="48%" cy="46%" r="60%">
+      <stop offset="0%" stop-color="#14532d" />
+      <stop offset="60%" stop-color="#064e3b" />
+      <stop offset="92%" stop-color="#022c22" />
+      <stop offset="100%" stop-color="#011812" />
+    </radialGradient>
+
+    <linearGradient id="silver-beard" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="40%" stop-color="#f1f5f9" />
+      <stop offset="80%" stop-color="#cbd5e1" />
+      <stop offset="100%" stop-color="#94a3b8" />
+    </linearGradient>
+
+    <linearGradient id="gold-rim" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="50%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#b45309" />
+    </linearGradient>
+
+    <linearGradient id="clip-board" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#b45309" />
+      <stop offset="70%" stop-color="#78350f" />
+      <stop offset="100%" stop-color="#451a03" />
+    </linearGradient>
+
+    <!-- Patient Gradients -->
+    <linearGradient id="monitor-frame" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#475569" />
+      <stop offset="60%" stop-color="#334155" />
+      <stop offset="100%" stop-color="#1e293b" />
+    </linearGradient>
+
+    <linearGradient id="monitor-screen-glow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="60%" stop-color="#0369a1" />
+      <stop offset="100%" stop-color="#0c4a6e" />
+    </linearGradient>
+
+    <linearGradient id="laptop-metal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#94a3b8" />
+      <stop offset="50%" stop-color="#64748b" />
+      <stop offset="100%" stop-color="#475569" />
+    </linearGradient>
+
+    <linearGradient id="laptop-screen-glow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f766e" />
+      <stop offset="60%" stop-color="#115e59" />
+      <stop offset="100%" stop-color="#134e4a" />
+    </linearGradient>
+
+    <linearGradient id="server-chassis" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#334155" />
+      <stop offset="25%" stop-color="#1e293b" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+
+    <!-- Rug Gradients -->
+    <linearGradient id="rug-fill" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#450a0a" />
+      <stop offset="20%" stop-color="#7f1d1d" />
+      <stop offset="50%" stop-color="#581c1c" />
+      <stop offset="80%" stop-color="#7f1d1d" />
+      <stop offset="100%" stop-color="#450a0a" />
+    </linearGradient>
+
+    <!-- Drop Shadows -->
+    <filter id="soft-shadow" x="-8%" y="-8%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="16" stdDeviation="16" flood-color="#000000" flood-opacity="0.55" />
+    </filter>
+
+    <filter id="ground-shadow" x="-5%" y="-20%" width="110%" height="150%">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#000000" flood-opacity="0.65" />
+    </filter>
+  </defs>
+
+  <!-- ==================== BACKGROUND & ROOM ==================== -->
+  <rect width="2400" height="680" fill="url(#bg-grad)" />
+
+  <!-- Architectural Wall Panels -->
+  <g opacity="0.18" stroke="#475569" stroke-width="1.5">
+    <line x1="80" y1="30" x2="80" y2="540" />
+    <line x1="460" y1="30" x2="460" y2="540" />
+    <line x1="860" y1="30" x2="860" y2="540" />
+    <line x1="1260" y1="30" x2="1260" y2="540" />
+    <line x1="1680" y1="30" x2="1680" y2="540" />
+    <line x1="2100" y1="30" x2="2100" y2="540" />
+    <line x1="40" y1="180" x2="2360" y2="180" />
+    <line x1="40" y1="540" x2="2360" y2="540" />
+  </g>
+
+  <!-- Ambient Light Overlays -->
+  <rect width="2400" height="680" fill="url(#ambient-light)" pointer-events="none" />
+  <rect width="2400" height="680" fill="url(#lamp-warmth)" pointer-events="none" />
+
+  <!-- Hardwood Floor -->
+  <rect x="0" y="540" width="2400" height="140" fill="url(#floor-grad)" />
+  <line x1="0" y1="540" x2="2400" y2="540" stroke="#1e293b" stroke-width="3" />
+  <g opacity="0.15" stroke="#334155" stroke-width="1">
+    <line x1="0" y1="575" x2="2400" y2="575" />
+    <line x1="0" y1="615" x2="2400" y2="615" />
+    <line x1="0" y1="655" x2="2400" y2="655" />
+    <line x1="280" y1="540" x2="240" y2="575" />
+    <line x1="620" y1="575" x2="570" y2="615" />
+    <line x1="980" y1="540" x2="940" y2="575" />
+    <line x1="1350" y1="575" x2="1290" y2="615" />
+    <line x1="1720" y1="540" x2="1670" y2="575" />
+    <line x1="2050" y1="575" x2="1990" y2="615" />
+  </g>
+
+  <!-- ==================== BACKGROUND BOOKSHELF ==================== -->
+  <g id="bookshelf" transform="translate(100, 205)" opacity="0.65">
+    <!-- Shelf Frame -->
+    <rect x="0" y="0" width="310" height="335" rx="3" fill="#0f172a" stroke="#1e293b" stroke-width="3" />
+    <line x1="0" y1="165" x2="310" y2="165" stroke="#334155" stroke-width="7" />
+    <line x1="0" y1="330" x2="310" y2="330" stroke="#334155" stroke-width="9" />
+
+    <!-- Top Shelf Books -->
+    <g transform="translate(15, 30)">
+      <rect x="0" y="20" width="22" height="115" rx="2" fill="#1e3a8a" />
+      <line x1="3" y1="40" x2="19" y2="40" stroke="#fbbf24" stroke-width="1.5" />
+      <line x1="3" y1="46" x2="19" y2="46" stroke="#fbbf24" stroke-width="1.5" />
+
+      <rect x="25" y="10" width="28" height="125" rx="2" fill="#7f1d1d" />
+      <line x1="29" y1="30" x2="49" y2="30" stroke="#fef08a" stroke-width="1.5" />
+      <line x1="29" y1="36" x2="49" y2="36" stroke="#fef08a" stroke-width="1.5" />
+
+      <rect x="56" y="25" width="20" height="110" rx="2" fill="#065f46" />
+      <rect x="79" y="15" width="32" height="120" rx="2" fill="#78350f" />
+      <line x1="83" y1="38" x2="107" y2="38" stroke="#fde68a" stroke-width="1.5" />
+
+      <rect x="114" y="30" width="18" height="105" rx="2" fill="#334155" />
+      <rect x="135" y="8" width="35" height="127" rx="2" fill="#1e293b" />
+      <line x1="140" y1="28" x2="165" y2="28" stroke="#38bdf8" stroke-width="1.5" />
+
+      <rect x="173" y="18" width="26" height="117" rx="2" fill="#581c87" />
+      <rect x="202" y="22" width="24" height="113" rx="2" fill="#831843" />
+      <rect x="229" y="12" width="30" height="123" rx="2" fill="#0f766e" />
+
+      <!-- Leaning book -->
+      <g transform="translate(262, 25) rotate(14)">
+        <rect x="0" y="0" width="20" height="115" rx="2" fill="#b45309" />
+      </g>
+    </g>
+
+    <!-- Bottom Shelf Books & Archives -->
+    <g transform="translate(15, 195)">
+      <rect x="0" y="10" width="36" height="125" rx="2" fill="#0f172a" stroke="#334155" stroke-width="1" />
+      <circle cx="18" cy="40" r="5" fill="#64748b" />
+
+      <rect x="40" y="10" width="36" height="125" rx="2" fill="#0f172a" stroke="#334155" stroke-width="1" />
+      <circle cx="58" cy="40" r="5" fill="#64748b" />
+
+      <rect x="80" y="10" width="36" height="125" rx="2" fill="#0f172a" stroke="#334155" stroke-width="1" />
+      <circle cx="98" cy="40" r="5" fill="#64748b" />
+
+      <rect x="122" y="22" width="26" height="113" rx="2" fill="#312e81" />
+      <rect x="151" y="16" width="32" height="119" rx="2" fill="#701a75" />
+      <rect x="186" y="28" width="22" height="107" rx="2" fill="#14532d" />
+      <rect x="211" y="14" width="28" height="121" rx="2" fill="#854d0e" />
+      <rect x="242" y="20" width="34" height="115" rx="2" fill="#1e293b" />
+    </g>
+  </g>
+
+  <!-- ==================== PERSIAN CONSULTING RUG ==================== -->
+  <g id="rug" transform="translate(480, 528)" filter="url(#groundShadow)">
+    <!-- Fringe Left -->
+    <path d="M 0 15 L 20 15 M 0 25 L 20 25 M 0 35 L 20 35 M 0 45 L 20 45 M 0 55 L 20 55 M 0 65 L 20 65" stroke="#fde68a" stroke-width="2.5" opacity="0.6" />
+    <!-- Fringe Right -->
+    <path d="M 1760 15 L 1780 15 M 1760 25 L 1780 25 M 1760 35 L 1780 35 M 1760 45 L 1780 45 M 1760 55 L 1780 55 M 1760 65 L 1780 65" stroke="#fde68a" stroke-width="2.5" opacity="0.6" />
+
+    <!-- Rug Main Body -->
+    <rect x="18" y="5" width="1744" height="74" rx="10" fill="url(#rug-fill)" stroke="#991b1b" stroke-width="2" />
+
+    <!-- Rug Ornamental Borders -->
+    <rect x="28" y="12" width="1724" height="60" rx="6" fill="none" stroke="#b45309" stroke-width="3" stroke-dasharray="8 4" opacity="0.75" />
+    <rect x="36" y="18" width="1708" height="48" rx="4" fill="#3b0712" stroke="#d97706" stroke-width="1.5" />
+
+    <!-- Repeated Diamond Medallions -->
+    <g opacity="0.65" fill="#b45309" stroke="#fde68a" stroke-width="1">
+      <polygon points="120,42 135,32 150,42 135,52" />
+      <polygon points="260,42 275,32 290,42 275,52" />
+      <polygon points="400,42 415,32 430,42 415,52" />
+      <polygon points="540,42 555,32 570,42 555,52" />
+      <polygon points="680,42 695,32 710,42 695,52" />
+      <polygon points="820,42 835,32 850,42 835,52" />
+      <polygon points="960,42 975,32 990,42 975,52" />
+      <polygon points="1100,42 1115,32 1130,42 1115,52" />
+      <polygon points="1240,42 1255,32 1270,42 1255,52" />
+      <polygon points="1380,42 1395,32 1410,42 1395,52" />
+      <polygon points="1520,42 1535,32 1550,42 1535,52" />
+      <polygon points="1660,42 1675,32 1690,42 1675,52" />
+    </g>
+  </g>
+
+  <!-- ==================== THE CHAISELONGUE (COUCH) ==================== -->
+  <g id="chaiselongue" filter="url(#ground-shadow)">
+    <!-- Turned Wooden Legs -->
+    <!-- Front Left Leg -->
+    <g transform="translate(565, 495)">
+      <polygon points="10,0 22,0 26,45 18,58 14,58 6,45" fill="url(#couch-wood)" />
+      <!-- Brass Caster / Ferrule -->
+      <rect x="12" y="52" width="8" height="8" rx="2" fill="#d97706" />
+    </g>
+    <!-- Back Left Leg (Shadowed) -->
+    <g transform="translate(605, 485)" opacity="0.6">
+      <polygon points="8,0 18,0 22,42 15,52 11,52 5,42" fill="#1c0a00" />
+      <rect x="10" y="46" width="6" height="6" fill="#92400e" />
+    </g>
+    <!-- Center Leg -->
+    <g transform="translate(1040, 495)">
+      <polygon points="10,0 22,0 24,45 18,58 14,58 8,45" fill="url(#couch-wood)" />
+      <rect x="12" y="52" width="8" height="8" rx="2" fill="#d97706" />
+    </g>
+    <!-- Front Right Leg -->
+    <g transform="translate(1520, 495)">
+      <polygon points="10,0 22,0 26,45 18,58 14,58 6,45" fill="url(#couch-wood)" />
+      <rect x="12" y="52" width="8" height="8" rx="2" fill="#d97706" />
+    </g>
+    <!-- Back Right Leg -->
+    <g transform="translate(1485, 485)" opacity="0.6">
+      <polygon points="8,0 18,0 22,42 15,52 11,52 5,42" fill="#1c0a00" />
+      <rect x="10" y="46" width="6" height="6" fill="#92400e" />
+    </g>
+
+    <!-- Wooden Frame Rail -->
+    <rect x="540" y="488" width="1025" height="18" rx="4" fill="url(#couch-wood)" stroke="#582f0e" stroke-width="1.5" />
+
+    <!-- Couch Cushion Base & Sweeping Raised Headrest -->
+    <!-- Path combines the curved psychoanalytic headrest on left and flat mattress body on right -->
+    <path d="M 535 365 
+             C 530 330, 560 305, 605 315 
+             C 655 325, 730 380, 830 435 
+             L 1565 435 
+             C 1578 435, 1585 445, 1585 455 
+             L 1585 486 
+             C 1585 492, 1578 496, 1565 496 
+             L 540 496 
+             C 530 496, 520 488, 520 475 
+             L 520 395 
+             C 520 380, 528 370, 535 365 Z" 
+          fill="url(#couch-leather)" stroke="#78350f" stroke-width="2" />
+
+    <!-- Tufted Leather Buttons & Diamond Creases -->
+    <g opacity="0.38" stroke="#451a03" stroke-width="1.5" fill="none">
+      <!-- Headrest creases -->
+      <line x1="560" y1="340" x2="630" y2="400" />
+      <line x1="630" y1="355" x2="710" y2="425" />
+      <line x1="710" y1="385" x2="800" y2="455" />
+      <line x1="630" y1="400" x2="565" y2="445" />
+      <line x1="710" y1="425" x2="640" y2="475" />
+
+      <!-- Horizontal cushion diamond tufts -->
+      <line x1="840" y1="442" x2="900" y2="488" />
+      <line x1="900" y1="442" x2="960" y2="488" />
+      <line x1="960" y1="442" x2="1020" y2="488" />
+      <line x1="1020" y1="442" x2="1080" y2="488" />
+      <line x1="1080" y1="442" x2="1140" y2="488" />
+      <line x1="1140" y1="442" x2="1200" y2="488" />
+      <line x1="1200" y1="442" x2="1260" y2="488" />
+      <line x1="1260" y1="442" x2="1320" y2="488" />
+      <line x1="1320" y1="442" x2="1380" y2="488" />
+      <line x1="1380" y1="442" x2="1440" y2="488" />
+      <line x1="1440" y1="442" x2="1500" y2="488" />
+      <line x1="1500" y1="442" x2="1560" y2="488" />
+
+      <line x1="900" y1="488" x2="960" y2="442" />
+      <line x1="960" y1="488" x2="1020" y2="442" />
+      <line x1="1020" y1="488" x2="1080" y2="442" />
+      <line x1="1080" y1="488" x2="1140" y2="442" />
+      <line x1="1140" y1="488" x2="1200" y2="442" />
+      <line x1="1200" y1="488" x2="1260" y2="442" />
+      <line x1="1260" y1="488" x2="1320" y2="442" />
+      <line x1="1320" y1="488" x2="1380" y2="442" />
+      <line x1="1380" y1="488" x2="1440" y2="442" />
+      <line x1="1440" y1="488" x2="1500" y2="442" />
+      <line x1="1500" y1="488" x2="1560" y2="442" />
+    </g>
+
+    <!-- Deep Tuft Buttons -->
+    <g fill="#451a03" opacity="0.7">
+      <circle cx="630" cy="380" r="3.5" />
+      <circle cx="710" cy="415" r="3.5" />
+      <circle cx="870" cy="465" r="3.5" />
+      <circle cx="930" cy="465" r="3.5" />
+      <circle cx="990" cy="465" r="3.5" />
+      <circle cx="1050" cy="465" r="3.5" />
+      <circle cx="1110" cy="465" r="3.5" />
+      <circle cx="1170" cy="465" r="3.5" />
+      <circle cx="1230" cy="465" r="3.5" />
+      <circle cx="1290" cy="465" r="3.5" />
+      <circle cx="1350" cy="465" r="3.5" />
+      <circle cx="1410" cy="465" r="3.5" />
+      <circle cx="1470" cy="465" r="3.5" />
+      <circle cx="1530" cy="465" r="3.5" />
+    </g>
+
+    <!-- Freud Cylindrical Bolster Pillow -->
+    <g transform="translate(565, 315) rotate(18)">
+      <ellipse cx="45" cy="28" rx="45" ry="24" fill="url(#pillow-velvet)" stroke="#92400e" stroke-width="2" />
+      <ellipse cx="14" cy="28" rx="12" ry="22" fill="#78350f" opacity="0.6" />
+      <!-- Center Rosette & Tassel -->
+      <circle cx="14" cy="28" r="4" fill="#fbbf24" />
+      <path d="M 14 28 C 10 34, 6 42, 4 48" stroke="#f59e0b" stroke-width="2.5" fill="none" />
+    </g>
+
+    <!-- Draped Velvet Foot Runner / Throw Blanket -->
+    <path d="M 1430 440 
+             C 1450 436, 1540 436, 1565 440 
+             L 1565 490 
+             C 1545 495, 1450 495, 1430 490 Z" 
+          fill="#1e3a5f" opacity="0.85" stroke="#0f172a" stroke-width="1.5" />
+    <path d="M 1430 488 L 1430 502 M 1450 489 L 1450 503 M 1470 490 L 1470 504 M 1490 490 L 1490 504 M 1510 490 L 1510 504 M 1530 489 L 1530 503 M 1550 488 L 1550 502" stroke="#38bdf8" stroke-width="2" opacity="0.7" />
+  </g>
+
+  <!-- ==================== THE PATIENTS ON THE COUCH ==================== -->
+  <!-- PATIENT 1: The Modern Flat Monitor (Leaning back on the pillow) -->
+  <g id="patient-monitor" transform="translate(680, 275) rotate(-16)" filter="url(#soft-shadow)">
+    <!-- Shadow beneath monitor -->
+    <ellipse cx="110" cy="170" rx="100" ry="14" fill="#000000" opacity="0.35" />
+
+    <!-- Monitor Stand & Neck (Folded relaxed on couch) -->
+    <rect x="98" y="130" width="16" height="38" rx="3" fill="#334155" stroke="#1e293b" stroke-width="1.5" />
+    <rect x="70" y="162" width="72" height="8" rx="4" fill="#475569" stroke="#1e293b" stroke-width="1" />
+
+    <!-- Monitor Outer Body / Bezel -->
+    <rect x="10" y="8" width="195" height="126" rx="8" fill="url(#monitor-frame)" stroke="#64748b" stroke-width="2" />
+
+    <!-- Glowing Screen -->
+    <rect x="18" y="16" width="179" height="110" rx="4" fill="url(#monitor-screen-glow)" />
+
+    <!-- Internal System State: Anxious Audit Waveform / Sine trace -->
+    <g opacity="0.9">
+      <!-- Grid lines -->
+      <line x1="20" y1="71" x2="195" y2="71" stroke="#38bdf8" stroke-width="0.8" stroke-dasharray="3 3" opacity="0.4" />
+      <line x1="20" y1="46" x2="195" y2="46" stroke="#38bdf8" stroke-width="0.5" stroke-dasharray="2 4" opacity="0.25" />
+      <line x1="20" y1="96" x2="195" y2="96" stroke="#38bdf8" stroke-width="0.5" stroke-dasharray="2 4" opacity="0.25" />
+
+      <!-- Agitated waveform easing into smooth baseline curve (Patient opening up) -->
+      <path d="M 24 71 
+               L 42 71 
+               L 50 48 
+               L 58 92 
+               L 66 38 
+               L 74 102 
+               L 82 55 
+               L 90 85 
+               L 100 64 
+               L 112 76 
+               Q 130 58, 150 71 
+               T 188 71" 
+            fill="none" stroke="#7dd3fc" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+    </g>
+
+    <!-- Subtle Amber Alert LED on corner -->
+    <circle cx="188" cy="120" r="2.5" fill="#f59e0b">
+      <animate attributeName="opacity" values="1;0.4;1" dur="2.8s" repeatCount="indefinite" />
+    </circle>
+  </g>
+
+  <!-- PATIENT 2: The Laptop (In the middle of the couch) -->
+  <g id="patient-laptop" transform="translate(970, 360)" filter="url(#soft-shadow)">
+    <!-- Base Keyboard Deck (Resting on couch) -->
+    <g transform="translate(20, 78)">
+      <polygon points="10,0 215,0 230,22 0,22" fill="url(#laptop-metal)" stroke="#334155" stroke-width="1.5" />
+      <!-- Trackpad -->
+      <rect x="90" y="8" width="46" height="11" rx="2" fill="#475569" opacity="0.6" />
+      <!-- Keyboard key rows (minimalist clean geometry) -->
+      <rect x="25" y="2" width="176" height="5" rx="1" fill="#1e293b" opacity="0.75" />
+      <!-- Front lip -->
+      <rect x="0" y="22" width="230" height="5" rx="2" fill="#334155" />
+    </g>
+
+    <!-- Display Lid (Propped open at comfortable reclining angle) -->
+    <!-- Transformed with perspective slant -->
+    <g transform="translate(20, 8) skewX(-14)">
+      <!-- Display Lid Casing -->
+      <rect x="18" y="0" width="195" height="74" rx="6" fill="url(#laptop-metal)" stroke="#334155" stroke-width="1.5" />
+      <!-- Screen Glow -->
+      <rect x="24" y="5" width="183" height="64" rx="4" fill="url(#laptop-screen-glow)" />
+
+      <!-- Terminal / Diagnostic lines (Abstract, no text) -->
+      <g opacity="0.8" stroke-linecap="round">
+        <line x1="34" y1="18" x2="95" y2="18" stroke="#5eead4" stroke-width="2.5" />
+        <line x1="34" y1="28" x2="140" y2="28" stroke="#2dd4bf" stroke-width="2" opacity="0.6" />
+        <line x1="34" y1="38" x2="115" y2="38" stroke="#2dd4bf" stroke-width="2" opacity="0.6" />
+        <line x1="34" y1="48" x2="165" y2="48" stroke="#2dd4bf" stroke-width="2" opacity="0.6" />
+        <!-- Pulsing Cursor -->
+        <rect x="100" y="14" width="7" height="7" fill="#ffffff">
+          <animate attributeName="opacity" values="1;0;1" dur="1.2s" repeatCount="indefinite" />
+        </rect>
+      </g>
+
+      <!-- Top Web Camera dot -->
+      <circle cx="115" cy="3" r="1.5" fill="#0f172a" />
+    </g>
+
+    <!-- Braided USB-C Cable trailing like a relaxed arm -->
+    <path d="M 235 90 C 255 92, 270 105, 280 115 C 290 125, 305 125, 318 120" fill="none" stroke="#64748b" stroke-width="3" stroke-linecap="round" />
+  </g>
+
+  <!-- PATIENT 3: The Server Rack Unit (At foot of couch) -->
+  <g id="patient-server" transform="translate(1260, 395)" filter="url(#soft-shadow)">
+    <!-- 2U / 3U Server Chassis -->
+    <!-- Left Rack Ear (Mounting bracket) -->
+    <rect x="0" y="8" width="14" height="68" rx="2" fill="#475569" stroke="#1e293b" stroke-width="1.5" />
+    <circle cx="7" cy="18" r="3" fill="#0f172a" />
+    <circle cx="7" cy="66" r="3" fill="#0f172a" />
+
+    <!-- Main Front Bezel -->
+    <rect x="14" y="5" width="245" height="74" rx="4" fill="url(#server-chassis)" stroke="#475569" stroke-width="2" />
+
+    <!-- Right Rack Ear -->
+    <rect x="259" y="8" width="14" height="68" rx="2" fill="#475569" stroke="#1e293b" stroke-width="1.5" />
+    <circle cx="266" cy="18" r="3" fill="#0f172a" />
+    <circle cx="266" cy="66" r="3" fill="#0f172a" />
+
+    <!-- 8 Hot-Swap Drive Bays (Arranged 4x2) -->
+    <g transform="translate(24, 12)" fill="#1e293b" stroke="#334155" stroke-width="1">
+      <!-- Row 1 -->
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="46" height="26" rx="2" />
+        <line x1="4" y1="20" x2="36" y2="20" stroke="#475569" stroke-width="1.5" />
+        <circle cx="40" cy="8" r="1.5" fill="#10b981" />
+      </g>
+      <g transform="translate(50, 0)">
+        <rect x="0" y="0" width="46" height="26" rx="2" />
+        <line x1="4" y1="20" x2="36" y2="20" stroke="#475569" stroke-width="1.5" />
+        <circle cx="40" cy="8" r="1.5" fill="#10b981" />
+      </g>
+      <g transform="translate(100, 0)">
+        <rect x="0" y="0" width="46" height="26" rx="2" />
+        <line x1="4" y1="20" x2="36" y2="20" stroke="#475569" stroke-width="1.5" />
+        <circle cx="40" cy="8" r="1.5" fill="#f59e0b" />
+      </g>
+      <g transform="translate(150, 0)">
+        <rect x="0" y="0" width="46" height="26" rx="2" />
+        <line x1="4" y1="20" x2="36" y2="20" stroke="#475569" stroke-width="1.5" />
+        <circle cx="40" cy="8" r="1.5" fill="#10b981" />
+      </g>
+
+      <!-- Row 2 -->
+      <g transform="translate(0, 31)">
+        <rect x="0" y="0" width="46" height="26" rx="2" />
+        <line x1="4" y1="20" x2="36" y2="20" stroke="#475569" stroke-width="1.5" />
+        <circle cx="40" cy="8" r="1.5" fill="#10b981" />
+      </g>
+      <g transform="translate(50, 31)">
+        <rect x="0" y="0" width="46" height="26" rx="2" />
+        <line x1="4" y1="20" x2="36" y2="20" stroke="#475569" stroke-width="1.5" />
+        <circle cx="40" cy="8" r="1.5" fill="#38bdf8" />
+      </g>
+      <g transform="translate(100, 31)">
+        <rect x="0" y="0" width="46" height="26" rx="2" />
+        <line x1="4" y1="20" x2="36" y2="20" stroke="#475569" stroke-width="1.5" />
+        <circle cx="40" cy="8" r="1.5" fill="#10b981" />
+      </g>
+      <g transform="translate(150, 31)">
+        <rect x="0" y="0" width="46" height="26" rx="2" />
+        <line x1="4" y1="20" x2="36" y2="20" stroke="#475569" stroke-width="1.5" />
+        <circle cx="40" cy="8" r="1.5" fill="#10b981" />
+      </g>
+    </g>
+
+    <!-- Right Control & Diagnostic Cluster -->
+    <g transform="translate(225, 14)">
+      <rect x="0" y="0" width="26" height="56" rx="2" fill="#0f172a" stroke="#334155" stroke-width="1" />
+      <!-- Power Button -->
+      <circle cx="13" cy="12" r="4" fill="#3b82f6" />
+      <!-- Diagnostic Activity LEDs -->
+      <circle cx="8" cy="26" r="2" fill="#10b981" />
+      <circle cx="18" cy="26" r="2" fill="#38bdf8" />
+      <circle cx="8" cy="36" r="2" fill="#f59e0b" />
+      <circle cx="18" cy="36" r="2" fill="#10b981" />
+      <circle cx="13" cy="46" r="2" fill="#ef4444" opacity="0.8" />
+    </g>
+
+    <!-- Trailing Network Cable resting like relaxed feet -->
+    <path d="M 265 60 C 285 65, 298 78, 305 92 C 310 102, 318 106, 328 104" fill="none" stroke="#0284c7" stroke-width="3.5" stroke-linecap="round" />
+  </g>
+
+
+  <!-- ==================== THE ANALYST'S WINGBACK ARMCHAIR ==================== -->
+  <g id="armchair" filter="url(#ground-shadow)">
+    <!-- Armchair Back Legs -->
+    <g transform="translate(1820, 505)" opacity="0.55">
+      <polygon points="5,0 18,0 22,45 14,55 9,55 2,45" fill="#1c0a00" />
+    </g>
+    <g transform="translate(2125, 505)" opacity="0.55">
+      <polygon points="5,0 18,0 22,45 14,55 9,55 2,45" fill="#1c0a00" />
+    </g>
+
+    <!-- Armchair Front Legs -->
+    <g transform="translate(1785, 515)">
+      <polygon points="8,0 24,0 28,48 18,60 14,60 4,48" fill="url(#couch-wood)" />
+      <rect x="12" y="54" width="8" height="8" rx="2" fill="#d97706" />
+    </g>
+    <g transform="translate(2160, 515)">
+      <polygon points="8,0 24,0 28,48 18,60 14,60 4,48" fill="url(#couch-wood)" />
+      <rect x="12" y="54" width="8" height="8" rx="2" fill="#d97706" />
+    </g>
+
+    <!-- Deep Wingback Rest (Chesterfield Oxblood Leather) -->
+    <path d="M 1795 240 
+             C 1780 230, 2180 230, 2165 240 
+             C 2190 280, 2200 360, 2175 440 
+             L 1785 440 
+             C 1760 360, 1770 280, 1795 240 Z" 
+          fill="url(#armchair-leather)" stroke="#450a0a" stroke-width="2" />
+
+    <!-- Left & Right Curved Wings -->
+    <path d="M 1795 240 C 1765 280, 1750 340, 1765 420 L 1795 420 Z" fill="#7f1d1d" opacity="0.8" />
+    <path d="M 2165 240 C 2195 280, 2210 340, 2195 420 L 2165 420 Z" fill="#450a0a" opacity="0.8" />
+
+    <!-- Diamond Button Tufting on Armchair Backrest -->
+    <g opacity="0.4" stroke="#450a0a" stroke-width="1.5" fill="none">
+      <line x1="1830" y1="260" x2="1880" y2="310" />
+      <line x1="1880" y1="260" x2="1930" y2="310" />
+      <line x1="1930" y1="260" x2="1980" y2="310" />
+      <line x1="1980" y1="260" x2="2030" y2="310" />
+      <line x1="2030" y1="260" x2="2080" y2="310" />
+      <line x1="2080" y1="260" x2="2130" y2="310" />
+
+      <line x1="1880" y1="310" x2="1830" y2="360" />
+      <line x1="1930" y1="310" x2="1880" y2="360" />
+      <line x1="1980" y1="310" x2="1930" y2="360" />
+      <line x1="2030" y1="310" x2="1980" y2="360" />
+      <line x1="2080" y1="310" x2="2030" y2="360" />
+      <line x1="2130" y1="310" x2="2080" y2="360" />
+
+      <line x1="1830" y1="360" x2="1880" y2="410" />
+      <line x1="1880" y1="360" x2="1930" y2="410" />
+      <line x1="1930" y1="360" x2="1980" y2="410" />
+      <line x1="1980" y1="360" x2="2030" y2="410" />
+      <line x1="2030" y1="360" x2="2080" y2="410" />
+      <line x1="2080" y1="360" x2="2130" y2="410" />
+    </g>
+
+    <!-- Tuft Buttons -->
+    <g fill="#450a0a" opacity="0.8">
+      <circle cx="1880" cy="310" r="3.5" />
+      <circle cx="1930" cy="310" r="3.5" />
+      <circle cx="1980" cy="310" r="3.5" />
+      <circle cx="2030" cy="310" r="3.5" />
+      <circle cx="2080" cy="310" r="3.5" />
+      <circle cx="1880" cy="360" r="3.5" />
+      <circle cx="1930" cy="360" r="3.5" />
+      <circle cx="1980" cy="360" r="3.5" />
+      <circle cx="2030" cy="360" r="3.5" />
+      <circle cx="2080" cy="360" r="3.5" />
+    </g>
+
+    <!-- Armchair Seat Cushion -->
+    <path d="M 1765 440 C 1760 425, 2195 425, 2190 440 L 2200 488 C 2200 500, 2185 506, 2165 506 L 1790 506 C 1770 506, 1755 500, 1755 488 Z" fill="url(#armchair-cushion)" stroke="#450a0a" stroke-width="2" />
+
+    <!-- Left Rolled Armrest (Facing Patient) -->
+    <path d="M 1735 410 C 1735 385, 1775 385, 1785 410 L 1790 495 C 1790 510, 1740 510, 1735 495 Z" fill="#991b1b" stroke="#450a0a" stroke-width="2" />
+    <circle cx="1760" cy="410" r="18" fill="url(#armchair-leather)" stroke="#450a0a" stroke-width="2" />
+    <circle cx="1760" cy="410" r="5" fill="#450a0a" />
+
+    <!-- Right Rolled Armrest -->
+    <path d="M 2170 410 C 2170 385, 2210 385, 2220 410 L 2220 495 C 2220 510, 2170 510, 2170 495 Z" fill="#7f1d1d" stroke="#450a0a" stroke-width="2" />
+    <circle cx="2195" cy="410" r="18" fill="url(#armchair-leather)" stroke="#450a0a" stroke-width="2" />
+    <circle cx="2195" cy="410" r="5" fill="#450a0a" />
+
+    <!-- Decorative Brass Upholstery Studs -->
+    <g fill="#d97706" opacity="0.75">
+      <circle cx="1748" cy="420" r="1.5" />
+      <circle cx="1744" cy="435" r="1.5" />
+      <circle cx="1744" cy="450" r="1.5" />
+      <circle cx="1745" cy="465" r="1.5" />
+      <circle cx="1748" cy="480" r="1.5" />
+      <circle cx="1755" cy="495" r="1.5" />
+    </g>
+  </g>
+
+
+  <!-- ==================== THE CRT PSYCHOANALYST ==================== -->
+  <!-- Sitting in armchair, leaning attentive and forward toward couch -->
+  <g id="crt-analyst" transform="translate(1825, 185) rotate(-6 120 200)" filter="url(#soft-shadow)">
+
+    <!-- Top Swivel Base & Rabbit-Ear Antenna -->
+    <g id="antenna" transform="translate(125, 42)">
+      <ellipse cx="0" cy="0" rx="14" ry="6" fill="#64748b" stroke="#334155" stroke-width="1.5" />
+      <!-- Left Antenna (Straight, attentive) -->
+      <line x1="-5" y1="-2" x2="-45" y2="-65" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round" />
+      <circle cx="-47" cy="-68" r="4" fill="#ef4444" />
+
+      <!-- Right Antenna (Tilted thoughtfully toward the patient couch) -->
+      <line x1="5" y1="-2" x2="35" y2="-58" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round" />
+      <circle cx="37" cy="-61" r="4" fill="#ef4444" />
+    </g>
+
+    <!-- Retro CRT Main Outer Housing (Beige / Putty Classic 1980s) -->
+    <path d="M 25 45 
+             C 25 38, 35 36, 125 36 
+             C 215 36, 225 38, 225 45 
+             L 240 195 
+             C 242 210, 230 220, 215 220 
+             L 35 220 
+             C 20 220, 8 210, 10 195 Z" 
+          fill="url(#crt-case)" stroke="#94a3b8" stroke-width="2.5" />
+
+    <!-- Top Ventilation Louvers / Heat Grille -->
+    <g stroke="#94a3b8" stroke-width="1.5" opacity="0.6">
+      <line x1="65" y1="46" x2="185" y2="46" />
+      <line x1="70" y1="52" x2="180" y2="52" />
+      <line x1="75" y1="58" x2="175" y2="58" />
+    </g>
+
+    <!-- Beveled Front Bezel -->
+    <rect x="22" y="62" width="206" height="148" rx="12" fill="url(#crt-bezel)" stroke="#475569" stroke-width="2" />
+
+    <!-- Curved CRT Glass Screen -->
+    <rect x="32" y="70" width="145" height="114" rx="16" fill="url(#crt-screen)" stroke="#0f172a" stroke-width="2" />
+
+    <!-- Phosphor Scanlines & Empathetic Baseline Waveform -->
+    <g opacity="0.3" stroke="#22c55e" stroke-width="0.8">
+      <line x1="36" y1="82" x2="173" y2="82" />
+      <line x1="36" y1="94" x2="173" y2="94" />
+      <line x1="36" y1="106" x2="173" y2="106" />
+      <line x1="36" y1="118" x2="173" y2="118" />
+      <line x1="36" y1="130" x2="173" y2="130" />
+      <line x1="36" y1="142" x2="173" y2="142" />
+      <line x1="36" y1="154" x2="173" y2="154" />
+      <line x1="36" y1="166" x2="173" y2="166" />
+    </g>
+    <!-- Gentle, calm listening waveform inside the analyst's screen -->
+    <path d="M 38 128 Q 65 120, 85 128 T 135 128 T 171 128" fill="none" stroke="#4ade80" stroke-width="2" opacity="0.75" />
+
+    <!-- Right Control Panel: Dials & Buttons -->
+    <g transform="translate(186, 74)">
+      <!-- Contrast Dial -->
+      <circle cx="16" cy="16" r="8" fill="#334155" stroke="#1e293b" stroke-width="1.5" />
+      <line x1="16" y1="11" x2="16" y2="15" stroke="#cbd5e1" stroke-width="1.5" />
+
+      <!-- Brightness Dial -->
+      <circle cx="16" cy="38" r="8" fill="#334155" stroke="#1e293b" stroke-width="1.5" />
+      <line x1="16" y1="33" x2="16" y2="37" stroke="#cbd5e1" stroke-width="1.5" />
+
+      <!-- Power Rocker Switch -->
+      <rect x="8" y="58" width="16" height="18" rx="2" fill="#1e293b" />
+      <rect x="10" y="60" width="12" height="8" rx="1" fill="#ef4444" />
+
+      <!-- Green Power Indicator LED -->
+      <circle cx="16" cy="94" r="3" fill="#22c55e">
+        <animate attributeName="opacity" values="1;0.7;1" dur="3s" repeatCount="indefinite" />
+      </circle>
+      <circle cx="16" cy="94" r="6" fill="#22c55e" opacity="0.25" />
+    </g>
+
+
+    <!-- ATTRIBUTE 1: FREUD'S ROUND GLASSES (Over the curved screen) -->
+    <g id="freud-glasses" transform="translate(0, 8)">
+      <!-- Left Lens -->
+      <circle cx="72" cy="115" r="26" fill="#ffffff" fill-opacity="0.08" stroke="url(#gold-rim)" stroke-width="3.5" />
+      <!-- Left Lens Glare reflection -->
+      <path d="M 54 105 A 22 22 0 0 1 82 95" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.6" fill="none" />
+
+      <!-- Right Lens -->
+      <circle cx="138" cy="115" r="26" fill="#ffffff" fill-opacity="0.08" stroke="url(#gold-rim)" stroke-width="3.5" />
+      <!-- Right Lens Glare reflection -->
+      <path d="M 120 105 A 22 22 0 0 1 148 95" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.6" fill="none" />
+
+      <!-- Spectacle Arched Nose Bridge -->
+      <path d="M 98 115 C 101 106, 109 106, 112 115" fill="none" stroke="url(#gold-rim)" stroke-width="3.5" stroke-linecap="round" />
+
+      <!-- Left & Right Wire Temples Extending to CRT Bezel -->
+      <line x1="46" y1="115" x2="22" y2="110" stroke="url(#gold-rim)" stroke-width="2.5" stroke-linecap="round" />
+      <line x1="164" y1="115" x2="186" y2="110" stroke="url(#gold-rim)" stroke-width="2.5" stroke-linecap="round" />
+    </g>
+
+
+    <!-- ATTRIBUTE 2: FREUD'S SILVER BEARD & MUSTACHE (Under the CRT chin) -->
+    <g id="freud-beard" transform="translate(105, 205)">
+      <!-- Mustache -->
+      <path d="M -48 -2 
+               C -25 -6, -5 6, 0 10 
+               C 5 6, 25 -6, 48 -2 
+               C 35 12, 15 16, 0 14 
+               C -15 16, -35 12, -48 -2 Z" 
+            fill="url(#silver-beard)" stroke="#cbd5e1" stroke-width="1" />
+
+      <!-- Pointed Freudian Beard -->
+      <path d="M -42 8 
+               C -45 28, -25 55, 0 68 
+               C 25 55, 45 28, 42 8 
+               C 28 20, 14 24, 0 24 
+               C -14 24, -28 20, -42 8 Z" 
+            fill="url(#silver-beard)" stroke="#94a3b8" stroke-width="1.5" />
+
+      <!-- Beard Texture Strands -->
+      <g stroke="#94a3b8" stroke-width="1" opacity="0.45" fill="none">
+        <path d="M -22 18 C -20 35, -10 50, 0 64" />
+        <path d="M 22 18 C 20 35, 10 50, 0 64" />
+        <path d="M -10 24 C -8 38, -4 48, 0 58" />
+        <path d="M 10 24 C 8 38, 4 48, 0 58" />
+      </g>
+    </g>
+
+
+    <!-- ATTRIBUTE 3: ARTICULATED ARM, CLIPBOARD & AUDIT NOTEPAD -->
+    <g id="notepad-arm" transform="translate(-45, 150)">
+      <!-- Mechanical Stylized Arm extending from side -->
+      <path d="M 65 50 C 40 60, 25 90, 32 120" fill="none" stroke="#64748b" stroke-width="8" stroke-linecap="round" />
+      <circle cx="32" cy="120" r="7" fill="#475569" stroke="#334155" stroke-width="1.5" />
+
+      <!-- Wooden Clipboard (Angled attentively toward analyst and lap) -->
+      <g transform="translate(10, 80) rotate(-14)">
+        <!-- Board -->
+        <rect x="0" y="0" width="85" height="122" rx="4" fill="url(#clip-board)" stroke="#451a03" stroke-width="2" />
+
+        <!-- Metal Top Clamp -->
+        <rect x="22" y="-6" width="41" height="14" rx="2" fill="#cbd5e1" stroke="#475569" stroke-width="1.5" />
+        <circle cx="42.5" cy="1" r="2.5" fill="#475569" />
+
+        <!-- Paper Notepad Sheet -->
+        <rect x="6" y="8" width="73" height="106" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" />
+
+        <!-- Audit Clinical Shorthand Notes & Checkmarks -->
+        <g stroke="#64748b" stroke-width="1.5" stroke-linecap="round">
+          <!-- Note Line 1 -->
+          <line x1="14" y1="24" x2="60" y2="24" />
+          <path d="M 64 22 L 67 25 L 72 20" fill="none" stroke="#2563eb" stroke-width="2" />
+
+          <!-- Note Line 2 -->
+          <line x1="14" y1="36" x2="48" y2="36" />
+          <path d="M 64 34 L 67 37 L 72 32" fill="none" stroke="#2563eb" stroke-width="2" />
+
+          <!-- Note Line 3 -->
+          <line x1="14" y1="48" x2="55" y2="48" />
+
+          <!-- Note Line 4 (Wave / shorthand observation) -->
+          <path d="M 14 60 Q 25 57, 35 60 T 55 60" fill="none" stroke="#94a3b8" stroke-width="1.2" />
+
+          <!-- Note Line 5 -->
+          <line x1="14" y1="72" x2="42" y2="72" />
+          <path d="M 64 70 L 67 73 L 72 68" fill="none" stroke="#10b981" stroke-width="2" />
+
+          <!-- Note Line 6 -->
+          <line x1="14" y1="84" x2="52" y2="84" />
+        </g>
+
+        <!-- Poised Fountain Pen / Stylus in Note-taking Gesture -->
+        <g transform="translate(62, 76) rotate(-35)">
+          <polygon points="0,0 5,0 4,28 1,28" fill="#1e293b" />
+          <!-- Gold Nib -->
+          <polygon points="1,28 4,28 2.5,35" fill="#f59e0b" />
+          <!-- Pen Clip -->
+          <rect x="-1" y="2" width="2" height="12" fill="#d97706" />
+        </g>
+      </g>
+    </g>
+  </g>
+
+
+  <!-- ==================== ANALYST'S SIDE TABLE ==================== -->
+  <g id="side-table" transform="translate(2210, 445)" filter="url(#soft-shadow)">
+    <!-- Table Top -->
+    <ellipse cx="60" cy="20" rx="55" ry="14" fill="#451a03" stroke="#78350f" stroke-width="2" />
+    <ellipse cx="60" cy="18" rx="51" ry="11" fill="#78350f" />
+
+    <!-- Center Pedestal Leg -->
+    <rect x="55" y="24" width="10" height="95" rx="2" fill="url(#couch-wood)" stroke="#291508" stroke-width="1.5" />
+
+    <!-- Tripod Base -->
+    <path d="M 60 115 L 20 135 M 60 115 L 60 138 M 60 115 L 100 135" stroke="url(#couch-wood)" stroke-width="4" stroke-linecap="round" />
+
+    <!-- Warm Coffee / Tea Ceramic Mug -->
+    <g transform="translate(35, -4)">
+      <rect x="0" y="4" width="18" height="18" rx="3" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
+      <path d="M 18 8 C 24 8, 24 18, 18 18" fill="none" stroke="#cbd5e1" stroke-width="2" />
+      <ellipse cx="9" cy="4" rx="9" ry="3" fill="#78350f" />
+      <!-- Curl of Steam -->
+      <path d="M 7 -2 Q 12 -8, 6 -14 T 11 -22" fill="none" stroke="#ffffff" stroke-width="1.2" opacity="0.35" stroke-linecap="round" />
+    </g>
+
+    <!-- 50-Minute Therapy Session Timer / Clock -->
+    <g transform="translate(68, -2)">
+      <circle cx="12" cy="12" r="12" fill="#0f172a" stroke="#d97706" stroke-width="2" />
+      <circle cx="12" cy="12" r="10" fill="#1e293b" />
+      <!-- Clock Hands -->
+      <line x1="12" y1="12" x2="12" y2="5" stroke="#f8fafc" stroke-width="1.5" stroke-linecap="round" />
+      <line x1="12" y1="12" x2="17" y2="12" stroke="#38bdf8" stroke-width="1.2" stroke-linecap="round" />
+      <circle cx="12" cy="12" r="1.5" fill="#f59e0b" />
+    </g>
+  </g>
+
+
+  <!-- ==================== BRANDING & TYPOGRAPHY ==================== -->
+  <!-- Clean, authoritative branding at top left (Prominent, crisp at 900px) -->
+  <g id="brand" transform="translate(95, 70)">
+    <!-- Audit Icon Emblem -->
+    <rect x="0" y="0" width="56" height="56" rx="16" fill="url(#brand-grad)" filter="url(#soft-shadow)" />
+
+    <!-- Shield & Checkmark Vector -->
+    <path d="M 28 12 
+             L 43 18 
+             L 43 31 
+             C 43 40, 28 46, 28 46 
+             C 28 46, 13 40, 13 31 
+             L 13 18 Z" 
+          fill="none" stroke="#ffffff" stroke-width="2.8" stroke-linejoin="round" />
+    <path d="M 20 28 L 26 34 L 37 21" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
+
+    <!-- Wordmark: system-auditor -->
+    <text x="76" y="41" 
+          font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" 
+          font-size="44" 
+          font-weight="800" 
+          letter-spacing="-0.8px" 
+          fill="#ffffff">system-auditor</text>
+
+    <!-- Tagline directly from README -->
+    <text x="78" y="72" 
+          font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" 
+          font-size="19.5" 
+          font-weight="500" 
+          letter-spacing="0.2px" 
+          fill="#94a3b8">Evidence-based system audits across several machines</text>
+  </g>
+</svg>
