@@ -310,17 +310,17 @@
 
     <!-- Couch Cushion Base & Sweeping Raised Headrest -->
     <!-- Path combines the curved psychoanalytic headrest on left and flat mattress body on right -->
-    <path d="M 535 365 
-             C 530 330, 560 305, 605 315 
-             C 655 325, 730 380, 830 435 
-             L 1565 435 
-             C 1578 435, 1585 445, 1585 455 
-             L 1585 486 
-             C 1585 492, 1578 496, 1565 496 
-             L 540 496 
-             C 530 496, 520 488, 520 475 
-             L 520 395 
-             C 520 380, 528 370, 535 365 Z" 
+    <path d="M 535 365
+             C 530 330, 560 305, 605 315
+             C 655 325, 730 380, 830 435
+             L 1565 435
+             C 1578 435, 1585 445, 1585 455
+             L 1585 486
+             C 1585 492, 1578 496, 1565 496
+             L 540 496
+             C 530 496, 520 488, 520 475
+             L 520 395
+             C 520 380, 528 370, 535 365 Z"
           fill="url(#couch-leather)" stroke="#78350f" stroke-width="2" />
 
     <!-- Tufted Leather Buttons & Diamond Creases -->
@@ -387,10 +387,10 @@
     </g>
 
     <!-- Draped Velvet Foot Runner / Throw Blanket -->
-    <path d="M 1430 440 
-             C 1450 436, 1540 436, 1565 440 
-             L 1565 490 
-             C 1545 495, 1450 495, 1430 490 Z" 
+    <path d="M 1430 440
+             C 1450 436, 1540 436, 1565 440
+             L 1565 490
+             C 1545 495, 1450 495, 1430 490 Z"
           fill="#1e3a5f" opacity="0.85" stroke="#0f172a" stroke-width="1.5" />
     <path d="M 1430 488 L 1430 502 M 1450 489 L 1450 503 M 1470 490 L 1470 504 M 1490 490 L 1490 504 M 1510 490 L 1510 504 M 1530 489 L 1530 503 M 1550 488 L 1550 502" stroke="#38bdf8" stroke-width="2" opacity="0.7" />
   </g>
@@ -419,18 +419,18 @@
       <line x1="20" y1="96" x2="195" y2="96" stroke="#38bdf8" stroke-width="0.5" stroke-dasharray="2 4" opacity="0.25" />
 
       <!-- Agitated waveform easing into smooth baseline curve (Patient opening up) -->
-      <path d="M 24 71 
-               L 42 71 
-               L 50 48 
-               L 58 92 
-               L 66 38 
-               L 74 102 
-               L 82 55 
-               L 90 85 
-               L 100 64 
-               L 112 76 
-               Q 130 58, 150 71 
-               T 188 71" 
+      <path d="M 24 71
+               L 42 71
+               L 50 48
+               L 58 92
+               L 66 38
+               L 74 102
+               L 82 55
+               L 90 85
+               L 100 64
+               L 112 76
+               Q 130 58, 150 71
+               T 188 71"
             fill="none" stroke="#7dd3fc" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
     </g>
 
@@ -583,11 +583,11 @@
     </g>
 
     <!-- Deep Wingback Rest (Chesterfield Oxblood Leather) -->
-    <path d="M 1795 240 
-             C 1780 230, 2180 230, 2165 240 
-             C 2190 280, 2200 360, 2175 440 
-             L 1785 440 
-             C 1760 360, 1770 280, 1795 240 Z" 
+    <path d="M 1795 240
+             C 1780 230, 2180 230, 2165 240
+             C 2190 280, 2200 360, 2175 440
+             L 1785 440
+             C 1760 360, 1770 280, 1795 240 Z"
           fill="url(#armchair-leather)" stroke="#450a0a" stroke-width="2" />
 
     <!-- Left & Right Curved Wings -->
@@ -674,13 +674,13 @@
     </g>
 
     <!-- Retro CRT Main Outer Housing (Beige / Putty Classic 1980s) -->
-    <path d="M 25 45 
-             C 25 38, 35 36, 125 36 
-             C 215 36, 225 38, 225 45 
-             L 240 195 
-             C 242 210, 230 220, 215 220 
-             L 35 220 
-             C 20 220, 8 210, 10 195 Z" 
+    <path d="M 25 45
+             C 25 38, 35 36, 125 36
+             C 215 36, 225 38, 225 45
+             L 240 195
+             C 242 210, 230 220, 215 220
+             L 35 220
+             C 20 220, 8 210, 10 195 Z"
           fill="url(#crt-case)" stroke="#94a3b8" stroke-width="2.5" />
 
     <!-- Top Ventilation Louvers / Heat Grille -->
@@ -756,19 +756,19 @@
     <!-- ATTRIBUTE 2: FREUD'S SILVER BEARD & MUSTACHE (Under the CRT chin) -->
     <g id="freud-beard" transform="translate(105, 205)">
       <!-- Mustache -->
-      <path d="M -48 -2 
-               C -25 -6, -5 6, 0 10 
-               C 5 6, 25 -6, 48 -2 
-               C 35 12, 15 16, 0 14 
-               C -15 16, -35 12, -48 -2 Z" 
+      <path d="M -48 -2
+               C -25 -6, -5 6, 0 10
+               C 5 6, 25 -6, 48 -2
+               C 35 12, 15 16, 0 14
+               C -15 16, -35 12, -48 -2 Z"
             fill="url(#silver-beard)" stroke="#cbd5e1" stroke-width="1" />
 
       <!-- Pointed Freudian Beard -->
-      <path d="M -42 8 
-               C -45 28, -25 55, 0 68 
-               C 25 55, 45 28, 42 8 
-               C 28 20, 14 24, 0 24 
-               C -14 24, -28 20, -42 8 Z" 
+      <path d="M -42 8
+               C -45 28, -25 55, 0 68
+               C 25 55, 45 28, 42 8
+               C 28 20, 14 24, 0 24
+               C -14 24, -28 20, -42 8 Z"
             fill="url(#silver-beard)" stroke="#94a3b8" stroke-width="1.5" />
 
       <!-- Beard Texture Strands -->
@@ -876,29 +876,29 @@
     <rect x="0" y="0" width="56" height="56" rx="16" fill="url(#brand-grad)" filter="url(#soft-shadow)" />
 
     <!-- Shield & Checkmark Vector -->
-    <path d="M 28 12 
-             L 43 18 
-             L 43 31 
-             C 43 40, 28 46, 28 46 
-             C 28 46, 13 40, 13 31 
-             L 13 18 Z" 
+    <path d="M 28 12
+             L 43 18
+             L 43 31
+             C 43 40, 28 46, 28 46
+             C 28 46, 13 40, 13 31
+             L 13 18 Z"
           fill="none" stroke="#ffffff" stroke-width="2.8" stroke-linejoin="round" />
     <path d="M 20 28 L 26 34 L 37 21" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
 
     <!-- Wordmark: system-auditor -->
-    <text x="76" y="41" 
-          font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" 
-          font-size="44" 
-          font-weight="800" 
-          letter-spacing="-0.8px" 
+    <text x="76" y="41"
+          font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+          font-size="44"
+          font-weight="800"
+          letter-spacing="-0.8px"
           fill="#ffffff">system-auditor</text>
 
     <!-- Tagline directly from README -->
-    <text x="78" y="72" 
-          font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" 
-          font-size="19.5" 
-          font-weight="500" 
-          letter-spacing="0.2px" 
+    <text x="78" y="72"
+          font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+          font-size="19.5"
+          font-weight="500"
+          letter-spacing="0.2px"
           fill="#94a3b8">Evidence-based system audits across several machines</text>
   </g>
 </svg>
