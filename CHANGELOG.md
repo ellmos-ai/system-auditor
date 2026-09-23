@@ -3,6 +3,34 @@
 Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [SemVer](https://semver.org/lang/de/).
 
+## [Unreleased]
+
+Pfad A Technische Repository-Hygiene, Kanonische NOTICE Attributionsdatei, CI-Welcome-Workflow, Multi-Host Lock-Defense und Topic-Sättigung.
+
+### Hinzugefuegt
+
+- **Kanonische NOTICE Attributionsdatei (`NOTICE`):**
+  Neu angelegte kanonische Urheberrechts- und Attributionsdatei gemäß Open-Source-Governance mit Ausweisung von Lukas Geiger, Organisation ellmos-ai und Umbrella-Ecosystem open-bricks.
+- **Automatisierter Welcome-Workflow (`.github/workflows/welcome.yml`):**
+  Begrüßungs-Workflow für Erstbeitragende (`actions/first-interaction@v3`, `timeout-minutes: 5`, Concurrency `cancel-in-progress: true`, least-privilege permissions `issues: write`, `pull-requests: write`).
+- **CI Least-Privilege Permissions (`.github/workflows/ci.yml`):**
+  Verankerung expliziter Standard-Rechte `permissions: contents: read` auf Top-Level-Ebene.
+- **Multi-Host Lock- und Synchronisations-Schutz (`.gitignore`):**
+  Ausschluss kanonischer Lock-Dateien (`LOCK.user.*`, `LOCK.until.*`, `LOCK.condition.*`, `.automation-lock`), erweiterter Host-Token (`*-WORKSTATION-LG*`, `*-ASUS-GEI*`, `*conflicted copy*`) sowie Tooling-Caches (`.hypothesis/`, `.nyc_output/`, `uv.lock`).
+- **Automatisierte Vertragstests für Pfad-A-Standards (`tests/test_metadata.py`):**
+  Neue Vertragstests für `NOTICE`-Attribution, Welcome-Workflow, CI-Least-Privilege-Permissions, Lock-Schutz in `.gitignore` und PEP 621 Notice-URL / License-Files.
+
+### Geaendert
+
+- **PEP 621 Standard-Metadaten (`pyproject.toml`):**
+  `license-files = ["LICENSE", "NOTICE", "THIRD_PARTY_LICENSES.md"]`, Verlinkung der Notice-URL unter `[project.urls]`, Erweiterung auf 20 kuratierte Keywords und Härtung von `[tool.pytest.ini_options]` (`minversion = "7.0"`, `norecursedirs`). Version `0.9.2` strikt eingefroren gemäß `T-20260920-167562623`.
+- **Level 1 SBOM Lizenzaudit (`THIRD_PARTY_LICENSES.md`):**
+  Re-Audit Stand 2026-09-23 mit unprivileged RunAsInvoker Non-Elevation Zertifizierung, Zero-Copyleft-Garantie und Querverweis auf `NOTICE`.
+- **GitHub Discoverability & Topic-Sättigung:**
+  Ausschöpfung des 20/20-Topic-Limits um `open-bricks`, `compliance`, `drift-detection`, `quality-assurance`, `offline-first` und `cross-platform`.
+- **Dokumentations- & Badge-Parität (`README.md`, `README_de.md`, `llms.txt`, `MARKETING-LOG.txt`):**
+  Shields.io `last checked` Badges auf `2026-09-23` und Test-Badges aktualisiert; Verlinkung der `NOTICE`-Datei.
+
 ## [0.9.2] - 2026-09-13
 
 Pfad A Repository-Hygiene, CI-Matrix- & Timeout-Härtung, Stale-Workflow, Multi-Host-Gitignore-Schutz und Vertragstesterweiterung.

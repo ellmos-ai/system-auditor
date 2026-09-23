@@ -2,13 +2,16 @@
 
 **Project:** `system-auditor`
 **License:** [MIT License](LICENSE)
-**Audit Date:** 2026-09-09
+**Attribution:** [NOTICE](NOTICE)
+**Audit Date:** 2026-09-23
+**Governance Standards:** Level 1 SBOM, Zero-Copyleft, Unprivileged RunAsInvoker Non-Elevation
 
 ---
 
 ## Runtime Architecture & Dependencies
 
 `system-auditor` is engineered from the ground up as a **100% local-first, zero-egress, zero-external-dependency** system audit and meta-bundling engine.
+It operates under the unprivileged `RunAsInvoker` security posture and guarantees 0% copyleft contamination at runtime.
 
 ### Zero-Runtime-Dependency Guarantee
 

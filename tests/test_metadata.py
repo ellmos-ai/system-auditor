@@ -29,6 +29,7 @@ def test_required_root_documents_exist():
         "README_de.md",
         "SECURITY.md",
         "LICENSE",
+        "NOTICE",
         "THIRD_PARTY_LICENSES.md",
         "CHANGELOG.md",
         "MARKETING-LOG.txt",
@@ -36,6 +37,7 @@ def test_required_root_documents_exist():
         "pyproject.toml",
         "ellmos-module.v2.json",
         ".github/workflows/ci.yml",
+        ".github/workflows/welcome.yml",
     ]
     for rel_path in required:
         target = ROOT / rel_path
@@ -70,7 +72,7 @@ def test_readme_badges_parity():
     readme_de = (ROOT / "README_de.md").read_text(encoding="utf-8")
 
     expected_badges = [
-        "https://img.shields.io/badge/pytest-190",
+        "https://img.shields.io/badge/pytest-196",
         "https://github.com/ellmos-ai/system-auditor/actions/workflows/ci.yml/badge.svg",
         "https://img.shields.io/badge/python-3.10",
         "https://img.shields.io/badge/ecosystem-ellmos--ai-purple",
@@ -79,7 +81,8 @@ def test_readme_badges_parity():
         "https://img.shields.io/badge/llms.txt-Discovery%20Context-informational",
         "https://img.shields.io/badge/security%20SLA-48h%20response%20%7C%205d%20triage-blue",
         "https://img.shields.io/badge/code%20style-ruff-000000.svg",
-        "https://img.shields.io/badge/last%20checked-2026--09--16-informational",
+        "https://img.shields.io/badge/attribution-NOTICE-blue.svg",
+        "https://img.shields.io/badge/last%20checked-2026--09--23-informational",
     ]
 
     for badge in expected_badges:
@@ -478,7 +481,82 @@ def test_gitignore_onedrive_conflict_and_cache_patterns():
 def test_changelog_release_entry_and_date():
     """Verify that CHANGELOG.md contains the current release entry and standard headings."""
     changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    assert "## [Unreleased]" in changelog
     assert "## [0.9.2] - 2026-09-13" in changelog
     assert "### Hinzugefuegt" in changelog
     assert "### Geaendert" in changelog
     assert "Pfad A Repository-Hygiene" in changelog
+
+
+def test_notice_file_and_attribution():
+    """Verify canonical NOTICE file presence and formal attribution contents."""
+    notice_file = ROOT / "NOTICE"
+    assert notice_file.is_file(), "NOTICE file must exist in repo root"
+
+    content = notice_file.read_text(encoding="utf-8")
+    assert "system-auditor" in content
+    assert "Lukas Geiger" in content
+    assert "ellmos-ai" in content
+    assert "open-bricks" in content
+    assert "MIT License" in content
+    assert "THIRD_PARTY_LICENSES.md" in content
+
+
+def test_welcome_workflow_concurrency_and_timeout():
+    """Verify welcome.yml workflow configuration, concurrency guard and timeout."""
+    welcome_file = ROOT / ".github" / "workflows" / "welcome.yml"
+    assert welcome_file.is_file(), "welcome.yml must exist"
+
+    content = welcome_file.read_text(encoding="utf-8")
+    assert "actions/first-interaction@v3" in content
+    assert "timeout-minutes: 5" in content
+    assert "cancel-in-progress: true" in content
+    assert "issues: write" in content
+    assert "pull-requests: write" in content
+
+
+def test_ci_least_privilege_permissions():
+    """Verify top-level least-privilege permissions in CI workflow."""
+    ci_file = ROOT / ".github" / "workflows" / "ci.yml"
+    content = ci_file.read_text(encoding="utf-8")
+    assert "permissions:" in content
+    assert "contents: read" in content
+
+
+def test_lock_defense_patterns_in_gitignore():
+    """Verify that .gitignore guards against canonical locks, host tokens, and cloud sync conflicts.
+    """
+    gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
+    assert "LOCK.user.*" in gitignore
+    assert "LOCK.until.*" in gitignore
+    assert "LOCK.condition.*" in gitignore
+    assert ".automation-lock" in gitignore
+    assert "*conflicted copy*" in gitignore
+    assert "*-WORKSTATION-LG*" in gitignore
+    assert "*-ASUS-GEI*" in gitignore
+    assert ".hypothesis/" in gitignore
+    assert ".nyc_output/" in gitignore
+    assert "uv.lock" in gitignore
+
+
+def test_pep621_notice_url_and_license_files():
+    """Verify Notice URL, PEP 639 license-files, keywords, and pytest options in pyproject.toml."""
+    pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    project = pyproject.get("project", {})
+
+    license_files = project.get("license-files", [])
+    assert "NOTICE" in license_files
+    assert "LICENSE" in license_files
+    assert "THIRD_PARTY_LICENSES.md" in license_files
+
+    urls = project.get("urls", {})
+    assert "Notice" in urls
+    assert urls["Notice"].startswith("https://")
+    assert "NOTICE" in urls["Notice"]
+
+    keywords = project.get("keywords", [])
+    assert len(keywords) >= 20, f"Expected at least 20 keywords, got {len(keywords)}"
+
+    pytest_opts = pyproject.get("tool", {}).get("pytest", {}).get("ini_options", {})
+    assert pytest_opts.get("minversion") == "7.0"
+    assert "norecursedirs" in pytest_opts

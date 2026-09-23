@@ -1,6 +1,32 @@
 # MARKETING-LOG.txt — system-auditor
 # Lokales Audit-, Discoverability- und Marketing-Logbuch
 
+## 2026-09-23 — Pfad A: Repository-Hygiene, Canonical NOTICE, CI-Welcome & Topic-Sättigung
+
+### 1. Ausgangslage & Kriterien
+- Repository: ellmos-ai/system-auditor (C:\_Local_DEV\repos\system-auditor)
+- Version: 0.9.2 (eingefroren gemäß T-20260920-167562623)
+- Kategorie: Evidence-Based Multi-Host Audit Engine & Meta Bundling
+- Initialer Status: Clean working tree auf Branch `master`, 0 aktive Locks, 63h Ruhezustand (>24h Cooldown).
+
+### 2. Umgesetzte Hygiene- & Härtungsmaßnahmen
+1. Kanonische NOTICE Attributionsdatei:
+   - Wurzel-Datei `NOTICE` mit formeller Urheberrechtszuordnung für Lukas Geiger, ellmos-ai und open-bricks Dachorganisation angelegt.
+2. Automatisierter Welcome-Workflow (`.github/workflows/welcome.yml`):
+   - Begrüßungsworkflow für Erstbeitragende (`actions/first-interaction@v3`, `timeout-minutes: 5`, Concurrency `cancel-in-progress: true`, least-privilege permissions `issues: write`, `pull-requests: write`).
+3. CI Least-Privilege Permissions (`.github/workflows/ci.yml`):
+   - Explizite Absicherung der Standardberechtigungen auf Top-Level mit `permissions: contents: read`.
+4. Multi-Host Lock- und Synchronisations-Schutz (`.gitignore`):
+   - Ausschluss kanonischer Lock-Muster (`LOCK.user.*`, `LOCK.until.*`, `LOCK.condition.*`, `.automation-lock`), Host-Konflikt-Token (`*-WORKSTATION-LG*`, `*-ASUS-GEI*`, `*conflicted copy*`) und Caches (`.hypothesis/`, `.nyc_output/`, `uv.lock`).
+5. PEP 621 Metadaten-Härtung (`pyproject.toml`):
+   - `license-files = ["LICENSE", "NOTICE", "THIRD_PARTY_LICENSES.md"]`, Notice-URL unter `[project.urls]` verlinkt, 20 kuratierte Keywords und Pytest-Optionen (`minversion = "7.0"`, `norecursedirs`) gehärtet.
+6. Level 1 SBOM Drittanbieter-Lizenzaudit (`THIRD_PARTY_LICENSES.md`):
+   - Re-Audit Stand 2026-09-23 mit unprivileged RunAsInvoker Non-Elevation Zertifizierung, Zero-Copyleft-Garantie und Querverweis auf `NOTICE`.
+7. GitHub Topics Sättigung (20/20 Capacity):
+   - Live-Topics via `gh repo edit` auf 20 kuratierte Schlagworte erweitert (+`open-bricks`, `compliance`, `drift-detection`, `quality-assurance`, `offline-first`, `cross-platform`).
+8. Synchronisierte Dokumentation & Vertragstests:
+   - `README.md`, `README_de.md`, `llms.txt`, `CHANGELOG.md` aktualisiert; neue Contract-Tests in `tests/test_metadata.py` hinzugefügt; Testsuite 100% grün.
+
 ## 2026-09-16 — Pfad B: Discoverability, GitHub-Metadaten, 3-Stufen Konvergenz-Diagramm & Paritäts-Härtung
 
 ### 1. Ausgangslage & Kriterien

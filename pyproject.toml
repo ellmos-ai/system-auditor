@@ -9,7 +9,7 @@ description = "Evidence-based system audits across several machines, with meta b
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
-license-files = ["LICENSE", "THIRD_PARTY_LICENSES.md"]
+license-files = ["LICENSE", "NOTICE", "THIRD_PARTY_LICENSES.md"]
 authors = [{ name = "Lukas Geiger" }]
 keywords = [
     "audit",
@@ -20,6 +20,18 @@ keywords = [
     "drift-detection",
     "compliance",
     "local-first",
+    "zero-egress",
+    "offline-first",
+    "evidence-based",
+    "audit-report",
+    "host-inventory",
+    "system-diagnostics",
+    "quality-assurance",
+    "security-audit",
+    "cross-platform",
+    "ellmos",
+    "ellmos-ai",
+    "open-bricks",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -57,6 +69,7 @@ Repository = "https://github.com/ellmos-ai/system-auditor"
 Issues = "https://github.com/ellmos-ai/system-auditor/issues"
 Changelog = "https://github.com/ellmos-ai/system-auditor/blob/master/CHANGELOG.md"
 Security = "https://github.com/ellmos-ai/system-auditor/blob/master/SECURITY.md"
+Notice = "https://github.com/ellmos-ai/system-auditor/blob/master/NOTICE"
 Umbrella = "https://github.com/open-bricks/open-bricks"
 "Parent Organization" = "https://github.com/ellmos-ai"
 "Umbrella Ecosystem" = "https://github.com/open-bricks"
@@ -65,9 +78,11 @@ Umbrella = "https://github.com/open-bricks/open-bricks"
 where = ["src"]
 
 [tool.pytest.ini_options]
+minversion = "7.0"
 pythonpath = ["src"]
 testpaths = ["tests"]
 addopts = "-v"
+norecursedirs = [".git", ".pytest_cache", ".ruff_cache", "build", "dist"]
 
 [tool.ruff]
 target-version = "py310"

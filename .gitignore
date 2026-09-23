@@ -10,6 +10,9 @@ venv/
 .mypy_cache/
 .tox/
 .turbo/
+.hypothesis/
+.nyc_output/
+uv.lock
 .coverage
 coverage/
 htmlcov/
@@ -28,6 +31,10 @@ reports/
 findings/
 _locks/
 LOCK.*
+LOCK.user.*
+LOCK.until.*
+LOCK.condition.*
+.automation-lock
 *.lock
 LOCK*.txt
 !protocols/**/LOCK*.txt
@@ -38,11 +45,15 @@ LOCK*.txt
 *.sync-conflict-*
 *-CONFLIT-*
 *.conflict
-*-WORKSTATION-LG.*
-*-ASUS-GEI.*
+*conflicted copy*
+*-WORKSTATION-LG*
+*-ASUS-GEI*
 *-ASUS.*
+*-ASUS*
 *-LAPTOP.*
+*-LAPTOP*
 *-Mac Studio.*
+*-Mac Studio*
 * (kopie)*
 * (copy)*
 

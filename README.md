@@ -4,7 +4,7 @@
 # system-auditor
 
 [![CI](https://github.com/ellmos-ai/system-auditor/actions/workflows/ci.yml/badge.svg)](https://github.com/ellmos-ai/system-auditor/actions/workflows/ci.yml)
-[![tests](https://img.shields.io/badge/pytest-190%20passed%20%7C%20100%25-brightgreen)](tests/)
+[![tests](https://img.shields.io/badge/pytest-196%20passed%20%7C%20100%25-brightgreen)](tests/)
 [![python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)](pyproject.toml)
 [![platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)](pyproject.toml)
 [![privacy](https://img.shields.io/badge/privacy-100%25%20Local--First%20%7C%20Zero--Egress-brightgreen)](SECURITY.md)
@@ -12,12 +12,13 @@
 [![security SLA](https://img.shields.io/badge/security%20SLA-48h%20response%20%7C%205d%20triage-blue)](SECURITY.md)
 [![code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![attribution](https://img.shields.io/badge/attribution-NOTICE-blue.svg)](NOTICE)
 [![dependencies](https://img.shields.io/badge/dependencies-none%20(stdlib)-lightgrey)](pyproject.toml)
 [![ecosystem](https://img.shields.io/badge/ecosystem-ellmos--ai-purple)](https://github.com/ellmos-ai)
 [![umbrella](https://img.shields.io/badge/umbrella-open--bricks-blueviolet)](https://github.com/open-bricks/open-bricks)
 [![version](https://img.shields.io/badge/version-0.9.2-orange)](pyproject.toml)
 [![llms.txt](https://img.shields.io/badge/llms.txt-Discovery%20Context-informational)](llms.txt)
-[![last checked](https://img.shields.io/badge/last%20checked-2026--09--16-informational)](MARKETING-LOG.txt)
+[![last checked](https://img.shields.io/badge/last%20checked-2026--09--23-informational)](MARKETING-LOG.txt)
 
 **Evidence-based system audits across several machines — with meta bundling.**
 
@@ -408,7 +409,7 @@ ruff check src tests
 
 ## License
 
-MIT — see [LICENSE](LICENSE) and [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
+MIT — see [LICENSE](LICENSE), [NOTICE](NOTICE), and [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
 
 
 ## Starters
