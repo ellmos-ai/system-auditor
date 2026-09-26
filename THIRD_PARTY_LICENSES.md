@@ -1,14 +1,13 @@
 # Third-Party Licenses & Software Inventory
 
-**Project:** `system-auditor`
-**License:** [MIT License](LICENSE)
-**Attribution:** [NOTICE](NOTICE)
-**Audit Date:** 2026-09-23
-**Governance Standards:** Level 1 SBOM, Zero-Copyleft, Unprivileged RunAsInvoker Non-Elevation
+> **Project:** `ellmos-ai/system-auditor` (Evidence-based system audits across machines with meta-audit bundling)<br>
+> **Audited:** 2026-09-26 (Pfad B Re-Audit)<br>
+> **Repository License:** [MIT License](LICENSE) | [Attribution Notice](NOTICE)<br>
+> **Architecture & Privacy:** 100% Local-First, Zero-Egress, Unprivileged User-Mode (`RunAsInvoker`)
 
 ---
 
-## Runtime Architecture & Dependencies
+## Executive Summary & Compliance Assurance
 
 `system-auditor` is engineered from the ground up as a **100% local-first, zero-egress, zero-external-dependency** system audit and meta-bundling engine.
 It operates under the unprivileged `RunAsInvoker` security posture and guarantees 0% copyleft contamination at runtime.
@@ -21,6 +20,25 @@ It operates under the unprivileged `RunAsInvoker` security posture and guarantee
 | *Python Standard Library* | `>=3.10` | PSF License | Built-in | `argparse`, `dataclasses`, `datetime`, `hashlib`, `json`, `os`, `pathlib`, `re`, `sys`, `typing` |
 
 All network access, telemetry, remote logging, and privileged operations are strictly prohibited by design.
+
+---
+
+## Level 1 SBOM & Governance Invariant Cross-Reference Matrix
+
+`system-auditor` affirms, implements, and certifies ten core governance and runtime invariants:
+
+| Invariant | Category | Description | Verification Method | Status |
+|---|---|---|---|---|
+| `INV-LOCAL-01` | Local-First & Zero-Egress | 100% offline-ready; audit generation, aggregation, and report persistence reside strictly on local disk with zero external network egress. | `tests/test_metadata.py` (`test_offline_and_zero_egress_invariants`) | VERIFIED |
+| `INV-UNPRIV-02` | Unprivileged Non-Elevation | Strict `RunAsInvoker` user-mode execution; zero administrator, root elevation, or UAC prompts required. | `SECURITY.md` & `pyproject.toml` | VERIFIED |
+| `INV-DETERM-03` | Deterministic Classification | Identical inputs produce bit-for-bit identical multi-host audit verdicts and canonical findings sorting. | `system_auditor.meta` & `tests/test_meta.py` | VERIFIED |
+| `INV-IDENT-04` | Identifiability Guard | Invariant that aggregations with >1 varying dimension cannot emit causal verdicts (enforced in constructor). | `system_auditor.tokens` & `tests/test_tokens.py` | VERIFIED |
+| `INV-RACE-05` | Write-Guard Race Protection | Safe concurrent runs across machines without centralized lock daemons; skips overwrite if disk has superset. | `system_auditor.report` & `tests/test_report.py` | VERIFIED |
+| `INV-WINDOW-06` | Discrete Window Tokens | Deterministic temporal alignment without distributed consensus protocols via config-driven calendar grid. | `system_auditor.tokens` & `tests/test_tokens.py` | VERIFIED |
+| `INV-SINGLE-07` | One Current Answer Per Window | Single authoritative multi-host answer per window; historical versions preserve themselves via window tokens. | `system_auditor.meta` & `tests/test_meta.py` | VERIFIED |
+| `INV-COVER-08` | Coverage Transparency Floor | Honest absence-of-proof prevents uninspected paths from masquerading as divergence (`unverifiable` tier). | `system_auditor.compare` & `tests/test_compare.py` | VERIFIED |
+| `INV-LOCK-09` | Multi-Host & Lock Hardening | Immune to cloud-sync conflict files and multi-agent lock contamination (`LOCK.*`, `*-conflict-*`). | `tests/test_metadata.py` (`test_gitignore_hygiene_patterns`) | VERIFIED |
+| `INV-SLA-10` | 48h Security & 5-Day Triage SLA | Committed vulnerability disclosure response and transparent patch lifecycle; zero-copyleft permissive MIT license. | `SECURITY.md`, `README.md`, `[NOTICE](NOTICE)` | VERIFIED |
 
 ---
 

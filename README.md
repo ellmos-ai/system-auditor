@@ -18,7 +18,7 @@
 [![umbrella](https://img.shields.io/badge/umbrella-open--bricks-blueviolet)](https://github.com/open-bricks/open-bricks)
 [![version](https://img.shields.io/badge/version-0.9.2-orange)](pyproject.toml)
 [![llms.txt](https://img.shields.io/badge/llms.txt-Discovery%20Context-informational)](llms.txt)
-[![last checked](https://img.shields.io/badge/last%20checked-2026--09--23-informational)](MARKETING-LOG.txt)
+[![last checked](https://img.shields.io/badge/last%20checked-2026--09--26-informational)](MARKETING-LOG.txt)
 
 **Evidence-based system audits across several machines — with meta bundling.**
 
@@ -26,28 +26,33 @@
 
 ---
 
-## 🧭 Quick Navigation
+## Quick Navigation
 
-- [Why This Exists](#why-this-exists)
-- [Architecture & System Flow](#architecture--system-flow)
-- [The Three Stages](#the-three-stages)
-- [Four Tokens & Discrete Windows](#four-tokens--discrete-windows)
-- [The Aggregation Ladder](#the-aggregation-ladder)
-- [Key Capabilities & Governance Invariants](#key-capabilities--governance-invariants)
-- [One Current Answer Per Window](#one-current-answer-per-window)
-- [Write-Guard Race Protection](#write-guard-race-protection)
-- [End-to-End Audit Lifecycle](#end-to-end-audit-lifecycle)
-- [Sibling Tools & Ecosystem Matrix](#sibling-tools--ecosystem-matrix)
-- [Installation & CLI Usage](#installation--cli-usage)
-- [Configuration](#configuration)
-- [Security & Privacy](#security--privacy)
-- [Development & Verification](#development--verification)
-- [License](#license)
-- [Starters](#starters)
+1. [Overview](#sec-01)
+2. [Key Capabilities & Core Value Proposition](#sec-02)
+3. [Target Personas & Discoverability](#sec-03)
+4. [Comparative Matrix vs. Alternatives](#sec-04)
+5. [Governance & Runtime Invariants](#sec-05)
+6. [Architecture & System Flow](#sec-06)
+7. [The Three Stages & Outbound Handover](#sec-07)
+8. [Four Tokens & Discrete Windows](#sec-08)
+9. [The Aggregation Ladder](#sec-09)
+10. [One Current Answer Per Window](#sec-10)
+11. [Write-Guard Race Protection](#sec-11)
+12. [End-to-End Audit Lifecycle](#sec-12)
+13. [Sibling Tools & Ecosystem Matrix](#sec-13)
+14. [Installation & CLI Usage](#sec-14)
+15. [Configuration & Public Handover Contract](#sec-15)
+16. [Security, Privacy & Level 1 SBOM](#sec-16)
+17. [Development & Verification Gates](#sec-17)
+18. [License, Maintainers & Starters](#sec-18)
 
 ---
 
-## Why This Exists
+<a id="sec-01"></a>
+<a id="1-overview"></a>
+<a id="overview"></a>
+### 1. Overview
 
 The auditor examines a composed system in **three directions**:
 
@@ -59,7 +64,7 @@ The guiding principle is **convergence**: every finding ends with a clear direct
 
 Two machines auditing the same domain do **not** produce the same result. That is not a defect — it is the most useful thing about running audits across multiple systems.
 
-### A Measured Example
+#### A Measured Example
 
 > **Finding:** *"Gardener governance hardcodes the laptop home path"* — `AGENTS.md` points at `C:\Users\alice\…`.
 >
@@ -81,7 +86,80 @@ A single machine can only ever see one half of that reality. Comparing the valid
 
 ---
 
-## Architecture & System Flow
+<a id="sec-02"></a>
+<a id="2-key-capabilities"></a>
+<a id="key-capabilities"></a>
+### 2. Key Capabilities & Core Value Proposition
+
+- **Multi-Host Aggregation Ladder:** Seamless aggregation of individual audits into causal verdicts without requiring distributed consensus daemons or centralized databases.
+- **Model-Manual Interrater Intelligence:** Compare verdicts across differing AI models (e.g., Claude, Gemini, GPT) holding system and domain constant to uncover cognitive rater biases and ambiguities.
+- **Zero Runtime Dependencies:** Pure Python standard library implementation (`dependencies = []`). Zero external wheels required at runtime.
+- **100% Local-First & Zero-Egress:** Operates in complete air-gapped isolation with zero outbound network calls, telemetry, or cloud tracking.
+- **Write-Guard Concurrency Defense:** Concurrent audits across machines never conflict; pre-write disk inspection safely avoids redundant rewrites when a superset exists.
+- **Deterministic Discrete Windows:** Replace fragile sliding window calculations with deterministic calendar window tokens derived directly from system clocks.
+- **Convergence Handover Pipeline:** Direct decoupled handover to ticket queues (measures) or governance files (decision proposals) via clean CLI argument contracts.
+
+---
+
+<a id="sec-03"></a>
+<a id="3-target-personas"></a>
+<a id="target-personas"></a>
+### 3. Target Personas & Discoverability
+
+`system-auditor` addresses key engineering and governance personas operating complex multi-environment systems:
+
+| Persona | Primary Challenge | How `system-auditor` Resolves It |
+|---|---|---|
+| **Multi-Agent Fleet Operators** | Auditing autonomous agent fleets across multiple hosts without distributed consensus locks | Derives discrete window tokens and aggregates evidence without distributed locking daemons |
+| **System & DevOps Architects** | Detecting silent configuration drift and hardcoded host assumptions across workstations and laptops | Classifies cross-machine findings into `systemwide`, `host_specific`, `inverse`, and `unverifiable` |
+| **Open-Source Maintainers** | Enforcing strict rule compliance, license integrity, and SBOM hygiene across multiple repos | Zero-runtime-dependency CLI with automated domain discovery and Level 1 SBOM verification |
+| **Local-First & Privacy Engineers** | Ensuring zero telemetry, zero cloud egress, and user-mode execution boundaries | Guaranteed zero-egress architecture verified by automated AST static analysis gates |
+
+---
+
+<a id="sec-04"></a>
+<a id="4-comparative-matrix"></a>
+<a id="comparative-matrix"></a>
+### 4. Comparative Matrix vs. Alternatives
+
+| Feature / Dimension | `system-auditor` | osquery | Lynis | Chef InSpec | OpenSCAP |
+|---|---|---|---|---|---|
+| **Primary Architecture** | **Local-First / Multi-Host Meta Bundling** | SQL OS Instrumentation | Shell Security Scanner | Ruby Infrastructure Testing | SCAP Compliance Engine |
+| **Runtime Dependencies** | **Zero (Python Standard Library)** | C++ Runtime & Binaries | Bash / POSIX Shell | Full Ruby Runtime & Gems | C Libraries & Python Bindings |
+| **Cross-Host Aggregation** | **Native Aggregation Ladder** | Central Fleet Server Required | Central Enterprise Server | Chef Automate Server | Satellite / Central Manager |
+| **AI Interrater Variance** | **Built-in (`auditor` Token)** | Not Supported | Not Supported | Not Supported | Not Supported |
+| **Privilege Requirement** | **Unprivileged (`RunAsInvoker`)** | Root / Administrator Required | Root Preferred / Required | Root / SSH Privileged | Root / Privileged Agent |
+| **Concurrency Model** | **Write-Guard Superset Check (Zero Locks)** | File Lock / OS Daemon | Sequential Execution | Sequential Runner | Single Process Lock |
+| **Coverage Transparency** | **Honest `unverifiable` Classification** | Silent Missing Rows | Warning / Skip Count | Skipped Control Block | Unchecked Rule State |
+| **Convergence Routing** | **Bilateral (Measure vs Decision)** | Query Output Stream | Unilateral Remediation | Failure Exit Code | XML / HTML Report |
+| **Network Egress** | **Strict Zero-Egress by Design** | Optional TLS Streaming | Optional Update Checks | Remote WinRM / SSH | Remote Repository Sync |
+
+---
+
+<a id="sec-05"></a>
+<a id="5-governance-invariants"></a>
+<a id="governance-invariants"></a>
+### 5. Governance & Runtime Invariants
+
+| Invariant / Capability | Guarantee | Verification & Technical Implementation |
+|---|---|---|
+| **1. 100% Local-First & Zero-Egress** | Zero telemetry, analytics, remote HTTP requests, or external data leaks | Offline execution via standard library; verified by AST import scan in `test_offline_and_zero_egress_invariants` |
+| **2. Unprivileged Non-Elevation** | Strict user-mode execution; no administrator/root escalation or system modifications | Safe execution boundaries; zero privilege elevation requirements (`RunAsInvoker`) |
+| **3. Deterministic Classification** | Identical inputs produce bit-for-bit identical multi-host audit verdicts | Canonical sorting of findings and inputs prior to aggregation in `system_auditor.meta` |
+| **4. Identifiability Guard** | Invariant that aggregations with >1 varying dimension cannot emit causal verdicts | Strict dimension arity validation in `Aggregation` class constructor |
+| **5. Write-Guard Race Protection** | Safe concurrent runs across machines without centralized lock daemons | Pre-write disk re-read in `write_meta`; skips overwrite if on-disk report is already a superset |
+| **6. Discrete Window Tokens** | Deterministic temporal alignment without distributed consensus protocols | Config-driven calendar window calculation (`system_auditor.tokens`) derived directly from clock |
+| **7. One Current Answer Per Window** | Single authoritative multi-host answer per window, avoiding stale duplicate reports | Window-level rewriting of meta reports; historical versions preserve themselves via window tokens |
+| **8. Coverage Transparency Floor** | Honest absence-of-proof prevents uninspected paths from masquerading as divergence | `unverifiable` classification tier tracks verified presence, absence, and unvisited sinks |
+| **9. Multi-Host & Lock Hardening** | Immune to cloud-sync conflict files and multi-agent lock contamination | Hardened `.gitignore` ignoring `*-conflict-*`, `*.sync-temp-*`, and `LOCK.*` tokens |
+| **10. 48h Security & 5-Day Triage SLA** | Committed vulnerability disclosure response and transparent patch lifecycle | Documented SLA in `SECURITY.md`, coordinated triage within 5 business days via `security@open-bricks.org` |
+
+---
+
+<a id="sec-06"></a>
+<a id="6-architecture"></a>
+<a id="architecture"></a>
+### 6. Architecture & System Flow
 
 ```mermaid
 flowchart TD
@@ -118,7 +196,10 @@ flowchart TD
 
 ---
 
-## The Three Stages
+<a id="sec-07"></a>
+<a id="7-the-three-stages"></a>
+<a id="the-three-stages"></a>
+### 7. The Three Stages & Outbound Handover
 
 ```text
 map      what is there            ->  system-explorer   (optional)
@@ -151,7 +232,10 @@ sequenceDiagram
 
 ---
 
-## Four Tokens & Discrete Windows
+<a id="sec-08"></a>
+<a id="8-four-tokens"></a>
+<a id="four-tokens"></a>
+### 8. Four Tokens & Discrete Windows
 
 Every audit answers four questions, and each answer is an immutable token:
 
@@ -162,13 +246,16 @@ Every audit answers four questions, and each answer is an immutable token:
 | `system` | *Where?* | The machine name or environment inspected (e.g. `WORKSTATION-LG`) |
 | `auditor` | *Who?* | The model or agent identity that conducted the audit (e.g. `claude-3-5-sonnet`) |
 
-### Why Discrete Windows Instead of Sliding Spans
+#### Why Discrete Windows Instead of Sliding Spans
 
 A sliding window ("valid for 14 days from run") makes overlap a matter of degree — every machine has to compare pairs to resolve status. A window **grid** derived from configuration turns that into a direct lookup: ask the clock, get a token. Two machines that never talk to each other derive the same token for the same moment, turning "same period" into a fast string comparison instead of a distributed consensus problem.
 
 ---
 
-## The Aggregation Ladder
+<a id="sec-09"></a>
+<a id="9-the-aggregation-ladder"></a>
+<a id="the-aggregation-ladder"></a>
+### 9. The Aggregation Ladder
 
 Hold some tokens fixed, let the rest vary. **An aggregation may only attribute a cause when exactly one dimension varies** — otherwise a difference is mathematically unidentifiable. This rule is enforced in the constructor.
 
@@ -184,24 +271,10 @@ Hold some tokens fixed, let the rest vary. **An aggregation may only attribute a
 
 ---
 
-## Key Capabilities & Governance Invariants
-
-| Invariant / Capability | Guarantee | Verification & Technical Implementation |
-|---|---|---|
-| **1. 100% Local-First & Zero-Egress** | Zero telemetry, analytics, remote HTTP requests, or external data leaks | Offline execution via standard library; verified by AST import scan in `test_offline_and_zero_egress_invariants` |
-| **2. Unprivileged Non-Elevation** | Strict user-mode execution; no administrator/root escalation or system modifications | Safe execution boundaries; zero privilege elevation requirements (`RunAsInvoker`) |
-| **3. Deterministic Classification** | Identical inputs produce bit-for-bit identical multi-host audit verdicts | Canonical sorting of findings and inputs prior to aggregation in `system_auditor.meta` |
-| **4. Identifiability Guard** | Invariant that aggregations with >1 varying dimension cannot emit causal verdicts | Strict dimension arity validation in `Aggregation` class constructor |
-| **5. Write-Guard Race Protection** | Safe concurrent runs across machines without centralized lock daemons | Pre-write disk re-read in `write_meta`; skips overwrite if on-disk report is already a superset |
-| **6. Discrete Window Tokens** | Deterministic temporal alignment without distributed consensus protocols | Config-driven calendar window calculation (`system_auditor.tokens`) derived directly from clock |
-| **7. One Current Answer Per Window** | Single authoritative multi-host answer per window, avoiding stale duplicate reports | Window-level rewriting of meta reports; historical versions preserve themselves via window tokens |
-| **8. Coverage Transparency Floor** | Honest absence-of-proof prevents uninspected paths from masquerading as divergence | `unverifiable` classification tier tracks verified presence, absence, and unvisited sinks |
-| **9. Multi-Host & Lock Hardening** | Immune to cloud-sync conflict files and multi-agent lock contamination | Hardened `.gitignore` ignoring `*-conflict-*`, `*.sync-temp-*`, and `LOCK.*` tokens |
-| **10. 48h Security & 5-Day Triage SLA** | Committed vulnerability disclosure response and transparent patch lifecycle | Documented SLA in `SECURITY.md`, coordinated triage within 5 business days via `security@open-bricks.org` |
-
----
-
-## One Current Answer Per Window
+<a id="sec-10"></a>
+<a id="10-one-current-answer"></a>
+<a id="one-current-answer"></a>
+### 10. One Current Answer Per Window
 
 ```text
 system A audits `bundles`   ->  single audit
@@ -215,7 +288,10 @@ Within a window the meta-audit is **overwritten, not archived**: "what do we kno
 
 ---
 
-## Write-Guard Race Protection
+<a id="sec-11"></a>
+<a id="11-write-guard"></a>
+<a id="write-guard"></a>
+### 11. Write-Guard Race Protection
 
 Parallel audits of one domain are the *premise* of a meta-audit, not a collision. There is nothing to exclude, so this module holds no distributed locks.
 
@@ -225,7 +301,10 @@ Parallel audits of one domain are the *premise* of a meta-audit, not a collision
 
 ---
 
-## End-to-End Audit Lifecycle
+<a id="sec-12"></a>
+<a id="12-end-to-end-lifecycle"></a>
+<a id="end-to-end-lifecycle"></a>
+### 12. End-to-End Audit Lifecycle
 
 ```mermaid
 sequenceDiagram
@@ -263,7 +342,10 @@ sequenceDiagram
 
 ---
 
-## Sibling Tools & Ecosystem Matrix
+<a id="sec-13"></a>
+<a id="13-sibling-tools"></a>
+<a id="sibling-tools"></a>
+### 13. Sibling Tools & Ecosystem Matrix
 
 `system-auditor` is part of the `ellmos-ai` ecosystem under the `open-bricks` umbrella:
 
@@ -288,7 +370,10 @@ sequenceDiagram
 
 ---
 
-## Installation & CLI Usage
+<a id="sec-14"></a>
+<a id="14-installation"></a>
+<a id="installation"></a>
+### 14. Installation & CLI Usage
 
 ```bash
 # Editable install
@@ -328,7 +413,10 @@ is added to the example configuration only; no host-local live configuration is 
 
 ---
 
-## Configuration
+<a id="sec-15"></a>
+<a id="15-configuration"></a>
+<a id="configuration"></a>
+### 15. Configuration & Public Handover Contract
 
 ```bash
 cp config/system-auditor.config.example.json system-auditor.config.json
@@ -353,7 +441,7 @@ Config lookup order: `--config`, `SYSTEM_AUDITOR_CONFIG`, `./`, `./config/`, `~/
 }
 ```
 
-### Where findings go: the public handover contract
+#### Where findings go: the public handover contract
 
 The auditor knows exactly **one** outbound interface. It appends
 `--title <title> --body <text>` to whatever command the sink was configured with,
@@ -387,15 +475,23 @@ ticket system is a normal state, not an error.
 
 ---
 
-## Security & Privacy
+<a id="sec-16"></a>
+<a id="16-security-privacy"></a>
+<a id="security-privacy"></a>
+### 16. Security, Privacy & Level 1 SBOM
 
 `system-auditor` is built with a strict **Local-First & Zero-Egress** model. It contains zero telemetry, requires zero network connectivity, operates with unprivileged user permissions, and employs deterministic write-guards.
+
+The project maintains a certified Level 1 SBOM inventory in [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) validating all 10 governance invariants (`INV-LOCAL-01` through `INV-SLA-10`), and provides full attribution in [NOTICE](NOTICE).
 
 For full details, supported versions, and vulnerability disclosure contacts, see [`SECURITY.md`](SECURITY.md).
 
 ---
 
-## Development & Verification
+<a id="sec-17"></a>
+<a id="17-development"></a>
+<a id="development"></a>
+### 17. Development & Verification Gates
 
 ```bash
 # Run pytest test suite (including metadata contract tests)
@@ -403,16 +499,21 @@ python -m pytest -q
 
 # Run Ruff linter
 ruff check src tests
+
+# Verify bytecode compilation
+python -m compileall -q src tests
 ```
 
 ---
 
-## License
+<a id="sec-18"></a>
+<a id="18-license"></a>
+<a id="license"></a>
+### 18. License, Maintainers & Starters
 
 MIT — see [LICENSE](LICENSE), [NOTICE](NOTICE), and [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
 
-
-## Starters
+#### Starters
 
 This module ships the provider-neutral role starters `START.bat` and `start.sh` in the
 repository root. They are generated from `roles[]` in `ellmos-module.v2.json` by COMA

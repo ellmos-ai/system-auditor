@@ -6,6 +6,8 @@ dist/
 .venv/
 venv/
 .pytest_cache/
+.pytest_temp/
+.pytest_tmp*/
 .ruff_cache/
 .mypy_cache/
 .tox/

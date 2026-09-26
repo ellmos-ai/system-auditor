@@ -5,10 +5,20 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
-Pfad A Technische Repository-Hygiene, Kanonische NOTICE Attributionsdatei, CI-Welcome-Workflow, Multi-Host Lock-Defense und Topic-Sättigung.
+Pfad B Discoverability, Visuelle Architektur, 18-Punkte Bilaterale Navigation, Level 1 SBOM Invariantenmatrix, Zielgruppen & Alternativenvergleich.
 
 ### Hinzugefuegt
 
+- **18-Punkte Bilaterale Schnellnavigation & HTML-Anker (`README.md`, `README_de.md`):**
+  Vollständige Parität über 18 durchnummerierte Abschnitte mit dualen reziproken HTML-Ankern (`<a id="sec-01"></a>` bis `<a id="sec-18"></a>`) für synchronisierte Verlinkung zwischen englischer und deutscher Dokumentation.
+- **Zielgruppen & Discoverability (Abschnitt 3):**
+  Detaillierte Matrix für Multi-Agenten-Flottenbetreiber, System- und DevOps-Architekten, Open-Source-Maintainer sowie Local-First- und Datenschutz-Teams.
+- **Vergleichsmatrix mit Alternativen (Abschnitt 4):**
+  Strukturierte 9-Dimensionen-Vergleichstabelle gegen osquery, Lynis, Chef InSpec und OpenSCAP (u. a. Multi-Machine-Evidenz, KI-Interrater-Varianz, Zero-Egress Stdlib, Schreibsicherung).
+- **Level 1 SBOM Invariantenmatrix (`THIRD_PARTY_LICENSES.md`):**
+  Zertifizierung aller 10 System- und Governance-Invarianten `INV-LOCAL-01` bis `INV-SLA-10` mit Status `VERIFIED` und Querverweis auf `[NOTICE](NOTICE)`.
+- **Automatisierte Vertragstests (`tests/test_metadata.py`):**
+  Neue Vertragstests für 18 reziproke Anker in beiden READMEs, Level 1 SBOM Invariantentabelle in `THIRD_PARTY_LICENSES.md`, Zielgruppen und Alternativenmatrix.
 - **Kanonische NOTICE Attributionsdatei (`NOTICE`):**
   Neu angelegte kanonische Urheberrechts- und Attributionsdatei gemäß Open-Source-Governance mit Ausweisung von Lukas Geiger, Organisation ellmos-ai und Umbrella-Ecosystem open-bricks.
 - **Automatisierter Welcome-Workflow (`.github/workflows/welcome.yml`):**
@@ -17,19 +27,17 @@ Pfad A Technische Repository-Hygiene, Kanonische NOTICE Attributionsdatei, CI-We
   Verankerung expliziter Standard-Rechte `permissions: contents: read` auf Top-Level-Ebene.
 - **Multi-Host Lock- und Synchronisations-Schutz (`.gitignore`):**
   Ausschluss kanonischer Lock-Dateien (`LOCK.user.*`, `LOCK.until.*`, `LOCK.condition.*`, `.automation-lock`), erweiterter Host-Token (`*-WORKSTATION-LG*`, `*-ASUS-GEI*`, `*conflicted copy*`) sowie Tooling-Caches (`.hypothesis/`, `.nyc_output/`, `uv.lock`).
-- **Automatisierte Vertragstests für Pfad-A-Standards (`tests/test_metadata.py`):**
-  Neue Vertragstests für `NOTICE`-Attribution, Welcome-Workflow, CI-Least-Privilege-Permissions, Lock-Schutz in `.gitignore` und PEP 621 Notice-URL / License-Files.
 
 ### Geaendert
 
-- **PEP 621 Standard-Metadaten (`pyproject.toml`):**
-  `license-files = ["LICENSE", "NOTICE", "THIRD_PARTY_LICENSES.md"]`, Verlinkung der Notice-URL unter `[project.urls]`, Erweiterung auf 20 kuratierte Keywords und Härtung von `[tool.pytest.ini_options]` (`minversion = "7.0"`, `norecursedirs`). Version `0.9.2` strikt eingefroren gemäß `T-20260920-167562623`.
+- **PEP 621 Standard-Metadaten & Test-Härtung (`pyproject.toml`, `.gitignore`):**
+  Pytest `addopts = "-ra -v --basetemp=.pytest_temp"`, `norecursedirs` mit `.pytest_temp` und `.hypothesis` gehärtet; `.gitignore` um `.pytest_temp/` und `.pytest_tmp*/` erweitert. Versionsnummer `0.9.2` strikt eingefroren gemäß `T-20260920-167562623`.
+- **Remote Discoverability:**
+  Homepage-URL via `gh repo edit` auf kanonische Readme-URL `https://github.com/ellmos-ai/system-auditor#readme` harmonisiert; Topics bei 20/20 Saturation verifiziert.
 - **Level 1 SBOM Lizenzaudit (`THIRD_PARTY_LICENSES.md`):**
-  Re-Audit Stand 2026-09-23 mit unprivileged RunAsInvoker Non-Elevation Zertifizierung, Zero-Copyleft-Garantie und Querverweis auf `NOTICE`.
-- **GitHub Discoverability & Topic-Sättigung:**
-  Ausschöpfung des 20/20-Topic-Limits um `open-bricks`, `compliance`, `drift-detection`, `quality-assurance`, `offline-first` und `cross-platform`.
+  Re-Audit Stand 2026-09-26 mit unprivileged RunAsInvoker Non-Elevation Zertifizierung, Zero-Copyleft-Garantie und Querverweis auf `NOTICE`.
 - **Dokumentations- & Badge-Parität (`README.md`, `README_de.md`, `llms.txt`, `MARKETING-LOG.txt`):**
-  Shields.io `last checked` Badges auf `2026-09-23` und Test-Badges aktualisiert; Verlinkung der `NOTICE`-Datei.
+  Shields.io `last checked` Badges auf `2026-09-26` und Test-Badges aktualisiert; Verlinkung der `NOTICE`-Datei.
 
 ## [0.9.2] - 2026-09-13
 

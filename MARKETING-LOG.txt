@@ -1,6 +1,38 @@
 # MARKETING-LOG.txt — system-auditor
 # Lokales Audit-, Discoverability- und Marketing-Logbuch
 
+## 2026-09-26 — Pfad B: Discoverability, Visuelle Architektur, 18-Punkte Bilaterale Navigation, Level 1 SBOM Invariantenmatrix, Zielgruppen & Alternativenvergleich
+
+### 1. Ausgangslage & Kriterien
+- Repository: ellmos-ai/system-auditor (C:\_Local_DEV\repos\system-auditor)
+- Version: 0.9.2 (strikte Einhaltung von T-20260920-167562623: unverändert beibehalten)
+- Kategorie: Evidence-Based Multi-Host Audit Engine & Meta Bundling
+- Initialer Status: Clean working tree auf Branch `master`, 0 aktive Locks via lock_status.py, >62h Ruhezustand (>24h Cooldown, letzte Pfad-B-Prüfung vor 10 Tagen am 2026-09-16).
+
+### 2. Umgesetzte Marketing-, Design- & Discoverability-Maßnahmen
+1. Version-Freeze Disziplin:
+   - Versionsnummer `0.9.2` in `pyproject.toml`, Quellcode, Manifesten und Dokumentation strikt unverändert beibehalten gem. `T-20260920-167562623`.
+2. Remote Discoverability:
+   - Homepage URL via `gh repo edit` auf kanonische URL `https://github.com/ellmos-ai/system-auditor#readme` harmonisiert.
+   - Topics auf 20/20 Capacity bestätigt (`audit`, `cli`, `governance`, `multi-agent`, `python`, `ellmos-ai`, `evidence`, `multi-machine`, `system-audit`, `developer-tools`, `local-first`, `meta-audit`, `verification`, `zero-egress`, `compliance`, `cross-platform`, `drift-detection`, `offline-first`, `open-bricks`, `quality-assurance`).
+3. PEP 621 Standardisierung in pyproject.toml & .gitignore:
+   - Pytest `addopts = "-ra -v --basetemp=.pytest_temp"`, `norecursedirs` mit `.pytest_temp` und `.hypothesis` gehärtet; `.gitignore` um `.pytest_temp/` und `.pytest_tmp*/` erweitert.
+4. Level 1 SBOM & Lizenzaudit in THIRD_PARTY_LICENSES.md:
+   - Re-Audit Stand 2026-09-26 mit formalem Querverweis auf `[NOTICE](NOTICE)`.
+   - Strukturierte Level 1 SBOM Invariant Cross-Reference Matrix Tabelle für alle 10 Invarianten `INV-LOCAL-01` bis `INV-SLA-10` (alle `VERIFIED`).
+   - Unprivileged `RunAsInvoker` Non-Elevation Zertifizierung (`INV-UNPRIV-02`), Zero-Egress Core Isolation, Zero-Copyleft.
+5. Bilinguale Navigation & Badges in README.md & README_de.md:
+   - 18-Punkte bilaterale Schnellnavigation (EN/DE) mit reziproken dualen HTML-Ankern (`<a id="sec-01"></a>`..`<a id="sec-18"></a>`) und konsistenten Section-Headern (#sec-01..#sec-18) synchronisiert.
+   - Abschnitt 3: Target Personas & Discoverability (Multi-Agent Fleet Operators, System & DevOps Architects, Open-Source Maintainers, Local-First Engineers) integriert.
+   - Abschnitt 4: Strukturierte 9-Dimensionen Comparative Matrix vs. Alternatives (osquery, Lynis, Chef InSpec, OpenSCAP) integriert.
+   - Shields.io Badges harmonisiert (`Verified: 2026-09-26`, `Last-Checked: 2026-09-26`, `pytest: 196 passed | 100% green`, `Attribution: NOTICE`).
+   - Validierung aller 3 Mermaid-Diagramme via `_tools/lint_mermaid.py` (0 Syntax-Probleme).
+6. LLM-Kontext & Release Notes:
+   - `llms.txt` aktualisiert mit Stand 2026-09-26, 196 verifizierten Tests Baseline, Level 1 SBOM Notizen, 18-Punkte Navigation.
+   - Release Notes in `CHANGELOG.md` unter `## [Unreleased]` um Pfad-B-Leistungen ergänzt.
+7. Automatisierte Vertragstests:
+   - `tests/test_metadata.py` erweitert um Assertions für alle 18 reziproken HTML-Anker in beiden READMEs, 2026-09-26 Shields-Badges, Level 1 SBOM Invariantentabelle, Target Personas & Comparative Matrix Parität.
+
 ## 2026-09-23 — Pfad A: Repository-Hygiene, Canonical NOTICE, CI-Welcome & Topic-Sättigung
 
 ### 1. Ausgangslage & Kriterien

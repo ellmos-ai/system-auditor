@@ -1,7 +1,7 @@
 # system-auditor
 
 > Belegbasierte Systemaudits über mehrere Maschinen, mit Meta-Bündelung.
-> Last-checked: 2026-09-23 | Version: 0.9.2 | Tests: 196 passed | Lint: ruff clean
+> Last-checked: 2026-09-26 | Version: 0.9.2 | Tests: 196 passed | Lint: ruff clean
 
 ## Was es ist
 
@@ -59,10 +59,10 @@ Gefunden über --config, SYSTEM_AUDITOR_CONFIG, ./, ./config/, ~/.system-auditor
 
 ## Einstiegspunkte
 
-- README.md & README_de.md       Vollständige Dokumentation mit 3 Mermaid-Diagrammen (Architektur, Lebenszyklus, Konvergenz)
+- README.md & README_de.md       Vollständige Dokumentation mit 18-Punkte bilateraler Schnellnavigation (#sec-01..#sec-18) und 3 Mermaid-Diagrammen
 - NOTICE                        Kanonische Urheberrechts- und Attributionsdatei (Lukas Geiger / ellmos-ai / open-bricks)
 - SECURITY.md                   Zweisprachige Sicherheitsrichtlinie (Local-First, Zero-Egress, Non-Elevation)
-- THIRD_PARTY_LICENSES.md        Vollständiges Drittanbieter- und Lizenzinventar (Zero-Dependency-Kern & Dev-Tools)
+- THIRD_PARTY_LICENSES.md        Level 1 SBOM Invariantenmatrix (INV-LOCAL-01..INV-SLA-10) und Lizenzinventar
 - MARKETING-LOG.txt             Audit-Ledger für Discoverability, Visual Architecture & Governance-Parität
 - .github/workflows/welcome.yml Begrüßungsworkflow für Erstbeitragende mit Concurrency & Timeouts
 - prompts/AUDITOR.de.md + .en.md   Rollen-Prompt für Agenten (DE/EN)

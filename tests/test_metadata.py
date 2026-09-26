@@ -82,7 +82,7 @@ def test_readme_badges_parity():
         "https://img.shields.io/badge/security%20SLA-48h%20response%20%7C%205d%20triage-blue",
         "https://img.shields.io/badge/code%20style-ruff-000000.svg",
         "https://img.shields.io/badge/attribution-NOTICE-blue.svg",
-        "https://img.shields.io/badge/last%20checked-2026--09--23-informational",
+        "https://img.shields.io/badge/last%20checked-2026--09--26-informational",
     ]
 
     for badge in expected_badges:
@@ -133,7 +133,7 @@ def test_three_stages_convergence_diagram_parity():
 
 
 def test_quick_navigation_anchors():
-    """Verify quick navigation links resolve to headers in READMEs."""
+    """Verify quick navigation links resolve to headers or HTML anchors in READMEs."""
     for filename in ["README.md", "README_de.md"]:
         content = (ROOT / filename).read_text(encoding="utf-8")
         assert "Quick Navigation" in content or "Schnellnavigation" in content
@@ -147,11 +147,14 @@ def test_quick_navigation_anchors():
         normalized_headers = [
             re.sub(r"[^\w\s-]", "", h).strip().lower().replace(" ", "-") for h in headers
         ]
+        html_anchors = set(re.findall(r'<a\s+id="([^"]+)">', content))
 
         for _text, anchor in anchor_links:
-            assert anchor in normalized_headers or any(
-                anchor in nh for nh in normalized_headers
-            ), f"Anchor #{anchor} in {filename} does not match any header"
+            assert (
+                anchor in normalized_headers
+                or anchor in html_anchors
+                or any(anchor in nh for nh in normalized_headers)
+            ), f"Anchor #{anchor} in {filename} does not match any header or HTML anchor"
 
 
 def test_security_policy_and_invariants():
@@ -381,6 +384,7 @@ def test_local_marketing_log_present():
     assert "Pfad A: Repository-Hygiene" in content
     assert "2026-09-13" in content
     assert "2026-09-16" in content
+    assert "2026-09-26" in content
     assert "Pfad B: Discoverability" in content
     assert (
         "Pfad B: Discoverability, Branding, Dual Mermaid & Governance Invariants Hardening"
@@ -399,7 +403,8 @@ def test_pyproject_pytest_addopts_and_ecosystem_urls():
     assert urls["Umbrella Ecosystem"] == "https://github.com/open-bricks"
 
     pytest_opts = pyproject.get("tool", {}).get("pytest", {}).get("ini_options", {})
-    assert pytest_opts.get("addopts") == "-v"
+    assert "-v" in pytest_opts.get("addopts", "")
+    assert "--basetemp=.pytest_temp" in pytest_opts.get("addopts", "")
 
 
 def test_third_party_licenses_inventory_and_zero_dependencies():
@@ -560,3 +565,72 @@ def test_pep621_notice_url_and_license_files():
     pytest_opts = pyproject.get("tool", {}).get("pytest", {}).get("ini_options", {})
     assert pytest_opts.get("minversion") == "7.0"
     assert "norecursedirs" in pytest_opts
+
+
+def test_18_points_bilateral_navigation_anchors_parity():
+    """Verify that both README.md and README_de.md contain all 18 dual reciprocal anchors."""
+    readme_en = (ROOT / "README.md").read_text(encoding="utf-8")
+    readme_de = (ROOT / "README_de.md").read_text(encoding="utf-8")
+
+    for i in range(1, 19):
+        anchor_id = f"sec-{i:02d}"
+        assert f'<a id="{anchor_id}"></a>' in readme_en, (
+            f"Anchor {anchor_id} missing in README.md"
+        )
+        assert f'<a id="{anchor_id}"></a>' in readme_de, (
+            f"Anchor {anchor_id} missing in README_de.md"
+        )
+
+        header_prefix = f"### {i}."
+        assert header_prefix in readme_en, (
+            f"Section header '{header_prefix}' missing in README.md"
+        )
+        assert header_prefix in readme_de, (
+            f"Section header '{header_prefix}' missing in README_de.md"
+        )
+
+
+def test_target_personas_and_comparative_matrix_parity():
+    """Verify presence of target personas and alternatives comparison matrix in both READMEs."""
+    readme_en = (ROOT / "README.md").read_text(encoding="utf-8")
+    readme_de = (ROOT / "README_de.md").read_text(encoding="utf-8")
+
+    assert "Target Personas & Discoverability" in readme_en
+    assert "Multi-Agent Fleet Operators" in readme_en
+    assert "Comparative Matrix vs. Alternatives" in readme_en
+    assert "osquery" in readme_en
+    assert "Lynis" in readme_en
+    assert "Chef InSpec" in readme_en
+    assert "OpenSCAP" in readme_en
+
+    assert "Zielgruppen & Discoverability" in readme_de
+    assert "Multi-Agenten-Flottenbetreiber" in readme_de
+    assert "Vergleichsmatrix mit Alternativen" in readme_de
+    assert "osquery" in readme_de
+    assert "Lynis" in readme_de
+    assert "Chef InSpec" in readme_de
+    assert "OpenSCAP" in readme_de
+
+
+def test_level_1_sbom_cross_reference_matrix_in_licenses():
+    """Verify Level 1 SBOM invariant cross-reference table and re-audit recency."""
+    licenses = (ROOT / "THIRD_PARTY_LICENSES.md").read_text(encoding="utf-8")
+    assert "Level 1 SBOM & Governance Invariant Cross-Reference Matrix" in licenses
+    assert "2026-09-26 (Pfad B Re-Audit)" in licenses
+    assert "RunAsInvoker" in licenses
+    assert "[NOTICE](NOTICE)" in licenses
+
+    invariants = [
+        "INV-LOCAL-01",
+        "INV-UNPRIV-02",
+        "INV-DETERM-03",
+        "INV-IDENT-04",
+        "INV-RACE-05",
+        "INV-WINDOW-06",
+        "INV-SINGLE-07",
+        "INV-COVER-08",
+        "INV-LOCK-09",
+        "INV-SLA-10",
+    ]
+    for inv in invariants:
+        assert inv in licenses, f"Invariant {inv} missing in THIRD_PARTY_LICENSES.md"
