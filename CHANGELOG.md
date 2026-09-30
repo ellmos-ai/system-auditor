@@ -5,10 +5,22 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
-Pfad B Discoverability, Visuelle Architektur, 18-Punkte Bilaterale Navigation, Level 1 SBOM Invariantenmatrix, Zielgruppen & Alternativenvergleich.
+Pfad A Repository-Hygiene, CI Lifecycle Workflows, Multi-Host Lock-Defense, PEP 621 / 639 Standardisierung, Level 1 SBOM Text-Begleitdatei & Vertragstest-Ausbau (2026-09-30).
 
 ### Hinzugefuegt
 
+- **Automatisierter Auto-Assign-Workflow (`.github/workflows/auto-assign.yml`):**
+  Automatisches Zuweisen neu geöffneter Pull Requests an den Repo-Owner (`actions/github-script@v7`, `timeout-minutes: 5`, Concurrency `cancel-in-progress: true`, `permissions: pull-requests: write`, `issues: write`).
+- **Automatisierter Label-Sync-Workflow & Governance-Labels (`.github/workflows/label-sync.yml`, `.github/labels.yml`):**
+  Zentral verwaltete Label-Synchronisation (`EndBug/label-sync@v2`, `timeout-minutes: 5`) mit 11 kanonischen Standard-Labels gemäß GOVERNANCE.md §4.2 (`bug`, `enhancement`, `good first issue`, `help wanted`, `documentation`, `duplicate`, `wontfix`, `priority: high`, `priority: low`, `needs-triage`, `stale`).
+- **Level 1 SBOM Plain-Text Begleitdatei (`THIRD_PARTY_LICENSES.txt`):**
+  Vollständiges Plain-Text-Lizenzinventar und Bestätigung aller 10 Governance- und Laufzeit-Invarianten `INV-LOCAL-01` bis `INV-SLA-10` Stand 2026-09-30 (Zero-Runtime-Dependencies, PSFL-2.0 stdlib runtime, unprivileged RunAsInvoker non-elevation).
+- **PEP 639 Lizenzmetadaten & URL-Erweiterung (`pyproject.toml`):**
+  `license-files` um `THIRD_PARTY_LICENSES.txt` erweitert; `Third-Party Licenses (Text)` URL in `[project.urls]` verlinkt.
+- **Erweiterte Multi-Host- & Editor-Absicherung (`.gitignore`):**
+  Härtung gegen `*-IDEAPAD*`, `*_WORKSTATION*`, `*-WORKSTATION.*`, `*-MacBook*`, `Desktop.ini` und `*.swo`.
+- **Vertragstest-Erweiterung (`tests/test_metadata.py`):**
+  10 neue Vertragstests für Auto-Assign, Label-Sync, Governance-Labels, Level 1 SBOM Begleitdatei, erweiterte .gitignore-Filter und URL-Parität; Gesamtzahl der Tests auf 204 gehoben (100% grün).
 - **18-Punkte Bilaterale Schnellnavigation & HTML-Anker (`README.md`, `README_de.md`):**
   Vollständige Parität über 18 durchnummerierte Abschnitte mit dualen reziproken HTML-Ankern (`<a id="sec-01"></a>` bis `<a id="sec-18"></a>`) für synchronisierte Verlinkung zwischen englischer und deutscher Dokumentation.
 - **Zielgruppen & Discoverability (Abschnitt 3):**
@@ -35,9 +47,9 @@ Pfad B Discoverability, Visuelle Architektur, 18-Punkte Bilaterale Navigation, L
 - **Remote Discoverability:**
   Homepage-URL via `gh repo edit` auf kanonische Readme-URL `https://github.com/ellmos-ai/system-auditor#readme` harmonisiert; Topics bei 20/20 Saturation verifiziert.
 - **Level 1 SBOM Lizenzaudit (`THIRD_PARTY_LICENSES.md`):**
-  Re-Audit Stand 2026-09-26 mit unprivileged RunAsInvoker Non-Elevation Zertifizierung, Zero-Copyleft-Garantie und Querverweis auf `NOTICE`.
+  Re-Audit Stand 2026-09-30 mit unprivileged RunAsInvoker Non-Elevation Zertifizierung, Zero-Copyleft-Garantie und Querverweis auf `NOTICE`.
 - **Dokumentations- & Badge-Parität (`README.md`, `README_de.md`, `llms.txt`, `MARKETING-LOG.txt`):**
-  Shields.io `last checked` Badges auf `2026-09-26` und Test-Badges aktualisiert; Verlinkung der `NOTICE`-Datei.
+  Shields.io `last checked` Badges auf `2026-09-30` und Test-Badges auf 204 passed (100% grün) aktualisiert; Verlinkung der `NOTICE`- und `THIRD_PARTY_LICENSES.txt`-Dateien.
 
 ## [0.9.2] - 2026-09-13
 

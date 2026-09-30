@@ -31,6 +31,7 @@ def test_required_root_documents_exist():
         "LICENSE",
         "NOTICE",
         "THIRD_PARTY_LICENSES.md",
+        "THIRD_PARTY_LICENSES.txt",
         "CHANGELOG.md",
         "MARKETING-LOG.txt",
         "llms.txt",
@@ -38,6 +39,9 @@ def test_required_root_documents_exist():
         "ellmos-module.v2.json",
         ".github/workflows/ci.yml",
         ".github/workflows/welcome.yml",
+        ".github/workflows/auto-assign.yml",
+        ".github/workflows/label-sync.yml",
+        ".github/labels.yml",
     ]
     for rel_path in required:
         target = ROOT / rel_path
@@ -72,7 +76,7 @@ def test_readme_badges_parity():
     readme_de = (ROOT / "README_de.md").read_text(encoding="utf-8")
 
     expected_badges = [
-        "https://img.shields.io/badge/pytest-196",
+        "https://img.shields.io/badge/pytest-204",
         "https://github.com/ellmos-ai/system-auditor/actions/workflows/ci.yml/badge.svg",
         "https://img.shields.io/badge/python-3.10",
         "https://img.shields.io/badge/ecosystem-ellmos--ai-purple",
@@ -82,7 +86,7 @@ def test_readme_badges_parity():
         "https://img.shields.io/badge/security%20SLA-48h%20response%20%7C%205d%20triage-blue",
         "https://img.shields.io/badge/code%20style-ruff-000000.svg",
         "https://img.shields.io/badge/attribution-NOTICE-blue.svg",
-        "https://img.shields.io/badge/last%20checked-2026--09--26-informational",
+        "https://img.shields.io/badge/last%20checked-2026--09--30-informational",
     ]
 
     for badge in expected_badges:
@@ -385,6 +389,7 @@ def test_local_marketing_log_present():
     assert "2026-09-13" in content
     assert "2026-09-16" in content
     assert "2026-09-26" in content
+    assert "2026-09-30" in content
     assert "Pfad B: Discoverability" in content
     assert (
         "Pfad B: Discoverability, Branding, Dual Mermaid & Governance Invariants Hardening"
@@ -430,6 +435,7 @@ def test_pep639_license_files_metadata():
     license_files = pyproject.get("project", {}).get("license-files", [])
     assert "LICENSE" in license_files
     assert "THIRD_PARTY_LICENSES.md" in license_files
+    assert "THIRD_PARTY_LICENSES.txt" in license_files
 
     optional_deps = pyproject.get("project", {}).get("optional-dependencies", {})
     assert "dev" in optional_deps
@@ -553,11 +559,15 @@ def test_pep621_notice_url_and_license_files():
     assert "NOTICE" in license_files
     assert "LICENSE" in license_files
     assert "THIRD_PARTY_LICENSES.md" in license_files
+    assert "THIRD_PARTY_LICENSES.txt" in license_files
 
     urls = project.get("urls", {})
     assert "Notice" in urls
     assert urls["Notice"].startswith("https://")
     assert "NOTICE" in urls["Notice"]
+    assert "Third-Party Licenses (Text)" in urls
+    assert urls["Third-Party Licenses (Text)"].startswith("https://")
+    assert "THIRD_PARTY_LICENSES.txt" in urls["Third-Party Licenses (Text)"]
 
     keywords = project.get("keywords", [])
     assert len(keywords) >= 20, f"Expected at least 20 keywords, got {len(keywords)}"
@@ -616,7 +626,7 @@ def test_level_1_sbom_cross_reference_matrix_in_licenses():
     """Verify Level 1 SBOM invariant cross-reference table and re-audit recency."""
     licenses = (ROOT / "THIRD_PARTY_LICENSES.md").read_text(encoding="utf-8")
     assert "Level 1 SBOM & Governance Invariant Cross-Reference Matrix" in licenses
-    assert "2026-09-26 (Pfad B Re-Audit)" in licenses
+    assert "2026-09-30 (Pfad A Re-Audit)" in licenses
     assert "RunAsInvoker" in licenses
     assert "[NOTICE](NOTICE)" in licenses
 
@@ -634,3 +644,96 @@ def test_level_1_sbom_cross_reference_matrix_in_licenses():
     ]
     for inv in invariants:
         assert inv in licenses, f"Invariant {inv} missing in THIRD_PARTY_LICENSES.md"
+
+
+def test_auto_assign_workflow_present_and_valid():
+    """Verify presence, permissions, and timeout of auto-assign.yml workflow."""
+    auto_assign_file = ROOT / ".github" / "workflows" / "auto-assign.yml"
+    assert auto_assign_file.is_file(), "auto-assign.yml must exist"
+
+    content = auto_assign_file.read_text(encoding="utf-8")
+    assert "actions/github-script@v7" in content
+    assert "timeout-minutes: 5" in content
+    assert "cancel-in-progress: true" in content
+    assert "pull-requests: write" in content
+    assert "issues: write" in content
+    assert "pull_request_target:" in content
+
+
+def test_label_sync_workflow_present_and_valid():
+    """Verify presence, trigger, and configuration of label-sync.yml workflow."""
+    label_sync_file = ROOT / ".github" / "workflows" / "label-sync.yml"
+    assert label_sync_file.is_file(), "label-sync.yml must exist"
+
+    content = label_sync_file.read_text(encoding="utf-8")
+    assert "EndBug/label-sync@v2" in content
+    assert "timeout-minutes: 5" in content
+    assert "cancel-in-progress: true" in content
+    assert "issues: write" in content
+    assert "workflow_dispatch:" in content
+    assert "config-file: .github/labels.yml" in content
+
+
+def test_canonical_labels_configuration():
+    """Verify canonical 11 governance labels in .github/labels.yml."""
+    labels_file = ROOT / ".github" / "labels.yml"
+    assert labels_file.is_file(), ".github/labels.yml must exist"
+
+    content = labels_file.read_text(encoding="utf-8")
+    expected_labels = [
+        "bug",
+        "enhancement",
+        "good first issue",
+        "help wanted",
+        "documentation",
+        "duplicate",
+        "wontfix",
+        "priority: high",
+        "priority: low",
+        "needs-triage",
+        "stale",
+    ]
+    for lbl in expected_labels:
+        assert f"- name: {lbl}" in content or f"- name: '{lbl}'" in content, (
+            f"Label '{lbl}' missing in .github/labels.yml"
+        )
+
+
+def test_third_party_licenses_plain_text_companion():
+    """Verify Level 1 SBOM plain-text companion THIRD_PARTY_LICENSES.txt."""
+    txt_file = ROOT / "THIRD_PARTY_LICENSES.txt"
+    assert txt_file.is_file(), "THIRD_PARTY_LICENSES.txt must exist"
+
+    content = txt_file.read_text(encoding="utf-8")
+    assert "system-auditor" in content
+    assert "Level 1 SBOM" in content
+    assert "Stand: 2026-09-30" in content
+    assert "zero external runtime dependencies" in content
+    assert "PSFL-2.0" in content
+    assert "NOTICE" in content
+
+    invariants = [
+        "INV-LOCAL-01",
+        "INV-UNPRIV-02",
+        "INV-DETERM-03",
+        "INV-IDENT-04",
+        "INV-RACE-05",
+        "INV-WINDOW-06",
+        "INV-SINGLE-07",
+        "INV-COVER-08",
+        "INV-LOCK-09",
+        "INV-SLA-10",
+    ]
+    for inv in invariants:
+        assert inv in content, f"Invariant {inv} missing in THIRD_PARTY_LICENSES.txt"
+
+
+def test_extended_host_and_desktop_ini_defense_in_gitignore():
+    """Verify that .gitignore includes extended host tokens, Desktop.ini, and editor swap files."""
+    gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
+    assert "*-IDEAPAD*" in gitignore
+    assert "*_WORKSTATION*" in gitignore
+    assert "*-WORKSTATION.*" in gitignore
+    assert "*-MacBook*" in gitignore
+    assert "Desktop.ini" in gitignore
+    assert "*.swo" in gitignore

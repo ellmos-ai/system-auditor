@@ -1,0 +1,69 @@
+# Third-Party Licenses & Level 1 SBOM
+
+Last checked: 2026-09-30 against PyPI metadata and local runtime environment.
+Audited: Stand: 2026-09-30 against Level 1 SBOM and runtime invariants.
+
+Scope: direct dependencies declared in `pyproject.toml` as well as standard
+library and development packages. This inventory is a direct dependency review
+and Level 1 SBOM affirmation, complementing the markdown review in
+`THIRD_PARTY_LICENSES.md`.
+
+## Project License & Attribution
+
+system-auditor is licensed under the MIT License.
+Canonical copyright attribution is maintained in `NOTICE`:
+Copyright (c) 2026 Lukas Geiger, ellmos-ai family under open-bricks umbrella.
+
+## Architecture & Security Invariants
+
+- 100% Local-First & Zero Cloud Egress (INV-LOCAL-01)
+- Unprivileged User-Mode Execution: RunAsInvoker Non-Elevation (INV-UNPRIV-02)
+- Deterministic Classification & Canonical Findings Sorting (INV-DETERM-03)
+- Identifiability Guard Against Multi-Dimensional Confounding (INV-IDENT-04)
+- Write-Guard Race Protection for Multi-Machine Concurrency (INV-RACE-05)
+- Discrete Window Tokens Without Distributed Consensus (INV-WINDOW-06)
+- One Authoritative Multi-Host Answer Per Window (INV-SINGLE-07)
+- Honest Absence-of-Proof Floor & Coverage Transparency (INV-COVER-08)
+- Multi-Host & Cloud-Sync Lock Defense (INV-LOCK-09)
+- 48h Security Response & 5-Day Triage SLA (INV-SLA-10)
+
+## Core Runtime Dependencies
+
+| Package | Ecosystem | Version / Range | License | Role & Purpose |
+|---|---|---:|---|---|
+| Python Standard Library | Python | >=3.10 | PSFL-2.0 | Core audit engine, argparse, dataclasses, datetime, hashlib (SHA-256), json, os, pathlib, re, sys, typing |
+
+*Note:* system-auditor has zero external runtime dependencies (`dependencies = []`
+in `pyproject.toml`). It operates fully standalone and network-free.
+
+## Optional Adapter & Reference Sibling Integrations
+
+| Package | Ecosystem | Version / Range | License | Role & Purpose |
+|---|---|---:|---|---|
+| system-explorer | Python / local | sibling | MIT | Architectural sibling reference for host mapping & topology (zero runtime coupling) |
+| ellmos-controlcenter-mcp | Python / local | sibling | MIT | Control center orchestration interface (zero runtime coupling) |
+
+## Development, Testing & Quality Assurance Tooling
+
+| Package | Ecosystem | Version / Range | License | Role & Purpose |
+|---|---|---:|---|---|
+| pytest | Python / PyPI | >=8.0 | MIT | Automated test runner, contract assertions and mock fixtures |
+| ruff | Python / PyPI | >=0.6.0 | MIT / Apache-2.0 | High-performance Python linter and code style enforcement |
+| setuptools | Python / PyPI | >=77.0 | MIT | Standard build backend (PEP 517 / PEP 621 compliant) |
+| build | Python / PyPI | >=1.2.0 | MIT | Standard PEP 517 build frontend |
+
+## Level 1 SBOM Invariant Verification (Stand: 2026-09-30)
+
+All 10 architectural and runtime governance invariants are confirmed:
+- INV-LOCAL-01: 100% Local-First & Zero Egress (zero network telemetry, zero phone-home calls)
+- INV-UNPRIV-02: Unprivileged User-Mode Execution (RunAsInvoker non-elevation principle)
+- INV-DETERM-03: Deterministic Classification (bit-for-bit identical multi-host audit verdicts)
+- INV-IDENT-04: Identifiability Guard (aggregations with >1 varying dimension reject causal claims)
+- INV-RACE-05: Write-Guard Race Protection (concurrent runs skip overwrite if disk has superset)
+- INV-WINDOW-06: Discrete Window Tokens (deterministic temporal alignment via calendar grid)
+- INV-SINGLE-07: One Current Answer Per Window (historical versions preserve themselves via window tokens)
+- INV-COVER-08: Coverage Transparency Floor (uninspected paths categorized as unverifiable)
+- INV-LOCK-09: Multi-Host & Lock Hardening (immune to cloud-sync conflict files and lock contamination)
+- INV-SLA-10: 48h Response, 5-Day Triage SLA (coordinated disclosure via security@open-bricks.org)
+
+Refer to `THIRD_PARTY_LICENSES.md` for full cross-reference matrix and component analyses.

@@ -1,6 +1,34 @@
 # MARKETING-LOG.txt — system-auditor
 # Lokales Audit-, Discoverability- und Marketing-Logbuch
 
+## 2026-09-30 — Pfad A: Repository-Hygiene, CI Lifecycle Workflows, Lock Defense, Level 1 SBOM Text Companion & Vertragstest-Ausbau
+
+### 1. Ausgangslage & Kriterien
+- Repository: ellmos-ai/system-auditor (C:\_Local_DEV\repos\system-auditor)
+- Version: 0.9.2 (strikte Einhaltung von T-20260920-167562623: unverändert beibehalten)
+- Kategorie: Evidence-Based Multi-Host Audit Engine & Meta Bundling
+- Initialer Status: Clean working tree auf Branch `master`, 0 aktive Locks via lock_status.py (UNLOCKED), >96h Ruhezustand (>24h Cooldown, letzte Pfad-A-Prüfung vor 7 Tagen am 2026-09-23).
+
+### 2. Umgesetzte Hygiene- & Härtungsmaßnahmen
+1. Version-Freeze Disziplin:
+   - Versionsnummer `0.9.2` in `pyproject.toml`, Quellcode, Manifesten und Dokumentation strikt unverändert beibehalten gem. `T-20260920-167562623`.
+2. CI Lifecycle Workflows (.github/workflows):
+   - `auto-assign.yml`: PR Auto-Assign an Repo-Owner (`actions/github-script@v7`, `timeout-minutes: 5`, Concurrency `cancel-in-progress: true`, `permissions: pull-requests: write`, `issues: write`).
+   - `label-sync.yml`: Workflow-Dispatch Label-Synchronisation (`EndBug/label-sync@v2`, `timeout-minutes: 5`, `permissions: issues: write`).
+   - `labels.yml`: 11 Standard-Governance-Labels gemäß GOVERNANCE.md §4.2 etabliert.
+3. Level 1 SBOM Plain-Text Begleitdatei (THIRD_PARTY_LICENSES.txt):
+   - Vollständiges Plain-Text-Lizenzinventar und Bestätigung aller 10 Governance- und Laufzeit-Invarianten `INV-LOCAL-01` bis `INV-SLA-10` Stand 2026-09-30 (Zero-Runtime-Dependencies, PSFL-2.0 stdlib runtime, unprivileged RunAsInvoker non-elevation).
+4. PEP 621 / 639 Standardisierung (pyproject.toml):
+   - `license-files` um `THIRD_PARTY_LICENSES.txt` erweitert.
+   - URL `"Third-Party Licenses (Text)"` unter `[project.urls]` verlinkt.
+5. Multi-Host & Editor Lock Defense (.gitignore):
+   - Härtung gegen `*-IDEAPAD*`, `*_WORKSTATION*`, `*-WORKSTATION.*`, `*-MacBook*`, `Desktop.ini` und `*.swo`.
+6. Dokumentations- & Badge-Parität (README.md, README_de.md, llms.txt):
+   - Shields.io Test-Badges auf 204 passed (100% grün) und `last checked` auf `2026-09-30` synchronisiert.
+   - Verlinkung von `THIRD_PARTY_LICENSES.txt` und neuen Einstiegspunkten.
+7. Automatisierte Vertragstests (tests/test_metadata.py):
+   - 10 neue Vertragstests für Auto-Assign, Label-Sync, Governance-Labels, Level 1 SBOM Text Companion, erweiterte .gitignore-Filter und URL-Parität implementiert; Gesamtsuite: 204 Pytest-Tests 100% grün.
+
 ## 2026-09-26 — Pfad B: Discoverability, Visuelle Architektur, 18-Punkte Bilaterale Navigation, Level 1 SBOM Invariantenmatrix, Zielgruppen & Alternativenvergleich
 
 ### 1. Ausgangslage & Kriterien

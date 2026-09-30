@@ -1,7 +1,7 @@
 # Third-Party Licenses & Software Inventory
 
 > **Project:** `ellmos-ai/system-auditor` (Evidence-based system audits across machines with meta-audit bundling)<br>
-> **Audited:** 2026-09-26 (Pfad B Re-Audit)<br>
+> **Audited:** 2026-09-30 (Pfad A Re-Audit)<br>
 > **Repository License:** [MIT License](LICENSE) | [Attribution Notice](NOTICE)<br>
 > **Architecture & Privacy:** 100% Local-First, Zero-Egress, Unprivileged User-Mode (`RunAsInvoker`)
 
