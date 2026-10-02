@@ -1,7 +1,7 @@
 # Third-Party Licenses & Level 1 SBOM
 
-Last checked: 2026-09-30 against PyPI metadata and local runtime environment.
-Audited: Stand: 2026-09-30 against Level 1 SBOM and runtime invariants.
+Last checked: 2026-10-02 against PyPI metadata and local runtime environment.
+Audited: Stand: 2026-10-02 against Level 1 SBOM and runtime invariants.
 
 Scope: direct dependencies declared in `pyproject.toml` as well as standard
 library and development packages. This inventory is a direct dependency review
@@ -52,7 +52,7 @@ in `pyproject.toml`). It operates fully standalone and network-free.
 | setuptools | Python / PyPI | >=77.0 | MIT | Standard build backend (PEP 517 / PEP 621 compliant) |
 | build | Python / PyPI | >=1.2.0 | MIT | Standard PEP 517 build frontend |
 
-## Level 1 SBOM Invariant Verification (Stand: 2026-09-30)
+## Level 1 SBOM Invariant Verification (Stand: 2026-10-02)
 
 All 10 architectural and runtime governance invariants are confirmed:
 - INV-LOCAL-01: 100% Local-First & Zero Egress (zero network telemetry, zero phone-home calls)

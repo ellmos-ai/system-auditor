@@ -13,25 +13,25 @@ license-files = ["LICENSE", "NOTICE", "THIRD_PARTY_LICENSES.md", "THIRD_PARTY_LI
 authors = [{ name = "Lukas Geiger" }]
 keywords = [
     "audit",
-    "system-integrity",
-    "multi-host",
-    "meta-audit",
-    "governance",
-    "drift-detection",
-    "compliance",
-    "local-first",
-    "zero-egress",
-    "offline-first",
-    "evidence-based",
     "audit-report",
-    "host-inventory",
-    "system-diagnostics",
-    "quality-assurance",
-    "security-audit",
+    "compliance",
     "cross-platform",
+    "drift-detection",
     "ellmos",
     "ellmos-ai",
+    "evidence-based",
+    "governance",
+    "host-inventory",
+    "local-first",
+    "meta-audit",
+    "multi-host",
+    "offline-first",
     "open-bricks",
+    "quality-assurance",
+    "security-audit",
+    "system-diagnostics",
+    "system-integrity",
+    "zero-egress",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -63,14 +63,19 @@ dev = [
 system-auditor = "system_auditor.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/ellmos-ai/system-auditor"
+Homepage = "https://github.com/ellmos-ai/system-auditor#readme"
 Documentation = "https://github.com/ellmos-ai/system-auditor#readme"
 Repository = "https://github.com/ellmos-ai/system-auditor"
 Issues = "https://github.com/ellmos-ai/system-auditor/issues"
 Changelog = "https://github.com/ellmos-ai/system-auditor/blob/master/CHANGELOG.md"
+Contributing = "https://github.com/ellmos-ai/system-auditor/blob/master/CONTRIBUTING.md"
 Security = "https://github.com/ellmos-ai/system-auditor/blob/master/SECURITY.md"
 Notice = "https://github.com/ellmos-ai/system-auditor/blob/master/NOTICE"
+"Level 1 SBOM" = "https://github.com/ellmos-ai/system-auditor/blob/master/THIRD_PARTY_LICENSES.md"
+"Level 1 SBOM (Text)" = "https://github.com/ellmos-ai/system-auditor/blob/master/THIRD_PARTY_LICENSES.txt"
+"Plain-Text License" = "https://github.com/ellmos-ai/system-auditor/blob/master/LICENSE"
 "Third-Party Licenses (Text)" = "https://github.com/ellmos-ai/system-auditor/blob/master/THIRD_PARTY_LICENSES.txt"
+"Marketing Log" = "https://github.com/ellmos-ai/system-auditor/blob/master/MARKETING-LOG.txt"
 Umbrella = "https://github.com/open-bricks/open-bricks"
 "Parent Organization" = "https://github.com/ellmos-ai"
 "Umbrella Ecosystem" = "https://github.com/open-bricks"

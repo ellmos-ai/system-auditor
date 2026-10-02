@@ -5,9 +5,20 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
-Pfad A Repository-Hygiene, CI Lifecycle Workflows, Multi-Host Lock-Defense, PEP 621 / 639 Standardisierung, Level 1 SBOM Text-Begleitdatei & Vertragstest-Ausbau (2026-09-30).
+Pfad B Discoverability, Visuelle Architektur, ASCII-Vier-Sichten-Topologie, Bilinguale CONTRIBUTING.md Guidelines, Level 1 SBOM Stand 2026-10-02 Re-Audit & PEP 621 URL-Erweiterung (2026-10-02).
 
 ### Hinzugefuegt
+
+- **ASCII Vier-Sichten-Architekturprojektion (`README.md`, `README_de.md`):**
+  Neuer Abschnitt 6 mit standardisierter ASCII-Topologie (`[VIEW 1: CALLER RUNTIMES, AGENT CLIENTS & CLI ENTRYPOINTS]`, `[VIEW 2: SYSTEM-AUDITOR SOVEREIGN ENGINE & AGGREGATION LADDER]`, `[VIEW 3: RUNTIME PERSISTENCE, EVIDENCE LEDGERS & WRITE-GUARD DEFENSE]`, `[VIEW 4: AIR-GAP DEFENSE PERIMETER, RUNASINVOKER & ZERO-EGRESS BOUNDARY]`; deutsche Fassung `[SICHT 1]` bis `[SICHT 4]`) und Projektion aller 10 Invarianten `INV-LOCAL-01` bis `INV-SLA-10`.
+- **Bilinguale CONTRIBUTING.md Guidelines (`CONTRIBUTING.md`):**
+  Vollständige Entwicklungs- und Mitwirkungsrichtlinien in Englisch und Deutsch mit Definition aller 10 Invarianten `INV-LOCAL-01` bis `INV-SLA-10`, unprivilegiertem `RunAsInvoker` Benutzermodus (`INV-UNPRIV-02`), Plan D Local Development Workflow, Testgates (`pytest`, `ruff`, `compileall`, `git diff --check`), gesetzlichem Haftungsausschluss (§ 521 BGB Gefälligkeitsrecht) und verbindlicher 48h Security Response SLA.
+- **PEP 621 Standard-URLs in `pyproject.toml`:**
+  Kanonische Endpunkte für `Contributing`, `Level 1 SBOM`, `Level 1 SBOM (Text)`, `Plain-Text License` und `Marketing Log` unter `[project.urls]` registriert; Homepage auf `https://github.com/ellmos-ai/system-auditor#readme` verankert; 20 Keywords alphabetisch sortiert.
+- **Shields.io Badges & Level 1 SBOM Plain-Text Ausweisung (`README.md`, `README_de.md`):**
+  Erweiterung um `Level 1 SBOM: Plain-Text Audited`, `Contributing: Guide`, `last checked: 2026-10-02` und `verified: 2026-10-02` (DE: `Level 1 SBOM: Reiner Text Geprüft`, `Mitwirken: Leitfaden`, `Geprüft: 2026-10-02`).
+- **Vertragstest-Erweiterung (`tests/test_metadata.py`):**
+  Neue automatisierte Vertragstests für ASCII Vier-Sichten-Topologie Parität, bilinguale CONTRIBUTING.md Integrität, PEP 621 Level 1 SBOM und Contributing URLs, Level 1 SBOM Re-Audit Stand 2026-10-02 sowie Version-Freeze-Disziplin (0.9.2).
 
 - **Automatisierter Auto-Assign-Workflow (`.github/workflows/auto-assign.yml`):**
   Automatisches Zuweisen neu geöffneter Pull Requests an den Repo-Owner (`actions/github-script@v7`, `timeout-minutes: 5`, Concurrency `cancel-in-progress: true`, `permissions: pull-requests: write`, `issues: write`).

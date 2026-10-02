@@ -4,7 +4,7 @@
 # system-auditor
 
 [![CI](https://github.com/ellmos-ai/system-auditor/actions/workflows/ci.yml/badge.svg)](https://github.com/ellmos-ai/system-auditor/actions/workflows/ci.yml)
-[![tests](https://img.shields.io/badge/pytest-204%20passed%20%7C%20100%25-brightgreen)](tests/)
+[![tests](https://img.shields.io/badge/pytest-209%20passed%20%7C%20100%25-brightgreen)](tests/)
 [![python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)](pyproject.toml)
 [![platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)](pyproject.toml)
 [![privacy](https://img.shields.io/badge/privacy-100%25%20Local--First%20%7C%20Zero--Egress-brightgreen)](SECURITY.md)
@@ -18,7 +18,10 @@
 [![umbrella](https://img.shields.io/badge/umbrella-open--bricks-blueviolet)](https://github.com/open-bricks/open-bricks)
 [![version](https://img.shields.io/badge/version-0.9.2-orange)](pyproject.toml)
 [![llms.txt](https://img.shields.io/badge/llms.txt-Discovery%20Context-informational)](llms.txt)
-[![last checked](https://img.shields.io/badge/last%20checked-2026--09--30-informational)](MARKETING-LOG.txt)
+[![Level 1 SBOM](https://img.shields.io/badge/Level%201%20SBOM-Plain--Text%20Audited-brightgreen)](THIRD_PARTY_LICENSES.txt)
+[![Contributing](https://img.shields.io/badge/contributing-guide-blue.svg)](CONTRIBUTING.md)
+[![last checked](https://img.shields.io/badge/last%20checked-2026--10--02-informational)](MARKETING-LOG.txt)
+[![verified](https://img.shields.io/badge/verified-2026--10--02-blue.svg)](MARKETING-LOG.txt)
 
 **Evidence-based system audits across several machines — with meta bundling.**
 
@@ -192,6 +195,57 @@ flowchart TD
     style S2 fill:#f0fdf4,stroke:#22c55e,stroke-width:1px
     style S3 fill:#eff6ff,stroke:#3b82f6,stroke-width:1px
     style S4 fill:#fdf4ff,stroke:#a855f7,stroke-width:1px
+```
+
+#### ASCII Architectural Topology (Four-View Projection)
+
+```text
+========================================================================================
+                      system-auditor: Four-View Architectural Topology
+========================================================================================
+
+[VIEW 1: CALLER RUNTIMES, AGENT CLIENTS & CLI ENTRYPOINTS]
+  +----------------------------------------------------------------------------------+
+  | Caller Ingestion & Execution Interfaces                                          |
+  | - CLI Dispatch: 'system-auditor run | list | meta | sweep | export'              |
+  | - Autonomous Agent Automation: Antigravity sidecars, Claude, Codex, Kimi-Code    |
+  | - Parameter Intake: --domain, --system, --auditor, --window-token, --reports-dir |
+  | - Shell Injection Guard: argv array isolation; 100% unprivileged user mode       |
+  +----------------------------------------------------------------------------------+
+                                           |
+                                           | (system_auditor.cli -> engine dispatch)
+                                           v
+[VIEW 2: SYSTEM-AUDITOR SOVEREIGN ENGINE & AGGREGATION LADDER]
+  +----------------------------------------------------------------------------------+
+  | Inspection, Verification & Causal Classification Core                            |
+  | - Rule & Integration Scanners: policy compliance (K1-K4), binding checks (I1-I7) |
+  | - Multi-Host Aggregation Ladder: interrater | cross-system | cross-domain | series|
+  | - Identifiability Guard: prohibits causal claims when >1 dimension varies        |
+  | - Classification Engine: systemwide | host_specific | inverse | unverifiable     |
+  +----------------------------------------------------------------------------------+
+                                           |
+                                           | (audit rendering / write_report / write_meta)
+                                           v
+[VIEW 3: RUNTIME PERSISTENCE, EVIDENCE LEDGERS & WRITE-GUARD DEFENSE]
+  +----------------------------------------------------------------------------------+
+  | Treffpunkt File Storage & Convergence Routing                                    |
+  | - Audit Reports: reports_dir/AUDIT-YYYYMMDD--<domain>.<host>.<auditor>-<hash>.md |
+  | - Discrete Window Meta: reports_dir/META-YYYYMMDD--<domain>.<scope>-<hash>.md    |
+  | - Write-Guard Concurrency Defense: re-reads disk; suppresses overwrite on superset|
+  | - Convergence Handover: tickets to queue (measures) & proposals to governance    |
+  +----------------------------------------------------------------------------------+
+                                           |
+                                           | (air-gap isolation perimeter)
+                                           v
+[VIEW 4: AIR-GAP DEFENSE PERIMETER, RUNASINVOKER & ZERO-EGRESS BOUNDARY]
+  +----------------------------------------------------------------------------------+
+  | Security, Privacy & Runtime Isolation Invariants                                 |
+  | - RunAsInvoker Non-Elevation: strictly unprivileged user-mode execution          |
+  | - 100% Local-First & Zero Egress: 0 network sockets, 0 HTTP, 0 outbound telemetry|
+  | - Zero External Dependencies: 100% Python Standard Library (dependencies = [])   |
+  | - Level 1 SBOM Invariants: INV-LOCAL-01..INV-SLA-10 cryptographically verified   |
+  +----------------------------------------------------------------------------------+
+========================================================================================
 ```
 
 ---

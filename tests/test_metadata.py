@@ -27,6 +27,7 @@ def test_required_root_documents_exist():
     required = [
         "README.md",
         "README_de.md",
+        "CONTRIBUTING.md",
         "SECURITY.md",
         "LICENSE",
         "NOTICE",
@@ -76,7 +77,7 @@ def test_readme_badges_parity():
     readme_de = (ROOT / "README_de.md").read_text(encoding="utf-8")
 
     expected_badges = [
-        "https://img.shields.io/badge/pytest-204",
+        "https://img.shields.io/badge/pytest-209",
         "https://github.com/ellmos-ai/system-auditor/actions/workflows/ci.yml/badge.svg",
         "https://img.shields.io/badge/python-3.10",
         "https://img.shields.io/badge/ecosystem-ellmos--ai-purple",
@@ -86,7 +87,7 @@ def test_readme_badges_parity():
         "https://img.shields.io/badge/security%20SLA-48h%20response%20%7C%205d%20triage-blue",
         "https://img.shields.io/badge/code%20style-ruff-000000.svg",
         "https://img.shields.io/badge/attribution-NOTICE-blue.svg",
-        "https://img.shields.io/badge/last%20checked-2026--09--30-informational",
+        "https://img.shields.io/badge/last%20checked-2026--10--02-informational",
     ]
 
     for badge in expected_badges:
@@ -96,6 +97,10 @@ def test_readme_badges_parity():
     # License badge (EN: license-MIT, DE: lizenz-MIT or license-MIT)
     assert "license-MIT" in readme_en
     assert "license-MIT" in readme_de or "lizenz-MIT" in readme_de
+
+    # Level 1 SBOM & Contributing badges
+    assert "Level%201%20SBOM" in readme_en and "Level%201%20SBOM" in readme_de
+    assert "contributing-guide" in readme_en or "mitwirken-leitfaden" in readme_de
 
 
 def test_mermaid_diagrams_syntax():
@@ -219,7 +224,14 @@ def test_pyproject_pep621_classifiers_and_urls():
         "Repository",
         "Issues",
         "Changelog",
+        "Contributing",
         "Security",
+        "Notice",
+        "Level 1 SBOM",
+        "Level 1 SBOM (Text)",
+        "Plain-Text License",
+        "Third-Party Licenses (Text)",
+        "Marketing Log",
         "Umbrella",
     ]
     for key in required_urls:
@@ -626,7 +638,7 @@ def test_level_1_sbom_cross_reference_matrix_in_licenses():
     """Verify Level 1 SBOM invariant cross-reference table and re-audit recency."""
     licenses = (ROOT / "THIRD_PARTY_LICENSES.md").read_text(encoding="utf-8")
     assert "Level 1 SBOM & Governance Invariant Cross-Reference Matrix" in licenses
-    assert "2026-09-30 (Pfad A Re-Audit)" in licenses
+    assert "2026-10-02 (Pfad B Re-Audit)" in licenses or "2026-09-30 (Pfad A Re-Audit)" in licenses
     assert "RunAsInvoker" in licenses
     assert "[NOTICE](NOTICE)" in licenses
 
@@ -707,7 +719,7 @@ def test_third_party_licenses_plain_text_companion():
     content = txt_file.read_text(encoding="utf-8")
     assert "system-auditor" in content
     assert "Level 1 SBOM" in content
-    assert "Stand: 2026-09-30" in content
+    assert "Stand: 2026-10-02" in content or "Stand: 2026-09-30" in content
     assert "zero external runtime dependencies" in content
     assert "PSFL-2.0" in content
     assert "NOTICE" in content
@@ -737,3 +749,81 @@ def test_extended_host_and_desktop_ini_defense_in_gitignore():
     assert "*-MacBook*" in gitignore
     assert "Desktop.ini" in gitignore
     assert "*.swo" in gitignore
+
+
+def test_contributing_guide_present_and_bilingual():
+    """Verify that CONTRIBUTING.md is present, bilingual (EN/DE), and references invariants."""
+    contrib = ROOT / "CONTRIBUTING.md"
+    assert contrib.is_file(), "CONTRIBUTING.md must exist in root"
+    content = contrib.read_text(encoding="utf-8")
+    assert "## English" in content
+    assert "## Deutsch" in content
+    assert "INV-LOCAL-01" in content
+    assert "INV-SLA-10" in content
+    assert "RunAsInvoker" in content
+    assert "T-20260920-167562623" in content
+    assert "0.9.2" in content or "version" in content
+    assert "BGB" in content
+
+
+def test_ascii_four_view_topology_parity():
+    """Verify that Section 06 in both README.md and README_de.md contains ASCII 4-view topology."""
+    readme_en = (ROOT / "README.md").read_text(encoding="utf-8")
+    readme_de = (ROOT / "README_de.md").read_text(encoding="utf-8")
+
+    # English README
+    assert "Four-View Architectural Topology" in readme_en
+    assert "[VIEW 1: CALLER RUNTIMES, AGENT CLIENTS & CLI ENTRYPOINTS]" in readme_en
+    assert "[VIEW 2: SYSTEM-AUDITOR SOVEREIGN ENGINE & AGGREGATION LADDER]" in readme_en
+    assert "[VIEW 3: RUNTIME PERSISTENCE, EVIDENCE LEDGERS & WRITE-GUARD DEFENSE]" in readme_en
+    assert "[VIEW 4: AIR-GAP DEFENSE PERIMETER, RUNASINVOKER & ZERO-EGRESS BOUNDARY]" in readme_en
+
+    # German README
+    assert "Vier-Sichten-Architektur-Topologie" in readme_de
+    assert "[SICHT 1: AUFRUFER-LAUFZEITEN, AGENTEN-CLIENTS & CLI-EINTRITTSPUNKTE]" in readme_de
+    assert "[SICHT 2: SYSTEM-AUDITOR KERN-ENGINE & AGGREGATIONSLEITER]" in readme_de
+    assert (
+        "[SICHT 3: LAUFZEIT-PERSISTENZ, EVIDENZ-REGISTER & SCHREIBSCHUTZ-RENNVERHINDERUNG]"
+        in readme_de
+    )
+    assert "[SICHT 4: AIR-GAP-SICHERHEITSPERIMETER, RUNASINVOKER & ZERO-EGRESS-GRENZE]" in readme_de
+
+
+def test_level_1_sbom_re_audit_currency_20261002():
+    """Verify Level 1 SBOM recency Stand 2026-10-02 across markdown and text files."""
+    md_content = (ROOT / "THIRD_PARTY_LICENSES.md").read_text(encoding="utf-8")
+    txt_content = (ROOT / "THIRD_PARTY_LICENSES.txt").read_text(encoding="utf-8")
+
+    assert "2026-10-02 (Pfad B Re-Audit)" in md_content
+    assert "Audited: Stand: 2026-10-02" in txt_content
+    assert "INV-LOCAL-01" in md_content and "INV-LOCAL-01" in txt_content
+    assert "INV-SLA-10" in md_content and "INV-SLA-10" in txt_content
+
+
+def test_changelog_pfad_b_currency_20261002():
+    """Verify CHANGELOG.md and MARKETING-LOG.txt Pfad B entries for 2026-10-02."""
+    changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    assert "## [Unreleased]" in changelog
+    assert "2026-10-02" in changelog
+    assert "ASCII-Vier-Sichten-Topologie" in changelog or "ASCII Vier-Sichten" in changelog
+    assert "CONTRIBUTING.md" in changelog
+
+    marketing_log = (ROOT / "MARKETING-LOG.txt").read_text(encoding="utf-8")
+    assert "## 2026-10-02 — Pfad B" in marketing_log
+    assert "ASCII-Vier-Sichten-Topologie" in marketing_log
+
+
+def test_version_freeze_discipline_092():
+    """Verify that version 0.9.2 is strictly frozen per T-20260920-167562623."""
+    import system_auditor
+
+    assert system_auditor.__version__ == "0.9.2"
+
+    pyproject_data = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    assert pyproject_data["project"]["version"] == "0.9.2"
+
+    llms_content = (ROOT / "llms.txt").read_text(encoding="utf-8")
+    assert "Version: 0.9.2" in llms_content
+
+    readme_en = (ROOT / "README.md").read_text(encoding="utf-8")
+    assert "version-0.9.2" in readme_en
