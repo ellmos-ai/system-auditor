@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -18,6 +19,7 @@ from pathlib import Path
 from . import __version__
 from .config import load as load_config
 from .discovery import discover
+from .installer_design import DesignAuditError, audit_design
 from .meta import due_aggregations, plan_all, stale_windows
 from .pages_drift import PagesDriftError, audit_pages_drift
 from .report import list_reports, next_domain
@@ -263,6 +265,21 @@ def cmd_pages_drift(args: argparse.Namespace) -> int:
     return 0 if result.ok else 1
 
 
+def cmd_installer_design(args: argparse.Namespace) -> int:
+    try:
+        result = audit_design(
+            Path(args.design), installer_src=Path(args.installer_src),
+            installer_commit=args.installer_commit, ocean_cli=Path(args.ocean_cli),
+            ocean_commit=args.ocean_commit, producer_commit=args.producer_commit,
+            timeout=args.timeout,
+        )
+    except (DesignAuditError, OSError, KeyError, TypeError, subprocess.SubprocessError) as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 2
+    _print(result, args.json)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="system-auditor",
@@ -336,6 +353,13 @@ def build_parser() -> argparse.ArgumentParser:
     p_pages.add_argument("--bundles-catalog", required=True)
     p_pages.add_argument("--site-dir", required=True)
     p_pages.set_defaults(func=cmd_pages_drift)
+
+    p_design = sub.add_parser("installer-design", help="bounded local native no-apply design audit")
+    for name in ("design", "installer-src", "installer-commit", "ocean-cli", "ocean-commit",
+                 "producer-commit"):
+        p_design.add_argument("--" + name, required=True)
+    p_design.add_argument("--timeout", type=float, default=60)
+    p_design.set_defaults(func=cmd_installer_design)
 
     return parser
 
