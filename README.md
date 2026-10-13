@@ -604,3 +604,9 @@ ticket-master: the auditor has no hand-written dispatcher of its own, so a per-p
 would only duplicate argv knowledge that COMA already owns. Starting the auditor through a task
 role (`taskplan launch --label system-auditor`) remains equally valid and uses the same
 declaration. Decided in ticket T-20260906-249053451.
+
+## SYSTEM-AUDITOR agent starter
+
+`SYSTEM-AUDITOR.bat` starts the role agent through TASKPLAN and keeps the existing audit CLI separate. Source files live in `starters/windows/` and `starters/posix/`; wheels and source archives include these files and the unchanged German/English role prompts. A wheel installs them below the active Python environment's `share/system-auditor/` directory. Use `bash starters/posix/system-auditor.sh` on macOS/Linux.
+
+Install the current source with `python -m pip install .` and install TASKPLAN with launcher support. `SA_LANG=de|en` selects the prompt. Provider, model, work directory and trusted automation are explicit user settings; the starter sets no personal paths, accounts, models or permissions. The role completes its preflight and confirms the requested audit scope before a sweep. Dry-run: set `TASKPLAN_STARTER_DRY_RUN=1` and pass `--provider codex --model configured-model --effort high --no-probe`.
