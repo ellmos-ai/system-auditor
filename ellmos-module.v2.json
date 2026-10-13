@@ -49,6 +49,7 @@
       "label": "System Auditor",
       "prompt": "prompts/AUDITOR.en.md",
       "request": "Read and follow the system-auditor role prompt for the requested audit scope.",
+      "starter": "starters/posix/system-auditor.sh",
       "modes": [],
       "providers": [
         "claude",

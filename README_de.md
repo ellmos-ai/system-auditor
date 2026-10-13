@@ -565,3 +565,9 @@ Dieses Modul stellt die provider-neutralen Rollenstarter `START.bat` und `start.
 Repository-Root bereit. Sie werden aus `roles[]` in `ellmos-module.v2.json` über COMA generiert
 (`python -m coma starters generate --manifest ellmos-module.v2.json --output-dir .`), sodass sie
 bei Änderungen neu erzeugt und nicht manuell editiert werden.
+
+## SYSTEM-AUDITOR-Agentenstarter
+
+`SYSTEM-AUDITOR.bat` startet den Rollenagenten über TASKPLAN. Die bestehende Audit-CLI bleibt separat verfügbar. Die Dateien stehen unter `starters/windows/` und `starters/posix/`; Wheel und Quellarchiv enthalten auch die unveränderten deutschen und englischen Rollen-Prompts. Ein Wheel installiert sie unter `share/system-auditor/` in der aktiven Python-Umgebung. Auf macOS/Linux `bash starters/posix/system-auditor.sh` verwenden.
+
+Aktuellen Quellstand mit `python -m pip install .` und TASKPLAN mit Launcher-Unterstützung installieren. `SA_LANG=de|en` wählt die Sprache. Anbieter, Modell, Arbeitsverzeichnis und erweiterte Berechtigungen sind ausdrückliche Nutzereinstellungen. Der Starter setzt keine persönlichen Pfade, Konten, Modelle oder Berechtigungen. Die Rolle führt zuerst den Vorabcheck aus und bestätigt den Audit-Bereich mit dem Nutzer. Für eine Vorschau `TASKPLAN_STARTER_DRY_RUN=1` setzen und `--provider codex --model konfiguriertes-modell --effort high --no-probe` übergeben.

@@ -83,6 +83,12 @@ Umbrella = "https://github.com/open-bricks/open-bricks"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.data-files]
+"share/system-auditor" = ["ellmos-module.v2.json"]
+"share/system-auditor/prompts" = ["prompts/AUDITOR.de.md", "prompts/AUDITOR.en.md"]
+"share/system-auditor/starters/windows" = ["starters/windows/*.bat"]
+"share/system-auditor/starters/posix" = ["starters/posix/*.sh"]
+
 [tool.pytest.ini_options]
 minversion = "7.0"
 pythonpath = ["src"]
