@@ -466,6 +466,34 @@ Website und stellt sicher, dass auf `bundles.html` kein unveröffentlichtes Modu
 
 ---
 
+#### Begrenzter Installer-Audit für ein Paketdesign
+
+`installer-design` erhält die acht erforderlichen mechanischen Prüfungen und sechs exakten
+Eingangsbytebindungen des vorhandenen No-apply-Vertrags. Ein Design mit `ocean.python_packages`
+benötigt zusätzlich echte mechanische Paketbelege für die bestehende physische PEP405-Umgebung:
+vertrauenswürdige Profil-ID/roher SHA-256, unveränderliche Wheel-Abhängigkeiten, Vorzustand,
+Dateieigentümer und unveränderter Ziel-/nicht ausgewählter Distributionsbestand.
+Ein alter PASS-Beleg ersetzt keine Paketprüfung.
+
+Die vertrauenswürdige Profilquelle ist dasselbe vom Operator konfigurierte
+`OCEAN_PYTHON_PROFILES_ROOT`, das die Original-Ocean-Engine verwendet. Das Design kann keinen
+freien Umgebungspfad vorgeben. Der Adapter bindet Git-Origin, Commit, sauberen Checkout und
+Quellbytes des Original-Ocean-Produzenten, bevor er dessen Exports verwendet. Kein Modell und
+kein Provider-Entry-Point nimmt an dieser Prüfung teil. Alle ersten Aufnahmen und abschließenden
+Nachprüfungen weisen Spezialdateien, übergroße Daten und Identitätsdrift ab. Designeingänge,
+Rezept-/Policybytes, Produzentenpins und Zielzustand werden nach dem letzten Paketkindprozess
+erneut geprüft; wechselnde Belege verhindern einen PASS-Receipt.
+
+Der Receipt beschreibt ausschließlich tatsächlich ausgeführte mechanische Prüfungen der
+Installationsplanung. Er autorisiert kein Apply, ersetzt keine persönliche Freigabe und keinen
+extern signierten Grant und belegt weder Governance- noch Laufzeitabnahme. Er erzeugt keine Venv
+und schaltet keine Dienste um. Bestehende Editable-/Legacy-Umgebungen bleiben für diese
+Paketoperation unsupported; ihre Umstellung braucht eine separate Autorisierung.
+Installer und Original-Ocean-Engine besitzen den gemeinsamen Mutex, die begrenzte
+Writerlebensdauer, die vollständige Nachzustands-Reconciliation und das grantgebundene partielle
+Rollback. Dieser Audit führt diese Operationen weder aus noch simuliert er sie.
+Source-Review und synthetische QA sind kein nativer Deploymentbeleg.
+
 <a id="sec-15"></a>
 <a id="15-konfiguration"></a>
 <a id="konfiguration"></a>
