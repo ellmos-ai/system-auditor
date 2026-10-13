@@ -467,6 +467,30 @@ is added to the example configuration only; no host-local live configuration is 
 
 ---
 
+#### Bounded Installer package-design audit
+
+`installer-design` retains the eight required mechanical checks and six exact input-byte
+bindings of the existing no-apply contract. A design containing `ocean.python_packages` also
+requires actual mechanical package evidence for the existing physical PEP405 environment:
+trusted profile ID/raw SHA-256, immutable wheel closure, beforestate, installed ownership and
+unchanged target/unselected inventory. An old passing receipt is not package evidence.
+
+The trusted profile source is the same operator-configured `OCEAN_PYTHON_PROFILES_ROOT` used
+by the original Ocean engine; the design cannot supply arbitrary environment paths. The
+adapter binds the original Ocean producer's Git origin, commit, clean checkout and source
+bytes before using its exports. No model or provider entry point participates in this audit.
+All initial captures and final rechecks reject special files, oversized bytes and identity
+drift. Design inputs, recipe/policy bytes, producer pins and target state are rechecked after
+the last package child; changing evidence prevents a passing receipt.
+
+The receipt reports only performed mechanical installation-planning checks. It does not
+authorize apply, replace human approval or an external signed grant, establish governance or
+runtime acceptance, bootstrap a venv or switch services. Existing editable/legacy environments
+remain unsupported by this package operation; their conversion requires separate authorization.
+The consuming Installer and original Ocean engine own the shared mutex, bounded writer lifetime,
+complete-afterstate reconciliation and grant-bound partial rollback. This audit does not apply
+or simulate those operations. Source review and synthetic QA are not a native deployment receipt.
+
 <a id="sec-15"></a>
 <a id="15-configuration"></a>
 <a id="configuration"></a>
