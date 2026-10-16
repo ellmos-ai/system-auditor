@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -182,6 +183,106 @@ def test_concurrent_changes_fail_closed(tmp_path, monkeypatch, kind):
 def test_timeout_terminates_before_returning_failure():
     with pytest.raises(audit.DesignAuditError, match="timed out"):
         audit._run_native([sys.executable, "-c", "import time; time.sleep(30)"], b"", 0.1)
+
+
+def test_successful_native_parent_cannot_leave_a_detached_writer(tmp_path):
+    marker = tmp_path / "late-descendant-write"
+    child = f"import time,pathlib; time.sleep(1); pathlib.Path({str(marker)!r}).touch()"
+    parent = (
+        "import subprocess,sys,json; "
+        f"p=subprocess.Popen([sys.executable,'-I','-S','-B','-c',{child!r}],"
+        "stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL); "
+        "print(json.dumps({'ok':True,'child':p.pid}),flush=True)"
+    )
+    report = audit._run_native([sys.executable, "-I", "-S", "-B", "-c", parent], b"", 10)
+    assert report["ok"] is True
+    time.sleep(1.3)
+    assert not marker.exists(), "a descendant wrote after a successful audit returned"
+
+
+def test_native_gate_preserves_argv_and_exact_input_bytes():
+    payload = "äΩ & ' \n".encode() * 10000
+    argv = ["space and & punctuation", "äΩ"]
+    code = (
+        "import sys,json,hashlib; b=sys.stdin.buffer.read(); "
+        "print(json.dumps({'argv':sys.argv[1:],'sha':hashlib.sha256(b).hexdigest()}))"
+    )
+    report = audit._run_native([sys.executable, "-I", "-S", "-B", "-c", code, *argv],
+                               payload, 10)
+    assert report == {"argv": argv, "sha": hashlib.sha256(payload).hexdigest()}
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows job containment")
+@pytest.mark.parametrize("failure", ["__enter__", "assign"])
+def test_windows_containment_failure_never_releases_command(tmp_path, monkeypatch, failure):
+    from system_auditor._windows_job import WindowsAuditJob
+
+    def unavailable(*_args):
+        raise OSError("synthetic containment failure")
+
+    monkeypatch.setattr(WindowsAuditJob, failure, unavailable)
+    marker = tmp_path / "must-not-run"
+    code = f"from pathlib import Path; Path({str(marker)!r}).touch(); print('{{}}')"
+    with pytest.raises(audit.DesignAuditError, match="containment"):
+        audit._run_native([sys.executable, "-I", "-S", "-B", "-c", code], b"", 10)
+    assert not marker.exists()
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows job kill-on-close")
+def test_native_controller_death_terminates_its_writers(tmp_path):
+    ready, marker = tmp_path / "writer-ready", tmp_path / "late-writer"
+    child = (
+        f"import pathlib,time; pathlib.Path({str(ready)!r}).touch(); "
+        f"time.sleep(1); pathlib.Path({str(marker)!r}).touch()"
+    )
+    parent = (
+        "import subprocess,sys,time; "
+        f"subprocess.Popen([sys.executable,'-I','-S','-B','-c',{child!r}],"
+        "stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL); "
+        "time.sleep(2); print('{}')"
+    )
+    source = str(Path(audit.__file__).resolve().parents[1])
+    controller = (
+        f"import sys; sys.path.insert(0,{source!r}); "
+        "from system_auditor.installer_design import _run_native; "
+        f"_run_native([sys.executable,'-I','-S','-B','-c',{parent!r}],b'',10)"
+    )
+    with subprocess.Popen([sys.executable, "-I", "-S", "-B", "-c", controller],
+                          stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                          stderr=subprocess.DEVNULL) as process:
+        try:
+            deadline = time.monotonic() + 10
+            while not ready.exists() and process.poll() is None and time.monotonic() < deadline:
+                time.sleep(0.01)
+            assert ready.exists(), "contained writer did not reach the synchronization point"
+        finally:
+            if process.poll() is None:
+                process.kill()  # Held Popen HANDLE of this test's controller.
+            process.wait(timeout=10)
+    time.sleep(2.2)
+    assert not marker.exists()
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows job kill-on-close")
+def test_cleanup_error_cannot_return_pass_or_leave_a_writer(tmp_path, monkeypatch):
+    from system_auditor._windows_job import WindowsAuditJob
+
+    def fail_cleanup(_self):
+        raise OSError("synthetic termination failure")
+
+    monkeypatch.setattr(WindowsAuditJob, "terminate_and_wait", fail_cleanup)
+    marker = tmp_path / "late-cleanup-writer"
+    child = f"import time,pathlib; time.sleep(1); pathlib.Path({str(marker)!r}).touch()"
+    parent = (
+        "import subprocess,sys; "
+        f"subprocess.Popen([sys.executable,'-I','-S','-B','-c',{child!r}],"
+        "stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL); "
+        "print('{}',flush=True)"
+    )
+    with pytest.raises(audit.DesignAuditError, match="containment"):
+        audit._run_native([sys.executable, "-I", "-S", "-B", "-c", parent], b"", 10)
+    time.sleep(1.3)
+    assert not marker.exists()
 
 
 def test_native_output_byte_bound_never_produces_pass(tmp_path):
