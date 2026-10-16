@@ -180,9 +180,32 @@ def _producer(root: Path, repository: str, commit: str) -> dict:
     return {"repository": repository, "commit": commit}
 
 
+@contextlib.contextmanager
+def _native_job():
+    if os.name != "nt":
+        yield None
+        return
+    from ._windows_job import WindowsAuditJob
+
+    try:
+        with WindowsAuditJob() as job:
+            yield job
+    except OSError as exc:
+        raise DesignAuditError(
+            "native audit process containment failed; no mechanical PASS"
+        ) from exc
+
+
 def _run_native(command: list[str], payload: bytes, timeout: float) -> dict:
     if len(payload) > 64 * 1024 * 1024:
         raise DesignAuditError("native audit input exceeds byte bound")
+    if os.name == "nt":
+        from ._windows_job import frame_command
+
+        try:
+            command, payload = frame_command(command, payload)
+        except ValueError as exc:
+            raise DesignAuditError("native audit command exceeds gate contract") from exc
     options = (
         {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW}
         if os.name == "nt"
@@ -190,7 +213,16 @@ def _run_native(command: list[str], payload: bytes, timeout: float) -> dict:
     )
     with subprocess.Popen(
         command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **options
-    ) as process:
+    ) as process, _native_job() as job:
+        if job is not None:
+            try:
+                job.assign(process)
+            except OSError:
+                # No command frame has been sent. Kill only the held Popen
+                # handle for the trusted gate, never a rediscovered PID.
+                process.kill()
+                process.wait(timeout=20)
+                raise
         output = [bytearray(), bytearray()]
         exceeded = threading.Event()
         guard = threading.Lock()
@@ -229,18 +261,11 @@ def _run_native(command: list[str], payload: bytes, timeout: float) -> dict:
                 raise DesignAuditError("native no-apply plan failed; no mechanical PASS")
             stdout = bytes(output[0])
         finally:
-            if os.name != "nt":
+            if job is not None:
+                job.terminate_and_wait()
+            else:
                 with contextlib.suppress(ProcessLookupError):
                     os.killpg(process.pid, signal.SIGKILL)
-            elif process.poll() is None:
-                killed = subprocess.run(
-                    ["taskkill", "/PID", str(process.pid), "/T", "/F"],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    timeout=20,
-                )
-                if killed.returncode and process.poll() is None:
-                    process.kill()
             process.wait(timeout=20)
             for thread in threads:
                 thread.join(timeout=20)
