@@ -27,13 +27,38 @@ def test_configured_stores_win(tmp_path):
     assert result.evidence_capable
 
 
-def test_configured_but_missing_file_is_dropped(tmp_path):
+def test_configured_but_missing_file_is_reported_without_becoming_evidence(tmp_path):
+    missing = tmp_path / "nope.md"
     result = discover(
         tmp_path,
-        policy_stores=[{"name": "p", "kind": "file", "target": str(tmp_path / "nope.md")}],
+        policy_stores=[{"name": "p", "kind": "file", "target": str(missing)}],
         probe_runner=lambda cmd: False,
     )
     assert result.tier_reached == TIER_NONE
+    assert result.policy == []
+    assert not result.evidence_capable
+    assert f"configured but not present: policy p -> {missing}" in result.notes
+
+
+def test_missing_configured_sources_remain_visible_after_convention_fallback(tmp_path):
+    fallback = tmp_path / "CLAUDE.md"
+    fallback.write_text("rules", encoding="utf-8")
+    missing_policy = tmp_path / "missing-policy.md"
+    missing_decision = tmp_path / "missing-decision.md"
+    result = discover(
+        tmp_path,
+        policy_stores=[{"name": "policy-store", "kind": "file", "target": str(missing_policy)}],
+        decision_stores=[
+            {"name": "decision-store", "kind": "file", "target": str(missing_decision)}
+        ],
+        probe_runner=lambda cmd: False,
+    )
+    assert result.tier_reached == TIER_CONVENTION
+    assert [source.target for source in result.policy] == [str(fallback)]
+    assert result.decision == []
+    assert f"configured but not present: policy policy-store -> {missing_policy}" in result.notes
+    decision_note = f"configured but not present: decision decision-store -> {missing_decision}"
+    assert decision_note in result.notes
 
 
 def test_known_module_is_used_when_its_probe_succeeds(tmp_path):

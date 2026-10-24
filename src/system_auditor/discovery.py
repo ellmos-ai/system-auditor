@@ -149,7 +149,7 @@ def _from_configured(entries: list[dict], kind: str) -> list[Source]:
                 detail="" if available else "configured but not present",
             )
         )
-    return [source for source in sources if source.available]
+    return sources
 
 
 def _from_modules(modules: list[dict], probe_runner) -> tuple[list[Source], list[Source]]:
@@ -222,8 +222,17 @@ def discover(
     runner = probe_runner or _run_probe
     result = DiscoveryResult()
 
-    result.policy.extend(_from_configured(policy_stores or [], KIND_POLICY))
-    result.decision.extend(_from_configured(decision_stores or [], KIND_DECISION))
+    for entries, kind, bucket in (
+        (policy_stores or [], KIND_POLICY, result.policy),
+        (decision_stores or [], KIND_DECISION, result.decision),
+    ):
+        for source in _from_configured(entries, kind):
+            if source.available:
+                bucket.append(source)
+            else:
+                result.notes.append(
+                    f"{source.detail}: {source.kind} {source.name} -> {source.target}"
+                )
 
     module_sources, probed = _from_modules(known_modules or [], runner)
     result.probed.extend(probed)

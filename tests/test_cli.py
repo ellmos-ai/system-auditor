@@ -4,6 +4,7 @@ The Fable review found the CLI untested and, in fact, broken over its documented
 invocation. These tests exercise it the way an auditor does: via main(argv).
 """
 import json
+from pathlib import Path
 
 import pytest
 
@@ -22,6 +23,60 @@ def _write_config(tmp_path, **extra):
     path = tmp_path / "system-auditor.config.json"
     path.write_text(json.dumps(data), encoding="utf-8")
     return path
+
+
+def test_discover_resolves_configured_domain_and_names_missing_store(tmp_path, capsys):
+    domain = tmp_path / "domäne-ü"
+    domain.mkdir()
+    policy = domain / "README.md"
+    policy.write_text("rules", encoding="utf-8")
+    missing_decision = domain / "DECISIONS.md"
+    config_path = _write_config(
+        tmp_path,
+        domains=[{"name": "example", "path": str(domain)}],
+        policy_stores=[{"name": "domain-policy", "kind": "file", "target": "<domain>/README.md"}],
+        decision_stores=[{"name": "domain-decisions", "kind": "file",
+                          "target": "<domain>/DECISIONS.md"}],
+    )
+    rc = cli.main(["--config", str(config_path), "--json", "discover", "--domain", "example"])
+    captured = capsys.readouterr()
+    assert rc == 0
+    payload = json.loads(captured.out)
+    assert payload["tier"] == "configured"
+    assert [Path(target) for target in payload["policy"]] == [policy]
+    assert payload["decision"] == []
+    assert payload["evidence_capable"] is True
+    assert any(note.startswith("configured but not present: decision domain-decisions -> ")
+               and Path(note.split(" -> ", 1)[1]) == missing_decision
+               for note in payload["notes"])
+    rc = cli.main(["--config", str(config_path), "discover", "--domain", "example"])
+    plain = capsys.readouterr().out
+    assert rc == 0
+    assert "notes:" in plain
+    assert "configured but not present: decision domain-decisions -> " in plain
+
+
+def test_discover_domain_path_still_accepts_unconfigured_areas(tmp_path, capsys):
+    domain = tmp_path / "ad-hoc"
+    domain.mkdir()
+    policy = domain / "CLAUDE.md"
+    policy.write_text("rules", encoding="utf-8")
+    config_path = _write_config(tmp_path)
+    rc = cli.main(["--config", str(config_path), "--json", "discover",
+                   "--domain-path", str(domain)])
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["tier"] == "convention"
+    assert payload["policy"] == [str(policy)]
+
+
+def test_role_prompts_use_domain_name_for_configured_sources():
+    prompts = Path(__file__).resolve().parents[1] / "prompts"
+    for name in ("AUDITOR.de.md", "AUDITOR.en.md"):
+        text = (prompts / name).read_text(encoding="utf-8")
+        section = text.split("### (c)", 1)[1].split("### (d)", 1)[0]
+        assert "discover --domain <name>" in section
+        assert "discover --domain-path" in section
 
 
 def test_auditor_flag_overrides_the_config_and_silences_the_warning(tmp_path, capsys, monkeypatch):
