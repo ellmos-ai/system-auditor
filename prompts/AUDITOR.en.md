@@ -170,8 +170,11 @@ the target area) remain absolute: skip the domain, note it in the report.
 
 ### (c) Resolve rule sources (evidence B and C)
 
-`system-auditor discover --domain-path <path>` or the config. Four tiers; the first that
-answers wins:
+For a configured domain, run `system-auditor discover --domain <name>` so the rule
+sources resolve `<domain>` to its configured path. Use
+`system-auditor discover --domain-path <path>` only for an unconfigured ad-hoc path.
+Missing configured sources appear in `notes` and do not count as B/C evidence.
+Four tiers; the first that answers wins:
 
 1. **configured** — `policy_stores[]` / `decision_stores[]`
 2. **module probe** — known modules, *detected* via `enabled_probe`, never assumed

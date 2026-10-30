@@ -181,8 +181,11 @@ Zielbereich) gelten dagegen absolut: Domäne überspringen, im Bericht vermerken
 
 ### (c) Regelquellen auflösen (Beleg B und C)
 
-`system-auditor discover --domain-path <pfad>` bzw. die Config. Vier Stufen, die erste, die
-antwortet, gewinnt:
+Für eine konfigurierte Domäne `system-auditor discover --domain <name>` aufrufen, damit
+`<domain>` in den Regelquellen auf den konfigurierten Domänenpfad zeigt. Nur für einen
+nicht konfigurierten Ad-hoc-Pfad `system-auditor discover --domain-path <pfad>` verwenden.
+Fehlende konfigurierte Quellen stehen in `notes` und dürfen nicht als B/C-Beleg zählen.
+Vier Stufen, die erste, die antwortet, gewinnt:
 
 1. **konfiguriert** — `policy_stores[]` / `decision_stores[]`
 2. **Modul-Probe** — bekannte Module, per `enabled_probe` *erkannt*, nie vorausgesetzt
