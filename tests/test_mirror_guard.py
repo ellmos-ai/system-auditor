@@ -4,7 +4,8 @@ from types import SimpleNamespace
 
 import pytest
 
-_spec = importlib.util.spec_from_file_location("_mirror_guard_conftest", Path(__file__).with_name("conftest.py"))
+_conftest_path = Path(__file__).with_name("conftest.py")
+_spec = importlib.util.spec_from_file_location("_mirror_guard_conftest", _conftest_path)
 _conftest = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_conftest)
 
