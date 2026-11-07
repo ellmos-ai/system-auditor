@@ -49,6 +49,11 @@ class Config:
     policy: dict[str, dict] = field(default_factory=resolve_policy)
     domains: list[dict] = field(default_factory=list)
     domain_selector_command: str | None = None
+    #: Phase (a-1): the cloud mirror of this module (prompt and templates are compared
+    #: against the clone), and an optional lock check run before any pull of the own
+    #: clone (``{path}`` is replaced; exit 0 means free).
+    mirror_dir: str = ""
+    lock_check_command: str | None = None
     policy_stores: list[dict] = field(default_factory=list)
     decision_stores: list[dict] = field(default_factory=list)
     known_modules: list[dict] = field(default_factory=list)
@@ -218,6 +223,8 @@ def load(path: str | Path | None = None, home: str | None = None) -> Config:
             if isinstance(entry, dict)
         ],
         domain_selector_command=data.get("domain_selector_command") or None,
+        mirror_dir=_expand(str(data.get("mirror_dir", "") or ""), resolved_home),
+        lock_check_command=data.get("lock_check_command") or None,
         policy_stores=_expand_stores(data.get("policy_stores"), resolved_home),
         decision_stores=_expand_stores(data.get("decision_stores"), resolved_home),
         known_modules=list(data.get("known_modules") or []),

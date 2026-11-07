@@ -23,6 +23,7 @@ from .installer_design import DesignAuditError, audit_design
 from .meta import due_aggregations, plan_all, stale_windows
 from .pages_drift import PagesDriftError, audit_pages_drift
 from .report import UnreadableReport, list_reports, next_domain
+from .selfcheck import run_self_check
 from .tokens import AGGREGATIONS, TimeGrid, utcnow
 
 
@@ -270,6 +271,39 @@ def cmd_config(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_self_check(args: argparse.Namespace) -> int:
+    """Phase (a-1): audit the own tool. Dry run unless --apply; prints the header value.
+
+    Exit 0 also for ``stale``: the audit runs on, marked. Exit 2 only if the check
+    itself could not run.
+    """
+    config = _config(args)
+    sources = [
+        str(entry.get("target", ""))
+        for entry in config.policy_stores + config.decision_stores
+        if entry.get("target") and "<" not in str(entry.get("target"))
+    ]
+    if args.clone:
+        import_path = Path(args.clone) / "src" / "system_auditor" / "__init__.py"
+    else:
+        import_path = Path(__file__).resolve().parent / "__init__.py"
+    try:
+        result = run_self_check(
+            import_path,
+            apply=args.apply,
+            mirror=args.mirror or config.mirror_dir or None,
+            rule_sources=sources,
+            lock_check_command=config.lock_check_command,
+        )
+    except OSError as exc:
+        print(f"ERROR: self-check could not run ({exc})", file=sys.stderr)
+        return 2
+    payload = result.to_dict()
+    payload["header_line"] = f"self_check: {result.value}"
+    _print(payload, args.json)
+    return 0
+
+
 def cmd_pages_drift(args: argparse.Namespace) -> int:
     try:
         result = audit_pages_drift(
@@ -364,6 +398,19 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_config = sub.add_parser("config", help="show the resolved configuration")
     p_config.set_defaults(func=cmd_config)
+
+    p_self = sub.add_parser(
+        "self-check", help="phase (a-1): audit the own tool; dry run unless --apply"
+    )
+    p_self.add_argument(
+        "--apply", action="store_true",
+        help="fast-forward the own clone if it is clean, unlocked and strictly behind",
+    )
+    p_self.add_argument("--mirror", default="", help="cloud mirror of this module (or config)")
+    p_self.add_argument(
+        "--clone", default="", help="check this clone instead of the one this code runs from"
+    )
+    p_self.set_defaults(func=cmd_self_check)
 
     p_pages = sub.add_parser(
         "pages-drift", help="compare module/skill/bundle catalogs with the generated Pages site"

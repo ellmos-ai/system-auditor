@@ -14,6 +14,8 @@ measures: []
 evidence_level: 1
 coverage: [<pfad-praefix-1>, <pfad-praefix-2>]
 clean: [<ort-ausdruecklich-in-ordnung>]
+self_check: <AUS system-auditor self-check: current | pulled <alt>..<neu> | stale <grund>>
+onedrive: <on | off -- Phase (a-1); off heisst: fehlende Fremdberichte sind erwartbar>
 findings_detail:
 - <locator> | <verletzte-regel> | <kurztitel>
 ---

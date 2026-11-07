@@ -71,6 +71,10 @@
 
   "domain_selector_command": null,
   "_comment_domain_selector_command": "Optionaler externer Selektor (Rang 2). Bleibt er null, gilt die Rotation ueber domains[] als regulaerer Weg.",
+  "mirror_dir": "",
+  "_comment_mirror_dir": "Phase (a-1): Cloud-Spiegel dieses Moduls. self-check vergleicht Prompt und Vorlagen des Klons damit und prueft dort LOCK*.txt. Leer = kein Spiegelvergleich.",
+  "lock_check_command": null,
+  "_comment_lock_check_command": "Phase (a-1): optionale Lockpruefung vor einem Nachzug des eigenen Klons; {path} wird ersetzt, Exit 0 heisst frei. Beispiel: python <HOME>/OneDrive/_scripts/lock_scan.py --check-dir {path} --json",
 
   "policy_stores": [
     { "name": "beispiel-regelwerk", "kind": "file", "target": "<HOME>/RULES.md" },

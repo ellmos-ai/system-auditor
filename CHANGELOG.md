@@ -9,6 +9,14 @@ Pfad B Discoverability, Visuelle Architektur, ASCII-Vier-Sichten-Topologie, Bili
 
 ### Hinzugefuegt
 
+- **Phase (a-1) Selbst-Audit und Berichtsfeld `self_check` (T-20261101-574947335, Nutzerentscheidung 2026-11-01):**
+  - **Befehl:** Neu ist `system-auditor self-check`, standardmäßig als Trockenlauf. Mit `--apply` zieht er den eigenen Werkzeug-Klon per `git fetch` + `git merge --ff-only` nach, und zwar nur, wenn der Baum sauber ist, der Default-Branch ausgecheckt ist, kein `LOCK*.txt` in Klon oder Spiegel liegt, `lock_check_command` „frei“ meldet und das Remote strikt vorwärts liegt.
+  - **Prüfungen:** Der Befehl prüft außerdem, ob der Importpfad eine verfolgte Datei des Klons ist, vergleicht Prompt und Vorlagen mit dem Spiegel (`mirror_dir`, Zeilenenden egal) und stellt fest, ob die konfigurierten Regelquellen existieren.
+  - **Berichtsfeld:** Der Bericht trägt `self_check: current | pulled <alt>..<neu> | stale <grund>`. Alte Berichte ohne das Feld lesen sich als `unknown`.
+  - **Meta-Audit:** Es nennt Teilnehmer mit `stale` als Einschränkung. Für `unknown` kommt kein neuer Hinweis.
+  - **Rollen-Prompt (DE/EN):** Phase (a-1) steht vor (a0). Leitprinzip 4 hat jetzt eine eng begrenzte Ausnahme mit Begründung, dazu gehört der OneDrive-Status (`onedrive:`).
+  - **Neue Config-Schlüssel:** `mirror_dir` und `lock_check_command`.
+  - **Tests:** `tests/test_self_check.py` mit echten Git-Repos. Jede Ablehnung wird mit unverändertem HEAD als Negativkontrolle geprüft.
 - **ASCII Vier-Sichten-Architekturprojektion (`README.md`, `README_de.md`):**
   Neuer Abschnitt 6 mit standardisierter ASCII-Topologie (`[VIEW 1: CALLER RUNTIMES, AGENT CLIENTS & CLI ENTRYPOINTS]`, `[VIEW 2: SYSTEM-AUDITOR SOVEREIGN ENGINE & AGGREGATION LADDER]`, `[VIEW 3: RUNTIME PERSISTENCE, EVIDENCE LEDGERS & WRITE-GUARD DEFENSE]`, `[VIEW 4: AIR-GAP DEFENSE PERIMETER, RUNASINVOKER & ZERO-EGRESS BOUNDARY]`; deutsche Fassung `[SICHT 1]` bis `[SICHT 4]`) und Projektion aller 10 Invarianten `INV-LOCAL-01` bis `INV-SLA-10`.
 - **Bilinguale CONTRIBUTING.md Guidelines (`CONTRIBUTING.md`):**
