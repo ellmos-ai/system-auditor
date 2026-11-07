@@ -39,7 +39,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
-from .report import ReportHeader, is_identified_auditor
+from .report import ReportHeader, is_identified_auditor, parse_self_check
 from .tokens import (
     CROSS_SYSTEM,
     DIM_DOMAIN,
@@ -352,6 +352,15 @@ def check_comparability(runs: list[AuditRun], aggregation: Aggregation) -> Compa
         if run.header.legacy:
             caveats.append(
                 f"{run.participant(aggregation)} contributed a legacy report without header"
+            )
+        # Phase (a-1): a participant whose own tool was stale may judge with outdated
+        # rules or code. Only an explicit stale is named; reports from before the field
+        # (unknown) stay as they were, or every old report would add noise.
+        if parse_self_check(run.header.self_check) == "stale":
+            caveats.append(
+                f"{run.participant(aggregation)} ran with a stale auditor tool "
+                f"(self_check: {run.header.self_check}) -- its findings may reflect "
+                "outdated code or rules"
             )
 
     levels = {run.header.evidence_level for run in runs}

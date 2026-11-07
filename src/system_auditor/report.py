@@ -92,6 +92,46 @@ def is_identified_auditor(token: str) -> bool:
 EVIDENCE_LEVELS = (1, 2, 3)
 
 
+#: Phase (a-1) outcome of the auditor's own tool (T-20261101-574947335).
+SELF_CHECK_UNKNOWN = "unknown"
+_SELF_CHECK_PULLED_RE = re.compile(r"^pulled [0-9a-f]{7,40}\.\.[0-9a-f]{7,40}$")
+
+
+def parse_self_check(value: str) -> str:
+    """Classify a ``self_check`` header value: current, pulled, stale or unknown.
+
+    Only the three documented forms count. ``pulled`` without a range, ``stale``
+    without a reason and anything else read ``unknown``, so a meta audit never
+    mistakes a malformed claim for a statement about the tool.
+    """
+    text = str(value or "").strip()
+    if text == "current":
+        return "current"
+    if _SELF_CHECK_PULLED_RE.match(text):
+        return "pulled"
+    if text.startswith("stale ") and text[len("stale "):].strip():
+        return "stale"
+    return SELF_CHECK_UNKNOWN
+
+
+def _self_check_text(text: str) -> str:
+    """The raw ``self_check`` value from the front matter.
+
+    Read verbatim rather than through ``_parse_scalar``: a reason may end in a quote
+    or look like a list, and both would be altered there.
+    """
+    lines = text.splitlines()
+    if not lines or lines[0].strip() != "---":
+        return ""
+    for line in lines[1:]:
+        if line.strip() == "---":
+            break
+        key, sep, value = line.partition(":")
+        if sep and key.strip() == "self_check":
+            return value.strip()
+    return ""
+
+
 def _parse_scalar(raw: str) -> object:
     text = raw.strip()
     if text.startswith("[") and text.endswith("]"):
@@ -194,6 +234,9 @@ class ReportHeader:
     coverage: list[str] = field(default_factory=list)
     #: Locators explicitly confirmed as fine.  Evidence for the INVERSE class.
     clean: list[str] = field(default_factory=list)
+    #: Phase (a-1): state of the auditor's own tool -- ``current``, ``pulled <old>..<new>``
+    #: or ``stale <reason>``. Reports from before the field read ``unknown``.
+    self_check: str = ""
     # --- meta only -------------------------------------------------------
     aggregation: str = ""
     meta_level: int = 0
@@ -273,6 +316,8 @@ class ReportHeader:
         lines.append(f"evidence_level: {self.evidence_level}")
         lines.append(f"coverage: [{', '.join(self.coverage)}]")
         lines.append(f"clean: [{', '.join(self.clean)}]")
+        if self.self_check and self.self_check != SELF_CHECK_UNKNOWN:
+            lines.append(f"self_check: {self.self_check}")
         lines.append("---")
         return "\n".join(lines) + "\n"
 
@@ -473,6 +518,7 @@ def inspect_report(path: Path) -> ReportHeader | UnreadableReport | None:
         evidence_level=_as_int(data.get("evidence_level"), 1),
         coverage=_as_list(data.get("coverage")),
         clean=_as_list(data.get("clean")),
+        self_check=_self_check_text(text) or SELF_CHECK_UNKNOWN,
         aggregation=aggregation,
         meta_level=int(data.get("meta_level", 0) or 0),
         participants=_as_list(data.get("participants")),

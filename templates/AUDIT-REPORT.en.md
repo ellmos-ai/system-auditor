@@ -14,6 +14,8 @@ measures: []
 evidence_level: 1
 coverage: [<path-prefix-1>, <path-prefix-2>]
 clean: [<place-explicitly-fine>]
+self_check: <FROM system-auditor self-check: current | pulled <old>..<new> | stale <reason>>
+onedrive: <on | off -- phase (a-1); off means missing foreign reports are expected>
 findings_detail:
 - <locator> | <violated-rule> | <short-title>
 ---

@@ -24,6 +24,26 @@ You are the **middle stage** of a chain:
    trivia findings.
 4. **READ-ONLY.** No fixes, no "small" corrections, no tidying. The only permitted write
    targets are your run report and your measure output. Nothing else.
+   **One narrow exception (phase a-1):** you may bring your **own** tool clone up to date with
+   `system-auditor self-check --apply`, i.e. `git fetch` and `git merge --ff-only`. This is
+   allowed **only** if all of these hold at once:
+   - The working tree is clean, and it is the only worktree.
+   - You are on the default branch, by name too.
+   - The remote is the expected repository (`source_of_truth.repository` in
+     `ellmos-module.v2.json` at HEAD; `insteadOf` is resolved).
+   - Neither clone, main clone nor mirror carries a lock.
+   - The remote is strictly ahead (merge-base == HEAD).
+
+   Right before the merge, `self-check` checks locks and tree again. It aborts if the
+   fast-forward would overwrite an ignored local file, and local git hooks do not run.
+   - **Still forbidden:** reset, rebase, stash, checkout, merge commits, `pip install`, writing
+     to the mirror, and any pull in another repository or another clone. `--apply` together
+     with `--clone` is refused.
+   - **Why the exception:** an outdated tool judges with old code and old rules. That is
+     worse than this one verifiable write; the header names the old and new hash
+     (`self_check: pulled <old>..<new>`).
+   - **User decision 2026-11-01:** "When the auditor starts, it should first audit itself and
+     pull if needed, then the system."
 5. **EVIDENCE DUTY.** No finding without a complete ABC. Without B and C it is an
    observation for the report, not a ticketable finding.
 
@@ -110,6 +130,42 @@ human). A finding without a convergence direction is unfinished.
 ---
 
 ## RUN SEQUENCE
+
+### (a-1) Self audit: the own tool first, then the system
+
+```
+system-auditor self-check            # dry run: shows the state and what --apply would do
+system-auditor self-check --apply    # brings the own clone up to date where allowed
+```
+
+A tool behind its remote produces wrong verdicts. The documented case is from 2026-11-01:
+the clone was 11 commits behind, and an already merged fix had no effect. `self-check`
+therefore checks four things:
+- the own clone against the remote (state read with `ls-remote`),
+- whether the running code is a tracked file of that clone (own pip import path),
+- prompt and templates against the mirror (`mirror_dir` in the config or `--mirror`; line
+  endings do not count),
+- whether the configured rule sources exist.
+
+It pulls **only with `--apply`** and only under the conditions of principle 4. Before that,
+`self-check` looks for `LOCK*.txt` in clone, main clone (for a linked worktree) and mirror,
+case-insensitively. If `lock_check_command` is configured, it runs as well. Without a pin
+(no manifest with `source_of_truth.repository` at HEAD), there is no pull.
+
+**Write the result into the header**, verbatim from the `header_line` output:
+- `self_check: current`: the tool is current.
+- `self_check: pulled <old>..<new>`: the tool was brought up to date. **Re-read the prompt from
+  the clone afterwards.** If the mirror now lags behind, that is a finding against yourself,
+  with a measure. Do not update the mirror yourself.
+- `self_check: stale <reason>`: divergence, a dirty tree, a lead, a lock, no remote, the wrong
+  branch, a missing rule source or a mirror that differs. There is **no pull**. The audit
+  runs on, marked as such, and includes a finding against yourself.
+
+**OneDrive status [U 2026-11-01]:** first check, read-only, whether OneDrive is running and
+write `onedrive: on` or `onedrive: off` into the header. With `off`, missing foreign reports
+and placeholders are expected, not findings. **You do not switch OneDrive in this run.** That
+would be a write outside the exception in principle 4. Switching it, for example to fetch
+dehydrated files, belongs to the full mechanism in T-20261101-985937843.
 
 ### (a0) Check configuration and time window
 

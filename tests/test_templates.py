@@ -19,7 +19,8 @@ TEMPLATES = Path(__file__).resolve().parents[1] / "templates"
 def test_audit_template_front_matter_parses(name):
     data = parse_front_matter((TEMPLATES / name).read_text(encoding="utf-8"))
     for key in ("run_id", "audit_mode", "time_token", "domain", "system", "auditor",
-                "window_start_utc", "coverage", "clean", "evidence_level", "findings_detail"):
+                "window_start_utc", "coverage", "clean", "evidence_level", "self_check",
+                "onedrive", "findings_detail"):
         assert key in data, f"template lost the {key} field"
     assert data["audit_mode"] == "self"
     # findings_detail is a `- item` block: one line per finding, model-readable.
