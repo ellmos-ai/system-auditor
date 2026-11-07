@@ -23,7 +23,7 @@ from .installer_design import DesignAuditError, audit_design
 from .meta import due_aggregations, plan_all, stale_windows
 from .pages_drift import PagesDriftError, audit_pages_drift
 from .report import UnreadableReport, list_reports, next_domain
-from .selfcheck import run_self_check
+from .selfcheck import clone_root, pinned_remote, run_self_check
 from .tokens import AGGREGATIONS, TimeGrid, utcnow
 
 
@@ -283,10 +283,16 @@ def cmd_self_check(args: argparse.Namespace) -> int:
         for entry in config.policy_stores + config.decision_stores
         if entry.get("target") and "<" not in str(entry.get("target"))
     ]
-    if args.clone:
-        import_path = Path(args.clone) / "src" / "system_auditor" / "__init__.py"
-    else:
-        import_path = Path(__file__).resolve().parent / "__init__.py"
+    own = Path(__file__).resolve().parent / "__init__.py"
+    import_path = Path(args.clone) / "src" / "system_auditor" / "__init__.py" if args.clone else own
+    if args.apply and args.clone:
+        # The exception in principle 4 covers the auditor's OWN clone only. --clone
+        # exists to inspect another checkout; it must not become a way to pull it.
+        mine, target = clone_root(own), clone_root(import_path)
+        if mine is None or target is None or mine != target:
+            print("ERROR: --apply only for the own clone (the one this code runs from); "
+                  "use --clone without --apply to inspect another checkout", file=sys.stderr)
+            return 2
     try:
         result = run_self_check(
             import_path,
@@ -294,6 +300,7 @@ def cmd_self_check(args: argparse.Namespace) -> int:
             mirror=args.mirror or config.mirror_dir or None,
             rule_sources=sources,
             lock_check_command=config.lock_check_command,
+            expected_remote=pinned_remote(import_path),
         )
     except OSError as exc:
         print(f"ERROR: self-check could not run ({exc})", file=sys.stderr)

@@ -17,6 +17,15 @@ Pfad B Discoverability, Visuelle Architektur, ASCII-Vier-Sichten-Topologie, Bili
   - **Rollen-Prompt (DE/EN):** Phase (a-1) steht vor (a0). Leitprinzip 4 hat jetzt eine eng begrenzte Ausnahme mit Begründung, dazu gehört der OneDrive-Status (`onedrive:`).
   - **Neue Config-Schlüssel:** `mirror_dir` und `lock_check_command`.
   - **Tests:** `tests/test_self_check.py` mit echten Git-Repos. Jede Ablehnung wird mit unverändertem HEAD als Negativkontrolle geprüft.
+  - **Nachbesserung nach der Prüfung durch eine zweite Instanz** (alle Punkte mit rotem Test zuerst):
+    - Locks und Arbeitsbaum werden direkt vor dem Merge erneut geprüft (TOCTOU).
+    - Das Remote ist gepinnt auf `source_of_truth.repository` aus `ellmos-module.v2.json` bei HEAD, mit `ls-remote --get-url`, also auch `insteadOf` aufgelöst. Ohne Pin gibt es keinen Pull.
+    - Bei einem verknüpften Worktree wird auch der Lock des Hauptklons gesehen. Mehr als ein Worktree heißt: kein Pull.
+    - Eine ignorierte lokale Datei, die der Fast-Forward überschreiben würde, verhindert den Pull.
+    - Lokale Hooks sind abgeschaltet (leeres `core.hooksPath`). Die Git-Umgebung des Aufrufers (`GIT_DIR`, `GIT_WORK_TREE`, `GIT_INDEX_FILE`, `GIT_CONFIG*` u. a.) wird entfernt.
+    - `--apply --clone` gilt nur für den eigenen Klon.
+    - Ein anders benannter Branch, der den Default trackt, gilt nicht als Default.
+    - Der OneDrive-Abschnitt im Prompt ist nur noch ein lesender Statuscheck, das Umschalten gehört zu T-20261101-985937843.
 - **ASCII Vier-Sichten-Architekturprojektion (`README.md`, `README_de.md`):**
   Neuer Abschnitt 6 mit standardisierter ASCII-Topologie (`[VIEW 1: CALLER RUNTIMES, AGENT CLIENTS & CLI ENTRYPOINTS]`, `[VIEW 2: SYSTEM-AUDITOR SOVEREIGN ENGINE & AGGREGATION LADDER]`, `[VIEW 3: RUNTIME PERSISTENCE, EVIDENCE LEDGERS & WRITE-GUARD DEFENSE]`, `[VIEW 4: AIR-GAP DEFENSE PERIMETER, RUNASINVOKER & ZERO-EGRESS BOUNDARY]`; deutsche Fassung `[SICHT 1]` bis `[SICHT 4]`) und Projektion aller 10 Invarianten `INV-LOCAL-01` bis `INV-SLA-10`.
 - **Bilinguale CONTRIBUTING.md Guidelines (`CONTRIBUTING.md`):**

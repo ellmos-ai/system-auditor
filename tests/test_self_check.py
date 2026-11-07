@@ -7,6 +7,8 @@ with HEAD unchanged as the negative control.
 
 from __future__ import annotations
 
+import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -52,6 +54,8 @@ def repos(tmp_path):
         git(repo, "config", "core.autocrlf", "false")
     commit(seed, "src/system_auditor/__init__.py", "x = 1\n", "init")
     commit(seed, "prompts/AUDITOR.de.md", "prompt v1\n", "prompt")
+    manifest = {"source_of_truth": {"repository": origin.as_posix()}}
+    commit(seed, "ellmos-module.v2.json", json.dumps(manifest) + "\n", "manifest")
     git(seed, "push", "-q", "origin", "HEAD:master")
     clone = tmp_path / "clone"
     # autocrlf at clone time: set afterwards, a CRLF checkout would read as modified
@@ -70,6 +74,7 @@ def advance_remote(seed: Path, text: str = "prompt v2\n") -> str:
 
 
 def run(clone: Path, **kwargs) -> selfcheck.SelfCheck:
+    kwargs.setdefault("expected_remote", str(clone.parent / "origin.git"))
     return selfcheck.run_self_check(clone / "src" / "system_auditor" / "__init__.py", **kwargs)
 
 
@@ -222,6 +227,206 @@ def test_unreachable_remote_is_stale_and_not_pulled(repos):
     head = git(clone, "rev-parse", "HEAD")
     git(clone, "remote", "set-url", "origin", str(clone.parent / "gone.git"))
     assert_refused(clone, run(clone, apply=True), head, "remote")
+
+
+# --- r1 review of b31add7: four gaps in the pull gate, and the hints ---------------------------
+
+
+def test_lock_appearing_during_fetch_stops_the_merge(repos, monkeypatch):
+    """TOCTOU: locks and the tree are checked again right before the fast-forward."""
+    _, seed, clone = repos
+    head = git(clone, "rev-parse", "HEAD")
+    advance_remote(seed)
+    real = selfcheck._git
+
+    def fetch_then_lock(cwd, *args, **kwargs):
+        result = real(cwd, *args, **kwargs)
+        if "fetch" in args:
+            (clone / "LOCK.txt").write_text("owner: late arrival\n", encoding="utf-8")
+        return result
+
+    monkeypatch.setattr(selfcheck, "_git", fetch_then_lock)
+    assert_refused(clone, run(clone, apply=True), head, "lock")
+
+
+def test_tree_changing_during_fetch_stops_the_merge(repos, monkeypatch):
+    _, seed, clone = repos
+    head = git(clone, "rev-parse", "HEAD")
+    advance_remote(seed)
+    real = selfcheck._git
+
+    def fetch_then_edit(cwd, *args, **kwargs):
+        result = real(cwd, *args, **kwargs)
+        if "fetch" in args:
+            (clone / "src" / "system_auditor" / "__init__.py").write_text(
+                "x = 2\n", encoding="utf-8"
+            )
+        return result
+
+    monkeypatch.setattr(selfcheck, "_git", fetch_then_edit)
+    assert_refused(clone, run(clone, apply=True), head, "uncommitted")
+
+
+def make_fork(tmp_path: Path, origin: Path) -> Path:
+    fork = tmp_path / "fork.git"
+    subprocess.run(["git", "clone", "-q", "--bare", str(origin), str(fork)], check=True)
+    work = tmp_path / "fork-work"
+    git(tmp_path, "clone", "-q", "-c", "core.autocrlf=false", str(fork), str(work))
+    git(work, "config", "user.email", "t@example.invalid")
+    git(work, "config", "user.name", "T")
+    commit(work, "src/system_auditor/evil.py", "print('unreviewed')\n", "fork only")
+    git(work, "push", "-q", "origin", "HEAD:master")
+    return fork
+
+
+def test_origin_pointing_at_a_fork_is_not_pulled(repos, tmp_path):
+    origin, _, clone = repos
+    head = git(clone, "rev-parse", "HEAD")
+    git(clone, "remote", "set-url", "origin", str(make_fork(tmp_path, origin)))
+    assert_refused(clone, run(clone, apply=True), head, "not pinned")
+
+
+def test_insteadof_redirect_to_a_fork_is_not_pulled(repos, tmp_path):
+    origin, _, clone = repos
+    head = git(clone, "rev-parse", "HEAD")
+    fork = make_fork(tmp_path, origin)
+    git(clone, "config", f"url.{fork.as_posix()}.insteadOf", origin.as_posix())
+    git(clone, "remote", "set-url", "origin", origin.as_posix())
+    assert_refused(clone, run(clone, apply=True), head, "not pinned")
+
+
+def test_without_an_expected_remote_nothing_is_pulled(repos):
+    _, seed, clone = repos
+    head = git(clone, "rev-parse", "HEAD")
+    advance_remote(seed)
+    assert_refused(clone, run(clone, apply=True, expected_remote=None), head, "not pinned")
+
+
+@pytest.mark.parametrize(
+    "left, right",
+    [
+        (
+            "https://github.com/ellmos-ai/system-auditor",
+            "git@github.com:ellmos-ai/system-auditor.git",
+        ),
+        ("https://github.com/Ellmos-AI/System-Auditor.git", "ssh://git@github.com/ellmos-ai/system-auditor"),
+        ("https://github.com/ellmos-ai/system-auditor/", "https://GitHub.com/ellmos-ai/system-auditor"),
+    ],
+)
+def test_remote_comparison_ignores_scheme_suffix_and_case(left, right):
+    assert selfcheck.same_remote(left, right)
+
+
+@pytest.mark.parametrize(
+    "left, right",
+    [
+        ("https://github.com/ellmos-ai/system-auditor", "https://github.com/someone/system-auditor"),
+        ("https://github.com/ellmos-ai/system-auditor", "https://github.com/ellmos-ai/system-auditor-x"),
+        ("https://github.com/ellmos-ai/system-auditor", "https://gitlab.com/ellmos-ai/system-auditor"),
+        ("https://github.com/ellmos-ai/system-auditor", ""),
+    ],
+)
+def test_remote_comparison_keeps_other_repositories_apart(left, right):
+    assert not selfcheck.same_remote(left, right)
+
+
+def test_linked_worktree_sees_the_main_clones_lock(repos, tmp_path):
+    _, seed, clone = repos
+    linked = tmp_path / "linked"
+    git(clone, "worktree", "add", "-q", "--detach", str(linked))
+    head = git(linked, "rev-parse", "HEAD")
+    advance_remote(seed)
+    (clone / "LOCK.txt").write_text("owner: main clone\n", encoding="utf-8")
+    result = run(linked, apply=True)
+    assert_refused(linked, result, head, "lock")
+    assert "main/LOCK.txt" in result.value
+
+
+def test_more_than_one_worktree_blocks_the_pull(repos, tmp_path):
+    _, seed, clone = repos
+    git(clone, "worktree", "add", "-q", "--detach", str(tmp_path / "second"))
+    head = git(clone, "rev-parse", "HEAD")
+    advance_remote(seed)
+    assert_refused(clone, run(clone, apply=True), head, "worktree")
+
+
+def test_ignored_local_file_is_not_overwritten_by_the_fast_forward(repos):
+    _, seed, clone = repos
+    commit(seed, ".gitignore", "local.cfg\n", "ignore local.cfg")
+    git(seed, "push", "-q", "origin", "HEAD:master")
+    git(clone, "pull", "-q", "--ff-only")  # test setup only: the clone knows the ignore rule
+    (clone / "local.cfg").write_text("LOCAL SECRET\n", encoding="utf-8")
+    (seed / "local.cfg").write_text("UPSTREAM\n", encoding="utf-8")
+    git(seed, "add", "-f", "local.cfg")
+    git(seed, "commit", "-q", "-m", "upstream starts tracking local.cfg")
+    git(seed, "push", "-q", "origin", "HEAD:master")
+    head = git(clone, "rev-parse", "HEAD")
+    assert_refused(clone, run(clone, apply=True), head, "ignored")
+    assert (clone / "local.cfg").read_text(encoding="utf-8") == "LOCAL SECRET\n"
+
+
+def test_local_hooks_do_not_run_during_the_pull(repos):
+    _, seed, clone = repos
+    new = advance_remote(seed)
+    marker = clone.parent / "hook-ran"
+    hook = clone / ".git" / "hooks" / "post-merge"
+    hook.write_text(
+        f"#!/bin/sh\necho ran > '{marker.as_posix()}'\n", encoding="utf-8", newline="\n"
+    )
+    hook.chmod(0o755)
+    assert run(clone, apply=True).status == "pulled"
+    assert git(clone, "rev-parse", "HEAD") == new
+    assert not marker.exists()
+
+
+def test_git_environment_from_the_caller_is_ignored(repos, tmp_path, monkeypatch):
+    _, seed, clone = repos
+    other = tmp_path / "other"
+    git(tmp_path, "init", "-q", str(other))
+    new = advance_remote(seed)  # before the caller's GIT_* is set: it would steer git() too
+    monkeypatch.setenv("GIT_DIR", str(other / ".git"))
+    monkeypatch.setenv("GIT_WORK_TREE", str(other))
+    monkeypatch.setenv("GIT_INDEX_FILE", str(other / ".git" / "index"))
+    monkeypatch.setenv("GIT_CONFIG_COUNT", "1")
+    monkeypatch.setenv("GIT_CONFIG_KEY_0", "core.hooksPath")
+    monkeypatch.setenv("GIT_CONFIG_VALUE_0", str(tmp_path))
+    result = run(clone, apply=True)
+    assert result.status == "pulled", result.value
+    clean_env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+    assert subprocess.run(
+        ["git", "-C", str(clone), "rev-parse", "HEAD"], capture_output=True, text=True,
+        env=clean_env,
+    ).stdout.strip() == new
+    assert not (other / ".git" / "refs" / "heads" / "master").exists()
+
+
+def test_branch_with_another_name_tracking_the_default_is_not_pulled(repos):
+    _, seed, clone = repos
+    git(clone, "checkout", "-q", "-b", "mine", "--track", "origin/master")
+    head = git(clone, "rev-parse", "HEAD")
+    advance_remote(seed)
+    assert_refused(clone, run(clone, apply=True), head, "default branch")
+
+
+def test_cli_apply_refuses_a_clone_other_than_its_own(repos, tmp_path, capsys):
+    from system_auditor.cli import main
+
+    _, seed, clone = repos
+    head = git(clone, "rev-parse", "HEAD")
+    advance_remote(seed)
+    code = main(["--config", str(tmp_path / "none.json"), "self-check", "--clone", str(clone),
+                 "--apply"])
+    assert code == 2 and "own clone" in capsys.readouterr().err
+    assert git(clone, "rev-parse", "HEAD") == head
+
+
+def test_cli_reads_the_pin_from_the_manifest_at_head(repos, tmp_path, capsys):
+    from system_auditor.cli import main
+
+    _, _, clone = repos
+    assert main(["--json", "--config", str(tmp_path / "none.json"), "self-check",
+                 "--clone", str(clone)]) == 0
+    assert json.loads(capsys.readouterr().out)["status"] == "current"
 
 
 # --- mirror and rule sources ------------------------------------------------------------------
