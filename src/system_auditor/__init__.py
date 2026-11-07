@@ -42,6 +42,7 @@ from .compare import (
 )
 from .discovery import DiscoveryResult, discover
 from .meta import (
+    ACTION_BLOCKED,
     ACTION_CREATE,
     ACTION_SKIP,
     ACTION_UPDATE,
@@ -65,6 +66,8 @@ from .report import (
     MODE_META,
     MODE_SELF,
     ReportHeader,
+    UnreadableReport,
+    inspect_report,
     latest_report,
     list_reports,
     meta_filename,
@@ -134,9 +137,11 @@ __all__ = [
     "RESOLVED",
     # reports
     "ReportHeader",
+    "UnreadableReport",
     "MODE_SELF",
     "MODE_META",
     "read_report",
+    "inspect_report",
     "list_reports",
     "latest_report",
     "next_domain",
@@ -174,6 +179,7 @@ __all__ = [
     "ACTION_CREATE",
     "ACTION_UPDATE",
     "ACTION_SKIP",
+    "ACTION_BLOCKED",
     # deterministic domain checks
     "audit_pages_drift",
     "PagesDriftResult",

@@ -79,6 +79,9 @@ def normalize_locator(raw: str) -> str:
     case-sensitive filesystem ``/srv/Repo/X`` and ``/srv/repo/x`` are two
     different files and must not compare equal.
 
+    A ``#fragment`` or trailing ``:line`` stays part of the result, so two places in one file
+    remain two locators; ``_file_of`` strips them where containment is decided.
+
     **Known limits, deliberately not guessed at:** symlinks, ``..`` segments,
     ``~`` and WSL aliases (``/mnt/c/...``) are not resolved -- that needs the
     filesystem of the machine that produced the locator, which a comparing host
@@ -105,17 +108,37 @@ def normalize_locator(raw: str) -> str:
     return text
 
 
+_SUBLOCATION_LINE_RE = re.compile(r":\d+(?:-\d+)?$")
+
+
+def _file_of(norm: str) -> str:
+    """The file part of a normalised locator, without ``#fragment`` and trailing ``:line``.
+
+    ``datei#fragment`` and ``datei:42`` (or ``datei:42-57``) name a place *inside* ``datei``.
+    Compared as whole strings they matched neither the coverage nor the ``clean`` entry
+    ``datei``, so a contradiction hid as ``unverifiable``. A drive letter (``c:/x``) is no line
+    suffix: the colon there is followed by a slash, never by digits at the end.
+    """
+    return _SUBLOCATION_LINE_RE.sub("", norm.split("#", 1)[0]).rstrip("/")
+
+
 def _is_under(target: str, prefix: str) -> bool:
     """Path containment, not string prefix.
 
     ``startswith`` alone made the coverage ``/repo/foo`` swallow the locator
     ``/repo/foobar/AGENTS.md`` -- and coverage is exactly what decides between
     "checked and found nothing" and "never looked". A plain character prefix is
-    not an ancestor relation.
+    not an ancestor relation. A place inside a file (``#fragment``, ``:line``) lies
+    under whatever contains the file.
     """
     if not prefix:
         return False
-    return target == prefix or target.startswith(prefix.rstrip("/") + "/")
+    file_part = _file_of(target)
+    return (
+        target == prefix
+        or file_part == prefix
+        or file_part.startswith(prefix.rstrip("/") + "/")
+    )
 
 
 @dataclass
@@ -159,8 +182,14 @@ class AuditRun:
         )
 
     def declares_clean(self, locator: str) -> bool:
+        """Is this exact place -- or the whole file it lies in -- declared fine?
+
+        ``clean: [datei]`` contradicts a finding at ``datei#x``; ``clean: [datei#a]`` says
+        nothing about ``datei#b`` or about ``datei`` as a whole.
+        """
         target = normalize_locator(locator)
-        return any(target == normalize_locator(entry) for entry in self.header.clean)
+        places = (target, _file_of(target))
+        return any(normalize_locator(entry) in places for entry in self.header.clean)
 
 
 @dataclass

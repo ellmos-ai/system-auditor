@@ -31,7 +31,15 @@ import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .report import MODE_META, MODE_SELF, ReportHeader, list_reports, meta_filename
+from .report import (
+    MODE_META,
+    MODE_SELF,
+    ReportHeader,
+    UnreadableReport,
+    inspect_report,
+    list_reports,
+    meta_filename,
+)
 from .tokens import (
     AGGREGATIONS,
     CROSS_SYSTEM,
@@ -48,6 +56,9 @@ MIN_PARTICIPANTS = 2
 ACTION_CREATE = "create"
 ACTION_UPDATE = "update"
 ACTION_SKIP = "skip"
+#: The artefact for this key exists but cannot be read. Planning it as ``create`` would
+#: claim there is none -- exactly the overwrite ``write_meta`` exists to prevent.
+ACTION_BLOCKED = "blocked"
 
 
 @dataclass
@@ -169,14 +180,36 @@ def plan_all(
     policy: dict[str, dict] | None = None,
     time_token: str | None = None,
     requested: str | None = None,
+    unreadable: list[UnreadableReport] | None = None,
 ) -> list[MetaPlan]:
-    """Plans for every aggregation that is due -- the normal entry point."""
+    """Plans for every aggregation that is due -- the normal entry point.
+
+    ``unreadable`` receives the reports that could not be read (each once). They are left
+    out of the bundles; the caller reports them as ``unavailable``.
+    """
     plans: list[MetaPlan] = []
     for aggregation, threshold in due_aggregations(policy, requested):
         plans.extend(
-            plan_metas(reports_dir, aggregation, time_token, min_participants=threshold)
+            plan_metas(
+                reports_dir,
+                aggregation,
+                time_token,
+                min_participants=threshold,
+                unreadable=unreadable,
+            )
         )
     return plans
+
+
+def _collect(into: list[UnreadableReport] | None, found: list[UnreadableReport]) -> None:
+    """Append what ``found`` holds to ``into``, each file once."""
+    if into is None:
+        return
+    known = {item.path for item in into}
+    for item in found:
+        if item.path not in known:
+            known.add(item.path)
+            into.append(item)
 
 
 def audit_ref(header: ReportHeader) -> str:
@@ -193,18 +226,26 @@ def time_of(aggregation: Aggregation, key: tuple[str, ...]) -> str:
 
 
 def current_single_audits(
-    reports_dir: Path, time_token: str | None = None
+    reports_dir: Path,
+    time_token: str | None = None,
+    unreadable: list[UnreadableReport] | None = None,
 ) -> tuple[list[ReportHeader], list[str]]:
     """Single audits, deduplicated by identity (newest wins).
 
     Returns ``(current, restated)`` -- the second lists identities whose earlier
     statement was replaced by a newer one carrying the same four tokens.
+    ``unreadable`` receives the single audits of this window that could not be read.
     """
+    missing: list[UnreadableReport] = []
     headers = [
         header
-        for header in list_reports(reports_dir, audit_mode=MODE_SELF)
+        for header in list_reports(reports_dir, audit_mode=MODE_SELF, unreadable=missing)
         if time_token is None or header.time_token == time_token
     ]
+    _collect(
+        unreadable,
+        [item for item in missing if time_token is None or item.time_token in ("", time_token)],
+    )
     pairs = [(header.identity, header) for header in headers]
     kept = newest_per_identity(pairs, sort_key=lambda header: header.sort_key)
     kept_paths = {header.path for _identity, header in kept}
@@ -218,11 +259,17 @@ def current_single_audits(
 
 
 def existing_meta(
-    reports_dir: Path, aggregation: str, key: list[str]
+    reports_dir: Path,
+    aggregation: str,
+    key: list[str],
+    unreadable: list[UnreadableReport] | None = None,
 ) -> ReportHeader | None:
-    """The meta artefact currently in force for exactly this key."""
+    """The meta artefact currently in force for exactly this key.
+
+    ``None`` also when the file exists but cannot be read -- pass ``unreadable`` to tell.
+    """
     wanted = meta_filename(aggregation, key)
-    for header in list_reports(reports_dir, audit_mode=MODE_META):
+    for header in list_reports(reports_dir, audit_mode=MODE_META, unreadable=unreadable):
         if header.path is not None and header.path.name == wanted:
             return header
     return None
@@ -233,16 +280,21 @@ def plan_metas(
     aggregation: Aggregation | str = CROSS_SYSTEM,
     time_token: str | None = None,
     min_participants: int = MIN_PARTICIPANTS,
+    unreadable: list[UnreadableReport] | None = None,
 ) -> list[MetaPlan]:
     """Which meta artefacts are due -- and for the rest, why not.
 
     ``time_token`` narrows to one window and is **ignored for time series**,
     which span windows by definition: filtering there would leave exactly one
     window and no series at all.
+
+    A report that cannot be read neither joins a bundle nor stops the plan: it lands in
+    ``unreadable``. If the *meta* artefact of a key is the unreadable one, that key is
+    planned as ``ACTION_BLOCKED`` rather than as new.
     """
     resolved = AGGREGATIONS[aggregation] if isinstance(aggregation, str) else aggregation
     window_filter = None if resolved.is_timeseries else time_token
-    current, restated = current_single_audits(reports_dir, window_filter)
+    current, restated = current_single_audits(reports_dir, window_filter, unreadable)
     by_identity = {header.identity: header for header in current}
 
     bundles: list[Bundle] = find_bundles(
@@ -254,9 +306,18 @@ def plan_metas(
         key = list(bundle.key)
         members = [by_identity[identity] for identity in bundle.identities]
         inputs = sorted(audit_ref(header) for header in members)
-        previous = existing_meta(reports_dir, resolved.name, key)
+        target = meta_filename(resolved.name, key)
+        missing: list[UnreadableReport] = []
+        previous = existing_meta(reports_dir, resolved.name, key, unreadable=missing)
+        _collect(unreadable, missing)
+        blocker = next((item for item in missing if item.path.name == target), None)
 
-        if previous is not None and sorted(previous.inputs) == inputs:
+        if blocker is not None:
+            action, reason = ACTION_BLOCKED, (
+                f"the artefact for this key exists but is unavailable ({blocker.reason}) "
+                "-- not planned over it"
+            )
+        elif previous is not None and sorted(previous.inputs) == inputs:
             action, reason = ACTION_SKIP, (
                 f"the artefact for this key already rests on exactly these "
                 f"{len(inputs)} audits"
@@ -281,7 +342,7 @@ def plan_metas(
                 participants=bundle.varying_values,
                 counts=bundle.counts(),
                 inputs=inputs,
-                target=meta_filename(resolved.name, key),
+                target=target,
                 replaces=previous.path if previous else None,
                 previous_level=previous.meta_level if previous else 0,
                 reason=reason,
@@ -360,9 +421,13 @@ def write_meta(
     planned = set(planned_inputs if planned_inputs is not None else header.inputs)
 
     if target.exists():
-        from .report import read_report
-
-        current = read_report(target)
+        current = inspect_report(target)
+        if isinstance(current, UnreadableReport):
+            return WriteOutcome(
+                False,
+                f"artefact on disk is unavailable ({current.reason}) -- not overwritten blind",
+                target,
+            )
         if current is not None:
             on_disk = set(current.inputs)
             if on_disk > planned:
