@@ -53,6 +53,8 @@ Pfad B Discoverability, Visuelle Architektur, ASCII-Vier-Sichten-Topologie, Bili
 
 ### Geaendert
 
+- **Unlesbare Berichte und Fragment-/Zeilen-Locators gehen nicht mehr still verloren (`report.py`, `meta.py`, `compare.py`, `cli.py`):**
+  `list_reports`, `next_domain`, `plan_all`/`plan_metas` und `current_single_audits` nehmen optional `unreadable=` entgegen und sammeln dort audit-benannte Dateien, deren Inhalt nicht lesbar ist (OneDrive-Online-Platzhalter, Errno 22); `meta-plan`, `next-domain` und `reports` nennen sie als `unavailable`, der Rest des Plans läuft weiter. Ist das Meta-Artefakt eines Schlüssels selbst unlesbar, plant `plan_metas` `ACTION_BLOCKED` statt `create`, und `write_meta` überschreibt es nicht. `#fragment` und abschließendes `:zeile` (`:von-bis`) gelten im Vergleich als Ort innerhalb der Datei: `clean: [datei]` widerspricht einem Fund an `datei#x` (inverse statt unverifiable), `coverage: [datei]` deckt ihn ab. Neue API: `inspect_report`, `UnreadableReport`, `ACTION_BLOCKED`; Vorlage und Locator-Formate unverändert. Muster P4 (T-20261101-652385135).
 - **PEP 621 Standard-Metadaten & Test-Härtung (`pyproject.toml`, `.gitignore`):**
   Pytest `addopts = "-ra -v --basetemp=.pytest_temp"`, `norecursedirs` mit `.pytest_temp` und `.hypothesis` gehärtet; `.gitignore` um `.pytest_temp/` und `.pytest_tmp*/` erweitert. Versionsnummer `0.9.2` strikt eingefroren gemäß `T-20260920-167562623`.
 - **Remote Discoverability:**

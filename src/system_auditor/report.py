@@ -356,8 +356,54 @@ def _as_list(value: object) -> list[str]:
     return [str(value)]
 
 
+@dataclass(frozen=True)
+class UnreadableReport:
+    """An audit-named file whose content could not be read.
+
+    "Not asked" is not "nothing found" (pattern P4): such a file must be named as
+    ``unavailable`` instead of vanishing from rotation, meta plan and write guard. The
+    typical cause is an OneDrive online-only placeholder (``OSError`` Errno 22). Everything
+    except ``reason`` comes from the file name, because the content is exactly what is
+    missing.
+    """
+
+    path: Path
+    reason: str
+    audit_mode: str = MODE_SELF
+    system: str = ""
+    time_token: str = ""
+
+
+def _unreadable(path: Path, exc: BaseException) -> UnreadableReport | None:
+    """The record for an audit-named file we could not read; ``None`` for any other file."""
+    reason = f"{exc.__class__.__name__}: {exc}"
+    if match := SELF_FILENAME_RE.match(path.name):
+        return UnreadableReport(path, reason, MODE_SELF, match.group("system"), match.group("time"))
+    if META_FILENAME_RE.match(path.name):
+        return UnreadableReport(path, reason, MODE_META)
+    if match := LEGACY_FILENAME_RE.match(path.name):
+        return UnreadableReport(
+            path, reason, MODE_SELF, match.group("system") or "", match.group("date")
+        )
+    return None
+
+
 def read_report(path: Path) -> ReportHeader | None:
-    """Read one artefact. Returns ``None`` for files that are not audits."""
+    """Read one artefact. Returns ``None`` for files that are not audits.
+
+    An audit that exists but cannot be read also yields ``None`` here; ``inspect_report``
+    tells the two apart.
+    """
+    result = inspect_report(path)
+    return result if isinstance(result, ReportHeader) else None
+
+
+def inspect_report(path: Path) -> ReportHeader | UnreadableReport | None:
+    """Read one artefact and say so when it cannot be read.
+
+    ``None``: the file name is not an audit's. ``UnreadableReport``: it is, but the
+    content is unavailable.
+    """
     path = Path(path)
     self_match = SELF_FILENAME_RE.match(path.name)
     meta_match = None if self_match else META_FILENAME_RE.match(path.name)
@@ -367,8 +413,8 @@ def read_report(path: Path) -> ReportHeader | None:
 
     try:
         text = path.read_text(encoding="utf-8")
-    except (OSError, UnicodeDecodeError):
-        return None
+    except (OSError, UnicodeDecodeError) as exc:
+        return _unreadable(path, exc)
     data = parse_front_matter(text)
 
     def _ts(key: str) -> datetime | None:
@@ -437,21 +483,33 @@ def read_report(path: Path) -> ReportHeader | None:
     )
 
 
-def list_reports(reports_dir: Path, audit_mode: str | None = None) -> list[ReportHeader]:
+def list_reports(
+    reports_dir: Path,
+    audit_mode: str | None = None,
+    unreadable: list[UnreadableReport] | None = None,
+) -> list[ReportHeader]:
+    """All readable audit artefacts, oldest first.
+
+    ``unreadable``: audit-named files that exist but could not be read are appended here
+    (the ``audit_mode`` filter applies to them by file name). Without it they are skipped as
+    before -- pass a list wherever the result drives a decision.
+    """
     directory = Path(reports_dir)
     if not directory.is_dir():
         return []
-    found = []
+    reports: list[ReportHeader] = []
     for entry in sorted(directory.iterdir()):
-        if not entry.is_file():
-            continue
         try:
-            found.append(read_report(entry))
-        except Exception:  # noqa: BLE001 - a hostile neighbour must not stop us
-            continue
-    reports = [item for item in found if item is not None]
-    if audit_mode is not None:
-        reports = [item for item in reports if item.audit_mode == audit_mode]
+            if not entry.is_file():
+                continue
+            result = inspect_report(entry)
+        except Exception as exc:  # noqa: BLE001 - a hostile neighbour must not stop us
+            result = _unreadable(entry, exc)
+        if isinstance(result, UnreadableReport):
+            if unreadable is not None and audit_mode in (None, result.audit_mode):
+                unreadable.append(result)
+        elif result is not None and audit_mode in (None, result.audit_mode):
+            reports.append(result)
     return sorted(reports, key=lambda item: item.sort_key)
 
 
@@ -460,8 +518,9 @@ def latest_report(
     domain: str | None = None,
     system: str | None = None,
     audit_mode: str | None = MODE_SELF,
+    unreadable: list[UnreadableReport] | None = None,
 ) -> ReportHeader | None:
-    candidates = list_reports(reports_dir, audit_mode=audit_mode)
+    candidates = list_reports(reports_dir, audit_mode=audit_mode, unreadable=unreadable)
     if domain is not None:
         candidates = [item for item in candidates if item.domain == domain]
     if system is not None:
@@ -469,16 +528,28 @@ def latest_report(
     return candidates[-1] if candidates else None
 
 
-def next_domain(domains: list[str], reports_dir: Path, system: str | None = None) -> str:
+def next_domain(
+    domains: list[str],
+    reports_dir: Path,
+    system: str | None = None,
+    unreadable: list[UnreadableReport] | None = None,
+) -> str:
     """Next domain in the rotation.
 
     ``system`` narrows the anchor to one machine's own history: several machines
     legitimately audit the same domain, so a foreign run must not push this one
     forward in its own cycle.
+
+    ``unreadable`` receives this machine's reports that could not be read. The rotation then
+    anchors on an older report or falls back to the first domain -- the caller can no longer
+    mistake that for "no earlier run".
     """
     if not domains:
         raise ValueError("rotation needs at least one domain")
-    last = latest_report(reports_dir, system=system)
+    seen: list[UnreadableReport] = []
+    last = latest_report(reports_dir, system=system, unreadable=seen)
+    if unreadable is not None:
+        unreadable.extend(item for item in seen if system is None or item.system in ("", system))
     if last is None:
         return domains[0]
     if last.next_domain and last.next_domain in domains:

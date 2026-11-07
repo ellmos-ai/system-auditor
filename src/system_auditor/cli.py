@@ -22,7 +22,7 @@ from .discovery import discover
 from .installer_design import DesignAuditError, audit_design
 from .meta import due_aggregations, plan_all, stale_windows
 from .pages_drift import PagesDriftError, audit_pages_drift
-from .report import list_reports, next_domain
+from .report import UnreadableReport, list_reports, next_domain
 from .tokens import AGGREGATIONS, TimeGrid, utcnow
 
 
@@ -103,6 +103,21 @@ def cmd_time_token(args: argparse.Namespace) -> int:
     return 0
 
 
+def _with_unavailable(payload: dict, unreadable: list[UnreadableReport]) -> dict:
+    """Name the reports that could not be read: "not asked" is not "nothing there"."""
+    if unreadable:
+        payload["unavailable"] = [
+            f"{item.path.name} · {item.reason}"
+            for item in sorted(unreadable, key=lambda entry: entry.path.name)
+        ]
+        print(
+            f"unavailable: {len(unreadable)} report(s) could not be read -- "
+            "the result rests on the rest",
+            file=sys.stderr,
+        )
+    return payload
+
+
 def cmd_next_domain(args: argparse.Namespace) -> int:
     if args.domains:
         domains = [item.strip() for item in args.domains.split(",") if item.strip()]
@@ -114,8 +129,10 @@ def cmd_next_domain(args: argparse.Namespace) -> int:
                 file=sys.stderr,
             )
             return 1
-    chosen = next_domain(domains, Path(args.reports), system=args.system)
-    _print({"domain": chosen, "system": args.system or "(any)"}, args.json)
+    unavailable: list[UnreadableReport] = []
+    chosen = next_domain(domains, Path(args.reports), system=args.system, unreadable=unavailable)
+    payload = {"domain": chosen, "system": args.system or "(any)"}
+    _print(_with_unavailable(payload, unavailable), args.json)
     return 0
 
 
@@ -130,14 +147,16 @@ def cmd_meta_plan(args: argparse.Namespace) -> int:
             file=sys.stderr,
         )
         return 1
+    unavailable: list[UnreadableReport] = []
     plans = plan_all(
         Path(args.reports),
         policy=config.policy,
         time_token=None if args.all_windows else token,
         requested=args.aggregation,
+        unreadable=unavailable,
     )
     _print(
-        {
+        _with_unavailable({
             "aggregation": args.aggregation or "(policy: "
             + ", ".join(item.name for item, _ in due) + ")",
             "time_token": "(all)" if args.all_windows else token,
@@ -149,16 +168,17 @@ def cmd_meta_plan(args: argparse.Namespace) -> int:
                 for plan in plans
             ],
             "restated_inputs": plans[0].restated if plans else [],
-        },
+        }, unavailable),
         args.json,
     )
     return 0
 
 
 def cmd_reports(args: argparse.Namespace) -> int:
-    reports = list_reports(Path(args.reports))
+    unavailable: list[UnreadableReport] = []
+    reports = list_reports(Path(args.reports), unreadable=unavailable)
     _print(
-        {
+        _with_unavailable({
             "count": len(reports),
             "reports": [
                 f"{item.time_token} · {item.domain} · {item.system} · {item.auditor}"
@@ -167,7 +187,7 @@ def cmd_reports(args: argparse.Namespace) -> int:
                 + (" · legacy" if item.legacy else "")
                 for item in reports
             ],
-        },
+        }, unavailable),
         args.json,
     )
     return 0
