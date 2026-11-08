@@ -440,7 +440,7 @@ def _pull(
     """
     reasons, head = result.reasons, result.head_before
     with tempfile.TemporaryDirectory(prefix="system-auditor-nohooks-") as no_hooks:
-        quiet = (f"core.hooksPath={Path(no_hooks).as_posix()}",)
+        quiet = (f"core.hooksPath={Path(no_hooks).as_posix()}", "core.fsmonitor=false")
         ok, out = _git(clone, "fetch", "--quiet", remote, branch, timeout=timeout, config=quiet)
         if not ok:
             reasons.append(f"fetch failed ({_one_line(out, 80)})")

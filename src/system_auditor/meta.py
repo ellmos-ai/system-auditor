@@ -27,6 +27,7 @@ aggregations (see :mod:`system_auditor.tokens`).  Everything else follows:
 
 from __future__ import annotations
 
+import contextlib
 import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -38,6 +39,7 @@ from .report import (
     UnreadableReport,
     inspect_report,
     list_reports,
+    meta_candidate_filenames,
     meta_filename,
 )
 from .tokens import (
@@ -267,11 +269,16 @@ def existing_meta(
     """The meta artefact currently in force for exactly this key.
 
     ``None`` also when the file exists but cannot be read -- pass ``unreadable`` to tell.
+    Recognises both canonical and legacy file names for the key.
     """
-    wanted = meta_filename(aggregation, key)
+    candidates = meta_candidate_filenames(aggregation, key)
+    found: dict[str, ReportHeader] = {}
     for header in list_reports(reports_dir, audit_mode=MODE_META, unreadable=unreadable):
-        if header.path is not None and header.path.name == wanted:
-            return header
+        if header.path is not None and header.path.name in candidates:
+            found[header.path.name] = header
+    for name in candidates:
+        if name in found:
+            return found[name]
     return None
 
 
@@ -307,12 +314,18 @@ def plan_metas(
         members = [by_identity[identity] for identity in bundle.identities]
         inputs = sorted(audit_ref(header) for header in members)
         target = meta_filename(resolved.name, key)
+        candidates = meta_candidate_filenames(resolved.name, key)
         missing: list[UnreadableReport] = []
         previous = existing_meta(reports_dir, resolved.name, key, unreadable=missing)
         _collect(unreadable, missing)
-        blocker = next((item for item in missing if item.path.name == target), None)
+        blocker = next((item for item in missing if item.path.name in candidates), None)
 
-        if blocker is not None:
+        target_path = Path(reports_dir) / target
+        if target_path.is_dir() or any((Path(reports_dir) / c).is_dir() for c in candidates):
+            action, reason = ACTION_BLOCKED, (
+                f"target path is a directory ({target}) -- not planned over it"
+            )
+        elif blocker is not None:
             action, reason = ACTION_BLOCKED, (
                 f"the artefact for this key exists but is unavailable ({blocker.reason}) "
                 "-- not planned over it"
@@ -417,32 +430,40 @@ def write_meta(
     "safe to write blindly".
     """
     directory = Path(reports_dir)
-    target = directory / header.filename()
     planned = set(planned_inputs if planned_inputs is not None else header.inputs)
+    candidates = meta_candidate_filenames(header.aggregation, header.scope)
 
-    if target.exists():
-        current = inspect_report(target)
-        if isinstance(current, UnreadableReport):
-            return WriteOutcome(
-                False,
-                f"artefact on disk is unavailable ({current.reason}) -- not overwritten blind",
-                target,
-            )
-        if current is not None:
-            on_disk = set(current.inputs)
-            if on_disk > planned:
+    for cand_name in candidates:
+        cand_path = directory / cand_name
+        if cand_path.exists():
+            current = inspect_report(cand_path)
+            if isinstance(current, UnreadableReport):
                 return WriteOutcome(
                     False,
-                    f"artefact on disk already rests on {len(on_disk)} audits "
-                    f"(we planned {len(planned)}) -- ours is stale, not written",
-                    target,
+                    f"artefact on disk is unavailable ({current.reason}) -- not overwritten blind",
+                    cand_path,
                 )
-            if on_disk == planned and current.meta_level >= header.meta_level:
-                return WriteOutcome(False, "artefact is already current", target)
+            if current is not None:
+                on_disk = set(current.inputs)
+                if on_disk > planned:
+                    return WriteOutcome(
+                        False,
+                        f"artefact on disk already rests on {len(on_disk)} audits "
+                        f"(we planned {len(planned)}) -- ours is stale, not written",
+                        cand_path,
+                    )
+                if on_disk == planned and current.meta_level >= header.meta_level:
+                    return WriteOutcome(False, "artefact is already current", cand_path)
 
     from .report import write_report
 
-    return WriteOutcome(True, "written", write_report(directory, header, body))
+    out_path = write_report(directory, header, body)
+    for cand_name in candidates:
+        cand_path = directory / cand_name
+        if cand_path.resolve() != out_path.resolve() and cand_path.exists():
+            with contextlib.suppress(OSError):
+                cand_path.unlink()
+    return WriteOutcome(True, "written", out_path)
 
 
 def archive(path: Path, archive_dir: Path | None = None) -> Path | None:

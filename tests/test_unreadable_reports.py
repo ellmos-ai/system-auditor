@@ -106,6 +106,33 @@ def test_files_that_are_not_audits_are_never_reported_as_unreadable(tmp_path, mo
     assert bag == []
 
 
+def test_empty_report_file_is_unavailable(tmp_path):
+    empty = tmp_path / "AUDIT-20260810--bundles.H1.opus.md"
+    empty.write_text("", encoding="utf-8")
+    whitespace = tmp_path / "AUDIT-20260810--bundles.H2.opus.md"
+    whitespace.write_text("   \n\n  \t  \n", encoding="utf-8")
+
+    bag: list[UnreadableReport] = []
+    reports = list_reports(tmp_path, unreadable=bag)
+
+    assert reports == []
+    assert {item.path.name for item in bag} == {empty.name, whitespace.name}
+    assert latest_report(tmp_path, unreadable=bag) is None
+
+
+def test_meta_target_is_directory_blocks_planning(tmp_path):
+    _single(tmp_path, "H1")
+    _single(tmp_path, "H2")
+    target_dir = tmp_path / "META-cross-system--20260810--bundles.md"
+    target_dir.mkdir()
+
+    plans = plan_metas(tmp_path, time_token=WINDOW)
+    assert len(plans) == 1
+    assert plans[0].action == ACTION_BLOCKED
+    assert "directory" in plans[0].reason
+
+
+
 def test_a_stat_error_on_one_file_neither_crashes_nor_hides_it(tmp_path, monkeypatch):
     """Errno 22 kann schon beim Stat auftreten; das darf list_reports nicht abbrechen."""
     _, ok = _single(tmp_path, "H1")

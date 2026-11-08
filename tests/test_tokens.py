@@ -17,9 +17,11 @@ from system_auditor.tokens import (
     AuditIdentity,
     TimeGrid,
     TimeTable,
+    TimestampError,
     find_bundles,
     newest_per_identity,
     parse_period,
+    parse_ts,
     resolve_time_token,
 )
 
@@ -236,3 +238,20 @@ def test_the_default_anchor_is_a_constant_not_today():
     per_day_monday = TimeGrid(period="7d", anchor=monday.replace(hour=0)).token(monday)
     per_day_wednesday = TimeGrid(period="7d", anchor=wednesday.replace(hour=0)).token(wednesday)
     assert per_day_monday != per_day_wednesday
+
+
+def test_parse_ts_fractional_seconds_and_utc_z():
+    parsed = parse_ts("2026-10-08T10:56:45.368Z")
+    assert parsed == datetime(2026, 10, 8, 10, 56, 45, 368000, tzinfo=timezone.utc)
+
+
+def test_parse_ts_explicit_offset_conversion_to_utc():
+    parsed_offset = parse_ts("2026-10-08T12:56:45+02:00")
+    assert parsed_offset == datetime(2026, 10, 8, 10, 56, 45, tzinfo=timezone.utc)
+
+    parsed_zero = parse_ts("2026-10-08T10:56:45+00:00")
+    assert parsed_zero == datetime(2026, 10, 8, 10, 56, 45, tzinfo=timezone.utc)
+
+    parsed_fractional_offset = parse_ts("2026-10-08T12:56:45.500+02:00")
+    assert parsed_fractional_offset == datetime(2026, 10, 8, 10, 56, 45, 500000, tzinfo=timezone.utc)
+
