@@ -255,3 +255,30 @@ def test_parse_ts_explicit_offset_conversion_to_utc():
     parsed_fractional_offset = parse_ts("2026-10-08T12:56:45.500+02:00")
     assert parsed_fractional_offset == datetime(2026, 10, 8, 10, 56, 45, 500000, tzinfo=timezone.utc)
 
+
+def test_parse_ts_python_310_compatibility_without_z_support_in_fromisoformat(monkeypatch):
+    import system_auditor.tokens as tok
+    orig_fromisoformat = tok._fromisoformat
+
+    def py310_fromisoformat(val):
+        if val.endswith(("Z", "z")):
+            raise ValueError(f"Invalid isoformat string: {val!r}")
+        return orig_fromisoformat(val)
+
+    monkeypatch.setattr(tok, "_fromisoformat", py310_fromisoformat)
+    parsed = parse_ts("2026-10-08T10:56:45.368Z")
+    assert parsed == datetime(2026, 10, 8, 10, 56, 45, 368000, tzinfo=timezone.utc)
+
+
+def test_parse_ts_fractional_seconds_strptime_fallback(monkeypatch):
+    import system_auditor.tokens as tok
+
+    def fail_fromisoformat(val):
+        raise ValueError("simulated failure")
+
+    monkeypatch.setattr(tok, "_fromisoformat", fail_fromisoformat)
+    parsed = parse_ts("2026-10-08T10:56:45.368Z")
+    assert parsed == datetime(2026, 10, 8, 10, 56, 45, 368000, tzinfo=timezone.utc)
+
+
+

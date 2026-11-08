@@ -130,17 +130,21 @@ def format_ts(moment: datetime) -> str:
     return as_utc(moment).strftime(TIMESTAMP_FORMAT) + "Z"
 
 
+_fromisoformat = datetime.fromisoformat
+
+
 def parse_ts(raw: str) -> datetime:
     """Read a timestamp, seconds optional (older artefacts wrote minutes)."""
     text = (raw or "").strip()
     if not text:
         raise TimestampError(f"unparsable timestamp: {raw!r}")
+    iso_text = text[:-1] + "+00:00" if text.endswith(("Z", "z")) else text
     try:
-        return as_utc(datetime.fromisoformat(text))
+        return as_utc(_fromisoformat(iso_text))
     except ValueError:
         pass
-    text_no_z = text.rstrip("Z")
-    for fmt in (TIMESTAMP_FORMAT, "%Y-%m-%dT%H:%M"):
+    text_no_z = text.rstrip("Zz")
+    for fmt in (TIMESTAMP_FORMAT, "%Y-%m-%dT%H:%M:%S.%f", "%Y-%m-%dT%H:%M"):
         try:
             return datetime.strptime(text_no_z, fmt).replace(tzinfo=timezone.utc)
         except ValueError:
