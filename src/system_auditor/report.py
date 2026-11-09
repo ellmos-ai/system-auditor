@@ -246,6 +246,11 @@ class ReportHeader:
     # --- housekeeping ----------------------------------------------------
     legacy: bool = False
     path: Path | None = field(default=None, compare=False)
+    unparsed_timestamps: dict[str, str] = field(default_factory=dict)
+
+    @property
+    def unparsed(self) -> dict[str, str]:
+        return self.unparsed_timestamps
 
     @property
     def auditor_token(self) -> str:
@@ -365,12 +370,35 @@ def meta_filename(aggregation: str, key: list[str]) -> str:
     Deliberately **without participant counts**: the level changes whenever a
     participant joins, and a changing name would defeat the overwrite rule that
     guarantees one current answer.  The counts live in the header and the title.
-    Deliberately **without a host token**: otherwise every machine would keep
-    its own copy of the one answer.
+    Aggregations ending in the host/system token (interrater, full-system) attach
+    the host with a dot (e.g. .HOST.md) rather than --HOST.md to avoid collision
+    with conflict-copy patterns.
     """
-    parts = [_slug(aggregation)]
-    parts.extend(_slug(item) for item in key if item)
+    agg_slug = _slug(aggregation)
+    cleaned_key = [_slug(item) for item in key if item]
+    if agg_slug in ("interrater", "full-system") and cleaned_key:
+        host_token = cleaned_key[-1]
+        prefix_parts = [agg_slug] + cleaned_key[:-1]
+        return "META-" + _KEY_SEPARATOR.join(prefix_parts) + f".{host_token}.md"
+    parts = [agg_slug] + cleaned_key
     return "META-" + _KEY_SEPARATOR.join(parts) + ".md"
+
+
+def meta_candidate_filenames(aggregation: str, key: list[str]) -> list[str]:
+    """All recognised file names for this (aggregation, key), canonical first.
+
+    Guarantees backward compatibility: both the new `.HOST.md` format and the
+    legacy `--HOST.md` format are mapped to the same meta key.
+    """
+    canonical = meta_filename(aggregation, key)
+    names = [canonical]
+    agg_slug = _slug(aggregation)
+    cleaned_key = [_slug(item) for item in key if item]
+    if agg_slug in ("interrater", "full-system") and cleaned_key:
+        legacy = "META-" + _KEY_SEPARATOR.join([agg_slug] + cleaned_key) + ".md"
+        if legacy not in names:
+            names.append(legacy)
+    return names
 
 
 def _as_int(value: object, default: int = 0) -> int:
@@ -460,7 +488,10 @@ def inspect_report(path: Path) -> ReportHeader | UnreadableReport | None:
         text = path.read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError) as exc:
         return _unreadable(path, exc)
+    if not text.strip():
+        return _unreadable(path, ValueError("empty report file"))
     data = parse_front_matter(text)
+    unparsed_timestamps: dict[str, str] = {}
 
     def _ts(key: str) -> datetime | None:
         raw = data.get(key)
@@ -469,6 +500,7 @@ def inspect_report(path: Path) -> ReportHeader | UnreadableReport | None:
         try:
             return parse_ts(str(raw))
         except Exception:
+            unparsed_timestamps[key] = str(raw)
             return None
 
     legacy = bool(legacy_match) or not data
@@ -526,6 +558,7 @@ def inspect_report(path: Path) -> ReportHeader | UnreadableReport | None:
         scope=_as_list(data.get("scope")),
         legacy=legacy,
         path=path,
+        unparsed_timestamps=unparsed_timestamps,
     )
 
 

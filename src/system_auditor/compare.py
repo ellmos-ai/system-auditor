@@ -119,7 +119,32 @@ def _file_of(norm: str) -> str:
     ``datei``, so a contradiction hid as ``unverifiable``. A drive letter (``c:/x``) is no line
     suffix: the colon there is followed by a slash, never by digits at the end.
     """
-    return _SUBLOCATION_LINE_RE.sub("", norm.split("#", 1)[0]).rstrip("/")
+    if not norm:
+        return ""
+
+    candidate = norm
+    if "#" in norm:
+        head, _, tail = norm.partition("#")
+        if "/" not in tail:
+            candidate = head
+        else:
+            head_last_seg = head.rpartition("/")[2]
+            if "." in head_last_seg:
+                candidate = head
+            elif "#" in tail:
+                sub_file, _, _ = tail.partition("#")
+                candidate = head + "#" + sub_file
+            else:
+                candidate = norm
+
+    match = _SUBLOCATION_LINE_RE.search(candidate)
+    if match:
+        prefix = candidate[:match.start()]
+        last_seg = prefix.rpartition("/")[2]
+        if "/" in prefix or "." in last_seg:
+            candidate = prefix
+
+    return candidate.rstrip("/")
 
 
 def _is_under(target: str, prefix: str) -> bool:

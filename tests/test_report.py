@@ -1,6 +1,6 @@
 """Reports: token-carrying artefacts; rotation must not depend on names or mtimes."""
 
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 
 from system_auditor.report import (
     MODE_META,
@@ -136,8 +136,28 @@ def test_meta_filename_omits_participant_counts():
     the header and the title, never in the file name."""
     two = meta_filename("full-system", ["20260810", "H1"])
     three = meta_filename("full-system", ["20260810", "H1"])
-    assert two == three == "META-full-system--20260810--H1.md"
+    assert two == three == "META-full-system--20260810.H1.md"
     assert "2" not in two.replace("20260810", "")
+
+
+def test_meta_filename_host_dot_format():
+    assert (
+        meta_filename("interrater", ["20261026", "ai-bundles", "ASUS-GEI"])
+        == "META-interrater--20261026--ai-bundles.ASUS-GEI.md"
+    )
+    assert (
+        meta_filename("full-system", ["20261026", "ASUS-GEI"])
+        == "META-full-system--20261026.ASUS-GEI.md"
+    )
+    assert (
+        meta_filename("cross-system", ["20261026", "bundles"])
+        == "META-cross-system--20261026--bundles.md"
+    )
+    assert (
+        meta_filename("timeseries", ["ASUS-GEI", "bundles"])
+        == "META-timeseries--ASUS-GEI--bundles.md"
+    )
+
 
 
 def test_timeseries_filename_carries_no_period():
@@ -379,3 +399,26 @@ def test_rescued_unknown_audits_keep_two_files_but_one_identity(tmp_path):
     first, second = _run("lauf-a"), _run("lauf-b")
     assert first != second and first.exists() and second.exists()
     assert len({header.identity for header in list_reports(tmp_path)}) == 1
+
+
+def test_unparsed_timestamps_not_swallowed(tmp_path):
+    path = tmp_path / "AUDIT-20260810--bundles.ASUS-GEI.md"
+    path.write_text(
+        "---\n"
+        "domain: bundles\n"
+        "system: ASUS-GEI\n"
+        "time_token: 20260810\n"
+        "started_utc: broken-start-timestamp\n"
+        "finished_utc: 2026-10-08T10:56:45Z\n"
+        "---\n"
+        "# bundles\n",
+        encoding="utf-8",
+    )
+    header = read_report(path)
+    assert header is not None
+    assert header.started_utc is None
+    assert header.finished_utc == datetime(2026, 10, 8, 10, 56, 45, tzinfo=timezone.utc)
+    assert "started_utc" in header.unparsed_timestamps
+    assert header.unparsed_timestamps["started_utc"] == "broken-start-timestamp"
+    assert header.unparsed == header.unparsed_timestamps
+

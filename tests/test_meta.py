@@ -143,11 +143,11 @@ def test_full_system_bundles_all_domains_and_raters_of_one_machine(tmp_path):
     plans = plan_metas(tmp_path, aggregation=FULL_SYSTEM, time_token=WINDOW)
     by_key = {plan.target: plan for plan in plans}
 
-    h1 = by_key["META-full-system--20260810--H1.md"]
+    h1 = by_key["META-full-system--20260810.H1.md"]
     assert h1.level == 3  # bundles/opus, skills/opus, bundles/sonnet
     assert h1.counts == {"domain": 2, "auditor": 2}
     assert h1.inputs == ["r1", "r2", "r3"]
-    assert "META-full-system--20260810--H2.md" not in by_key  # only one participant
+    assert "META-full-system--20260810.H2.md" not in by_key  # only one participant
 
 
 def test_full_system_title_carries_the_counts_the_filename_omits(tmp_path):
@@ -160,7 +160,7 @@ def test_full_system_title_carries_the_counts_the_filename_omits(tmp_path):
     title = plan.title()
     assert "2 auditor" in title and "2 domain" in title
     assert "H1" in title
-    assert plan.target == "META-full-system--20260810--H1.md"
+    assert plan.target == "META-full-system--20260810.H1.md"
 
 
 # --- interrater and cross-domain -------------------------------------------
@@ -172,7 +172,7 @@ def test_interrater_bundle_is_found_on_one_machine(tmp_path):
     plans = plan_metas(tmp_path, aggregation=INTERRATER, time_token=WINDOW)
     assert len(plans) == 1
     assert plans[0].participants == ["opus", "sonnet"]
-    assert plans[0].target == "META-interrater--20260810--bundles--H1.md"
+    assert plans[0].target == "META-interrater--20260810--bundles.H1.md"
 
 
 def test_cross_domain_holds_machine_and_model_constant(tmp_path):
@@ -409,3 +409,63 @@ def test_rewriting_the_identical_state_is_skipped(tmp_path):
     again = write_meta(tmp_path, header, "body")
     assert again.written is False
     assert "already current" in again.reason
+
+
+def test_plan_metas_recognizes_legacy_host_meta_file(tmp_path):
+    _single(tmp_path, "H1", domain="bundles", auditor="opus", run_id="r1")
+    _single(tmp_path, "H1", domain="skills", auditor="sonnet", run_id="r2")
+    legacy_path = tmp_path / "META-full-system--20260810--H1.md"
+    legacy_header = ReportHeader(
+        domain="", system="H1", time_token=WINDOW, audit_mode=MODE_META,
+        aggregation="full-system", meta_level=2, inputs=["r1", "r2"],
+        scope=[WINDOW, "H1"], finished_utc=utcnow(),
+    )
+    legacy_path.write_text(legacy_header.to_front_matter() + "\nlegacy meta\n", encoding="utf-8")
+
+    plan = plan_metas(tmp_path, aggregation=FULL_SYSTEM, time_token=WINDOW)[0]
+    assert plan.action == ACTION_SKIP
+    assert plan.replaces == legacy_path
+    assert plan.target == "META-full-system--20260810.H1.md"
+
+
+def test_plan_metas_recognizes_new_host_dot_meta_file(tmp_path):
+    _single(tmp_path, "H1", domain="bundles", auditor="opus", run_id="r1")
+    _single(tmp_path, "H1", domain="skills", auditor="sonnet", run_id="r2")
+    new_path = tmp_path / "META-full-system--20260810.H1.md"
+    new_header = ReportHeader(
+        domain="", system="H1", time_token=WINDOW, audit_mode=MODE_META,
+        aggregation="full-system", meta_level=2, inputs=["r1", "r2"],
+        scope=[WINDOW, "H1"], finished_utc=utcnow(),
+    )
+    new_path.write_text(new_header.to_front_matter() + "\nnew meta\n", encoding="utf-8")
+
+    plan = plan_metas(tmp_path, aggregation=FULL_SYSTEM, time_token=WINDOW)[0]
+    assert plan.action == ACTION_SKIP
+    assert plan.replaces == new_path
+    assert plan.target == "META-full-system--20260810.H1.md"
+
+
+def test_write_meta_replaces_legacy_host_file(tmp_path):
+    from system_auditor.meta import write_meta
+
+    _single(tmp_path, "H1", domain="bundles", auditor="opus", run_id="r1")
+    _single(tmp_path, "H1", domain="skills", auditor="sonnet", run_id="r2")
+    legacy_path = tmp_path / "META-full-system--20260810--H1.md"
+    legacy_header = ReportHeader(
+        domain="", system="H1", time_token=WINDOW, audit_mode=MODE_META,
+        aggregation="full-system", meta_level=1, inputs=["r1"],
+        scope=[WINDOW, "H1"], finished_utc=utcnow() - timedelta(minutes=10),
+    )
+    legacy_path.write_text(legacy_header.to_front_matter() + "\nlegacy meta\n", encoding="utf-8")
+
+    new_header = ReportHeader(
+        domain="", system="H1", time_token=WINDOW, audit_mode=MODE_META,
+        aggregation="full-system", meta_level=2, inputs=["r1", "r2"],
+        scope=[WINDOW, "H1"], finished_utc=utcnow(),
+    )
+    outcome = write_meta(tmp_path, new_header, "updated meta")
+    assert outcome.written is True
+    assert outcome.path.name == "META-full-system--20260810.H1.md"
+    assert outcome.path.exists()
+    assert not legacy_path.exists()
+

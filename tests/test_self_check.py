@@ -379,6 +379,32 @@ def test_local_hooks_do_not_run_during_the_pull(repos):
     assert not marker.exists()
 
 
+def test_git_commands_with_nohooks_also_disable_fsmonitor(repos, monkeypatch):
+    _, seed, clone = repos
+    advance_remote(seed)
+    seen_commands = []
+    real_run = subprocess.run
+
+    def spy(cmd, *args, **kwargs):
+        if cmd and cmd[0] == "git":
+            seen_commands.append(list(cmd))
+        return real_run(cmd, *args, **kwargs)
+
+    monkeypatch.setattr(selfcheck.subprocess, "run", spy)
+    assert run(clone, apply=True).status == "pulled"
+
+    hook_cmds = [
+        cmd for cmd in seen_commands
+        if any("core.hooksPath=" in str(arg) for arg in cmd)
+    ]
+    assert len(hook_cmds) >= 2  # fetch and merge
+    for cmd in hook_cmds:
+        # Check that -c core.fsmonitor=false is present in command arguments
+        assert "-c" in cmd
+        assert "core.fsmonitor=false" in cmd
+
+
+
 def test_git_environment_from_the_caller_is_ignored(repos, tmp_path, monkeypatch):
     _, seed, clone = repos
     other = tmp_path / "other"

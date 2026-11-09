@@ -130,3 +130,44 @@ def test_a_windows_drive_letter_is_not_mistaken_for_a_line_suffix():
 def test_distinct_fragments_stay_distinct_locators():
     assert normalize_locator("a.json#x") != normalize_locator("a.json#y")
     assert normalize_locator("a.json:1") != normalize_locator("a.json:2")
+
+
+def test_hash_in_directory_name_is_not_treated_as_fragment():
+    finder = _run("H1", [Finding("/repo/c#/file.py", "omission")], coverage=["/repo/c#"])
+    looked = _run("H2", coverage=["/repo/c"])
+
+    item = _only_item(finder, looked)
+    assert item.classification == UNVERIFIABLE
+    assert item.absent_on == []
+
+    # But # in the basename after the last / IS treated as fragment
+    finder_sub = _run(
+        "H1", [Finding("/repo/c#/file.py#section", "omission")], coverage=["/repo/c#"]
+    )
+    looked_sub = _run("H2", coverage=["/repo/c#"])
+    item_sub = _only_item(finder_sub, looked_sub)
+    assert item_sub.classification == HOST_SPECIFIC
+    assert item_sub.absent_on == ["H2"]
+
+
+def test_host_port_is_not_stripped_as_line_number():
+    finder = _run("H1", [Finding("server:80", "down")], coverage=["server:80"])
+    looked = _run("H2", coverage=["server"])
+
+    item = _only_item(finder, looked)
+    assert item.classification == UNVERIFIABLE
+    assert item.absent_on == []
+
+    # But file with extension or slash DOES strip line number
+    finder_file = _run("H1", [Finding("file.py:80", "error")], coverage=["file.py"])
+    looked_file = _run("H2", coverage=["file.py"])
+    item_file = _only_item(finder_file, looked_file)
+    assert item_file.classification == HOST_SPECIFIC
+    assert item_file.absent_on == ["H2"]
+
+    finder_path = _run("H1", [Finding("dir/server:80", "error")], coverage=["dir/server"])
+    looked_path = _run("H2", coverage=["dir/server"])
+    item_path = _only_item(finder_path, looked_path)
+    assert item_path.classification == HOST_SPECIFIC
+    assert item_path.absent_on == ["H2"]
+
