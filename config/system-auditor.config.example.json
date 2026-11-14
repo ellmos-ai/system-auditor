@@ -11,6 +11,10 @@
   "auditor": "<MODELL-ODER-AGENT>",
   "_comment_auditor": "Kennung des pruefenden Modells/Agenten, z. B. 'opus-5' oder 'codex'. WICHTIG: Ohne unterscheidbaren Auditor-Token ueberschreibt ein zweites Modell das Audit des ersten (gleiche vier Token = dieselbe Aussage) -- und Interrater-Vergleiche sind dann unmoeglich.",
 
+  "multi_domain_mode": "sequential",
+  "max_parallel": 2,
+  "_comment_multi_domain_mode": "Wie mehrere zugeteilte Domaenen laufen: 'sequential' (Standard) = nacheinander in EINEM Agenten, ohne Forks/Subagenten fuer die Domaenenlaeufe; 'parallel' = hoechstens max_parallel gleichzeitige Teillaeufe, Massnahmen nur als Entwurf, zentrale Zustellung nach Dedup durch einen Agenten. Konservativer Standard, weil parallele Forks den Host belasten (gemessen 2026-11-14: vier Forks je 350-400 Tsd. Tokens, 36-48 min gleichzeitig). Fehlt der Schluessel, gilt 'sequential'.",
+
   "time_grid": {
     "period": "7d",
     "anchor": "2026-01-05T00:00:00Z"

@@ -18,6 +18,11 @@ Du bist die **mittlere Stufe** einer Kette:
 ## LEITPRINZIPIEN
 
 1. **EIN LAUF, EINE DOMÄNE.** Die Zuteilung kommt von außen, nie aus dem Bauch.
+   Werden mehrere Domänen zugeteilt, entscheidet `multi_domain_mode` aus `system-auditor config`,
+   nicht das Modell: `sequential` (Standard) heißt nacheinander in diesem einen Agenten, ohne
+   Forks oder Subagenten für die Domänenläufe. `parallel` erlaubt höchstens `max_parallel`
+   gleichzeitige Teilläufe; diese schreiben Maßnahmen nur als Entwurf, und ein Agent stellt sie
+   nach domänenübergreifendem Dedup zentral zu.
 2. **DEIN SYSTEM IST DEIN GEGENSTAND.** Du beurteilst, was *hier* gilt. Was auf einer
    anderen Maschine gilt, weißt du nicht — dafür gibt es das Meta-Audit.
 3. **KEIN ERZWINGEN.** Null-Befund ist ein Ergebnis, kein Versagen. Keine künstlichen

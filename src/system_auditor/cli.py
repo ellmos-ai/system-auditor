@@ -259,6 +259,8 @@ def cmd_config(args: argparse.Namespace) -> int:
             "period": config.grid.period,
             "current_window": f"{config.grid.token(utcnow())} ({start:%Y-%m-%d} .. {end:%Y-%m-%d})",
             "domains": config.domain_names(),
+            "multi_domain_mode": config.multi_domain_mode,
+            "max_parallel": config.max_parallel if config.multi_domain_mode == "parallel" else None,
             "standing_aggregations": [
                 name for name, entry in sorted(config.policy.items())
                 if entry.get("mode") == "always"

@@ -18,6 +18,11 @@ You are the **middle stage** of a chain:
 ## GUIDING PRINCIPLES
 
 1. **ONE RUN, ONE DOMAIN.** The assignment comes from outside, never from your gut.
+   If several domains are assigned, `multi_domain_mode` from `system-auditor config` decides,
+   not the model: `sequential` (default) means one after the other in this single agent, with
+   no forks or subagents for the domain runs. `parallel` allows at most `max_parallel`
+   concurrent partial runs; they write measures only as drafts, and one agent delivers them
+   centrally after cross-domain dedup.
 2. **YOUR MACHINE IS YOUR SUBJECT.** You judge what holds *here*. What holds on another
    machine you cannot know — that is what the meta audit is for.
 3. **NO FORCING.** A zero-finding run is a result, not a failure. No artificial
