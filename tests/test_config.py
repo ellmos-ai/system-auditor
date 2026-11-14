@@ -224,3 +224,34 @@ def test_without_the_policy_the_note_still_asks_for_a_token(tmp_path):
     notes = " ".join(load(path).notes)
     assert "auditor is unset" in notes
     assert "per-run" in notes  # nennt den Ausweg, statt nur zu klagen
+
+
+def test_multi_domain_mode_defaults_to_sequential(tmp_path):
+    """T-20261114-668731702: ohne Eintrag laufen mehrere Domaenen nacheinander in einem Agenten."""
+    from system_auditor import config as cfgmod
+
+    cfg = cfgmod.load(_write_host_cfg(tmp_path))
+    assert cfg.multi_domain_mode == "sequential"
+
+
+def test_multi_domain_mode_parallel_and_invalid_values(tmp_path):
+    from system_auditor import config as cfgmod
+
+    cfg = cfgmod.load(_write_host_cfg(tmp_path, multi_domain_mode="Parallel", max_parallel=3))
+    assert (cfg.multi_domain_mode, cfg.max_parallel) == ("parallel", 3)
+
+    cfg = cfgmod.load(_write_host_cfg(tmp_path, multi_domain_mode="fork-all", max_parallel="viele"))
+    assert (cfg.multi_domain_mode, cfg.max_parallel) == ("sequential", 2)
+    assert any("multi_domain_mode" in n for n in cfg.notes)
+    assert any("max_parallel" in n for n in cfg.notes)
+
+
+def test_config_command_shows_multi_domain_mode(tmp_path, capsys):
+    import json
+
+    from system_auditor import cli
+
+    cli.main(["--config", str(_write_host_cfg(tmp_path)), "--json", "config"])
+    shown = json.loads(capsys.readouterr().out)
+    assert shown["multi_domain_mode"] == "sequential"
+    assert shown["max_parallel"] is None

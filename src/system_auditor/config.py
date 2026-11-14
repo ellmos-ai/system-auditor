@@ -33,6 +33,7 @@ from .tokens import TimeGrid, TimeTable
 DEFAULT_FILENAME = "system-auditor.config.json"
 HOME_PLACEHOLDER = "<HOME>"
 DOMAIN_PLACEHOLDER = "<domain>"
+MULTI_DOMAIN_MODES = ("sequential", "parallel")
 
 
 @dataclass
@@ -64,6 +65,11 @@ class Config:
     #: not an oversight -- the token is model-dependent and belongs to the run,
     #: so a shared host config deliberately declines to guess one.
     auditor_policy: str = ""
+    #: T-20261114-668731702 (user order): how several assigned domains are run. "sequential"
+    #: (default, one agent, one domain after the other) or "parallel" (at most max_parallel
+    #: concurrent domain runs). The default stays conservative because parallel forks load the host.
+    multi_domain_mode: str = "sequential"
+    max_parallel: int = 2
     source: str = "defaults"
     notes: list[str] = field(default_factory=list)
     # T-20260830-419610437: (konfigurierter Host, tatsaechlicher Host), sonst None.
@@ -205,6 +211,16 @@ def load(path: str | Path | None = None, home: str | None = None) -> Config:
         grid = TimeGrid()
         notes.append(f"time_grid rejected ({exc}) -- using the default 7d grid")
 
+    multi_domain_mode = str(data.get("multi_domain_mode", "sequential") or "sequential").strip().lower()
+    if multi_domain_mode not in MULTI_DOMAIN_MODES:
+        notes.append(f"multi_domain_mode {multi_domain_mode!r} unknown -- using 'sequential'")
+        multi_domain_mode = "sequential"
+    try:
+        max_parallel = max(1, int(data.get("max_parallel", 2) or 2))
+    except (TypeError, ValueError):
+        notes.append("max_parallel is not a number -- using 2")
+        max_parallel = 2
+
     table_entries = data.get("time_table") or []
     table = TimeTable(entries=list(table_entries)) if table_entries else None
 
@@ -232,6 +248,8 @@ def load(path: str | Path | None = None, home: str | None = None) -> Config:
         measure_sink=dict(data.get("measure_sink") or {"kind": "file"}),
         evidence_level_default=int(data.get("evidence_level_default", 1) or 1),
         auditor_policy=str(data.get("auditor_policy", "")),
+        multi_domain_mode=multi_domain_mode,
+        max_parallel=max_parallel,
         source=str(found),
         notes=notes,
     )
