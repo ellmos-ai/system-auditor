@@ -1,6 +1,8 @@
 """Configuration -- a file that nothing reads is worse than none."""
 import json
 
+import pytest
+
 from system_auditor.config import live_host, load
 from system_auditor.tokens import utcnow
 
@@ -255,3 +257,12 @@ def test_config_command_shows_multi_domain_mode(tmp_path, capsys):
     shown = json.loads(capsys.readouterr().out)
     assert shown["multi_domain_mode"] == "sequential"
     assert shown["max_parallel"] is None
+
+
+@pytest.mark.parametrize("value", [0, -1, True, "viele", None])
+def test_max_parallel_rejects_non_positive_and_bool_with_a_note(tmp_path, value):
+    from system_auditor import config as cfgmod
+
+    cfg = cfgmod.load(_write_host_cfg(tmp_path, multi_domain_mode="parallel", max_parallel=value))
+    assert cfg.max_parallel == 2
+    assert any("max_parallel" in n for n in cfg.notes)

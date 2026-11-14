@@ -211,14 +211,20 @@ def load(path: str | Path | None = None, home: str | None = None) -> Config:
         grid = TimeGrid()
         notes.append(f"time_grid rejected ({exc}) -- using the default 7d grid")
 
-    multi_domain_mode = str(data.get("multi_domain_mode", "sequential") or "sequential").strip().lower()
+    raw_mode = data.get("multi_domain_mode") or "sequential"
+    multi_domain_mode = str(raw_mode).strip().lower()
     if multi_domain_mode not in MULTI_DOMAIN_MODES:
         notes.append(f"multi_domain_mode {multi_domain_mode!r} unknown -- using 'sequential'")
         multi_domain_mode = "sequential"
+    raw_parallel = data.get("max_parallel", 2)
     try:
-        max_parallel = max(1, int(data.get("max_parallel", 2) or 2))
+        if isinstance(raw_parallel, bool):
+            raise ValueError
+        max_parallel = int(raw_parallel)
+        if max_parallel < 1:
+            raise ValueError
     except (TypeError, ValueError):
-        notes.append("max_parallel is not a number -- using 2")
+        notes.append(f"max_parallel {raw_parallel!r} is not a positive number -- using 2")
         max_parallel = 2
 
     table_entries = data.get("time_table") or []
