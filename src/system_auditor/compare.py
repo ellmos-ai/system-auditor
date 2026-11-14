@@ -189,6 +189,27 @@ class Finding:
         return f"{self.norm_rule}@{self.norm_locator}"
 
 
+def findings_from_header(header: ReportHeader) -> list[Finding]:
+    """The ``findings_detail`` lines of a report as ``Finding`` objects.
+
+    Lets a meta auditor check a manual classification against ``build_meta``
+    without parsing headers by hand (T-20261114-257609608). Each line reads
+    ``<locator> | <rule> | <title>``; the title may itself contain ``|``. A line
+    without locator and rule raises instead of being skipped: a dropped finding
+    would turn "found" into "nothing found" -- the very error the field exists
+    to prevent.
+    """
+    found = []
+    for line in header.findings_detail:
+        parts = [part.strip() for part in line.split("|", 2)]
+        if len(parts) < 2 or not parts[0] or not parts[1]:
+            raise ValueError(
+                f"findings_detail line needs '<locator> | <rule> | <title>': {line!r}")
+        found.append(Finding(locator=parts[0], rule=parts[1],
+                             title=parts[2] if len(parts) > 2 else ""))
+    return found
+
+
 @dataclass
 class AuditRun:
     """One participant's audit."""

@@ -355,3 +355,26 @@ def test_identified_raters_still_compare_normally():
         _run("H1", [Finding(GARDENER, "pointer-drift")], auditor="sonnet"),
     ]
     assert build_meta(runs, INTERRATER).comparability.ok
+
+
+def test_findings_from_header_turns_detail_lines_into_findings():
+    """T-20261114-257609608: the control path for a manual meta classification."""
+    from system_auditor.compare import findings_from_header
+
+    header = ReportHeader(domain="d", system="S", findings_detail=[
+        "C:/a/manifest.json | I7 | dead optional | names",
+        "C:/b | K4",
+    ])
+    found = findings_from_header(header)
+    assert [(f.locator, f.rule, f.title) for f in found] == [
+        ("C:/a/manifest.json", "I7", "dead optional | names"),
+        ("C:/b", "K4", ""),
+    ]
+
+
+def test_findings_from_header_refuses_a_line_it_cannot_place():
+    """Skipping would turn 'found' into 'nothing found' -- the error the field prevents."""
+    from system_auditor.compare import findings_from_header
+
+    with pytest.raises(ValueError, match="locator"):
+        findings_from_header(ReportHeader(domain="d", system="S", findings_detail=["just a title"]))

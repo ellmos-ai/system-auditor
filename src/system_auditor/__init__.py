@@ -37,6 +37,7 @@ from .compare import (
     MetaResult,
     build_inventory,
     build_meta,
+    findings_from_header,
     normalize_locator,
     render_markdown,
 )
@@ -152,6 +153,7 @@ __all__ = [
     "AuditRun",
     "MetaResult",
     "build_meta",
+    "findings_from_header",
     "build_inventory",
     "InventoryResult",
     "render_markdown",

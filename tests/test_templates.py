@@ -27,6 +27,36 @@ def test_audit_template_front_matter_parses(name):
     assert isinstance(data["findings_detail"], list) and data["findings_detail"]
 
 
+@pytest.mark.parametrize("name", ["AUDIT-BERICHT.de.md", "AUDIT-REPORT.en.md"])
+def test_a_report_written_by_the_library_carries_every_template_field(name, tmp_path):
+    """One schema, checked from the writer's side (T-20261114-257609608).
+
+    The test above only guards the template. The library writer had drifted away
+    from it: `write_report` could not emit `findings_detail` or `onedrive`, so a
+    report it produced was never template-conformant. A fully populated header
+    must now round-trip every key the template demands.
+    """
+    from datetime import datetime, timezone
+
+    from system_auditor.report import ReportHeader, read_report, write_report
+
+    template_keys = set(parse_front_matter((TEMPLATES / name).read_text(encoding="utf-8")))
+    ts = datetime(2026, 11, 14, 1, 0, tzinfo=timezone.utc)
+    header = ReportHeader(
+        domain="control-integration", system="WORKSTATION-LG", time_token="20261109",
+        auditor="claude-opus-5-5", run_id="r1", started_utc=ts, finished_utc=ts,
+        window_start_utc=ts, next_domain="bundles", findings=2, measures=["M-1"],
+        coverage=["<HOME>/x"], clean=["<HOME>/y"], self_check="current", onedrive="on",
+        findings_detail=["C:/a/b.json | I7 | dead optional, names", "C:/c | K4 | split"],
+    )
+    path = write_report(tmp_path, header, "# body")
+    written = parse_front_matter(path.read_text(encoding="utf-8"))
+    assert template_keys <= set(written), f"writer lacks {sorted(template_keys - set(written))}"
+    parsed = read_report(path)
+    assert parsed.findings_detail == header.findings_detail, "a comma must not split a finding"
+    assert parsed.onedrive == "on"
+
+
 @pytest.mark.parametrize("name", ["META-BERICHT.de.md", "META-REPORT.en.md"])
 def test_meta_template_front_matter_parses(name):
     data = parse_front_matter((TEMPLATES / name).read_text(encoding="utf-8"))

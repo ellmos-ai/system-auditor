@@ -237,6 +237,15 @@ class ReportHeader:
     #: Phase (a-1): state of the auditor's own tool -- ``current``, ``pulled <old>..<new>``
     #: or ``stale <reason>``. Reports from before the field read ``unknown``.
     self_check: str = ""
+    #: Phase (a-1): ``on`` or ``off``. ``off`` means missing foreign reports are
+    #: expected, not a sign that the other hosts did nothing.
+    onedrive: str = ""
+    #: One line per finding, ``<locator> | <rule> | <title>`` -- the template's
+    #: mandatory block. Without it a written report says ``findings: 3`` next to a
+    #: filled ``coverage`` but carries no finding a meta audit could place, and reads
+    #: like "checked, nothing found". The template and this class used to define
+    #: the header separately and had drifted apart (T-20261114-257609608).
+    findings_detail: list[str] = field(default_factory=list)
     # --- meta only -------------------------------------------------------
     aggregation: str = ""
     meta_level: int = 0
@@ -323,6 +332,16 @@ class ReportHeader:
         lines.append(f"clean: [{', '.join(self.clean)}]")
         if self.self_check and self.self_check != SELF_CHECK_UNKNOWN:
             lines.append(f"self_check: {self.self_check}")
+        if self.onedrive:
+            lines.append(f"onedrive: {self.onedrive}")
+        if self.audit_mode != MODE_META:
+            # A `- item` block, not an inline list: finding lines contain commas,
+            # and the inline form splits on them.
+            if self.findings_detail:
+                lines.append("findings_detail:")
+                lines.extend(f"- {' '.join(str(item).split())}" for item in self.findings_detail)
+            else:
+                lines.append("findings_detail: []")
         lines.append("---")
         return "\n".join(lines) + "\n"
 
@@ -551,6 +570,8 @@ def inspect_report(path: Path) -> ReportHeader | UnreadableReport | None:
         coverage=_as_list(data.get("coverage")),
         clean=_as_list(data.get("clean")),
         self_check=_self_check_text(text) or SELF_CHECK_UNKNOWN,
+        onedrive=_as_text(data.get("onedrive", "")),
+        findings_detail=_as_list(data.get("findings_detail")),
         aggregation=aggregation,
         meta_level=int(data.get("meta_level", 0) or 0),
         participants=_as_list(data.get("participants")),
