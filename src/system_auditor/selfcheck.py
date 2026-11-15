@@ -15,9 +15,11 @@ The one write it may make is the narrow exception in the role prompt's principle
 pinned to the expected remote, free of locks (clone, main clone, mirror) and strictly behind
 the remote (merge-base == HEAD), it runs ``git fetch`` and ``git merge --ff-only`` on its own
 clone, with local hooks disabled. Right before the merge it checks locks and tree again and
-refuses if the fast-forward would overwrite an untracked or ignored local file. Anything
-else -- dirty, ahead, diverged, detached, a lock, a foreign remote, an error or a timeout --
-means no pull and ``stale <reason>``. The audit then runs on, marked as such.
+refuses if the fast-forward would overwrite an untracked or ignored local file. An extra
+worktree blocks a pull too (``pull_blockers``), so a behind or diverged clone with more than
+one worktree is ``stale`` while an up-to-date clone stays ``current``. Anything else -- dirty,
+ahead, diverged, detached, a lock, a foreign remote, an error or a timeout -- means no pull
+and ``stale <reason>``. The audit then runs on, marked as such.
 """
 
 from __future__ import annotations
@@ -58,6 +60,7 @@ class SelfCheck:
     remote_head: str = ""
     would_pull: bool = False
     reasons: list[str] = field(default_factory=list)
+    pull_blockers: list[str] = field(default_factory=list)
     mirror_diffs: list[str] = field(default_factory=list)
     missing_rule_sources: list[str] = field(default_factory=list)
 
@@ -323,8 +326,11 @@ def run_self_check(
         blocked = True
     ok, listing = _git(clone, "worktree", "list", "--porcelain", timeout=timeout)
     worktrees = sum(1 for line in listing.splitlines() if line.startswith("worktree ")) if ok else 0
-    if not ok or worktrees > 1:
-        reasons.append(f"more than one worktree ({worktrees or 'unknown'}), no pull")
+    if not ok or worktrees < 1:
+        reasons.append("more than one worktree (unknown), no pull")
+        blocked = True
+    elif worktrees > 1:
+        result.pull_blockers.append(f"more than one worktree ({worktrees}), no pull")
         blocked = True
 
     # --- state of the clone (read only) ----------------------------------------------
@@ -390,6 +396,7 @@ def run_self_check(
         if ahead:
             reasons.append(f"clone is ahead of {upstream} (unpushed commits)")
         elif not apply:
+            reasons.extend(result.pull_blockers)
             result.would_pull = not blocked
             reasons.append(
                 f"clone differs from {upstream} (HEAD {head[:SHORT_SHA]}, remote "
@@ -397,6 +404,7 @@ def run_self_check(
                 + ("run self-check --apply" if not blocked else "no pull")
             )
         elif blocked:
+            reasons.extend(result.pull_blockers)
             reasons.append(f"clone differs from {upstream}; no pull")
         else:
 
