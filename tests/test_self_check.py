@@ -350,6 +350,64 @@ def test_more_than_one_worktree_blocks_the_pull(repos, tmp_path):
     assert_refused(clone, run(clone, apply=True), head, "worktree")
 
 
+def test_more_than_one_worktree_stays_current_when_up_to_date(repos, tmp_path, capsys):
+    from system_auditor.cli import main
+
+    _, _, clone = repos
+    git(clone, "worktree", "add", "-q", "--detach", str(tmp_path / "second"))
+    head = git(clone, "rev-parse", "HEAD")
+
+    for flag in (False, True):
+        result = run(clone, apply=flag)
+        assert result.status == "current"
+        assert result.value == "current"
+        assert not result.would_pull
+        assert result.reasons == []
+        assert result.pull_blockers == ["more than one worktree (2), no pull"]
+        assert git(clone, "rev-parse", "HEAD") == head
+
+    code = main(
+        ["--json", "--config", str(tmp_path / "none.json"), "self-check", "--clone", str(clone)]
+    )
+    payload = json.loads(capsys.readouterr().out)
+    assert code == 0
+    assert payload["status"] == "current"
+    assert payload["value"] == "current"
+    assert payload["header_line"] == "self_check: current"
+    assert payload["reasons"] == []
+    assert payload["pull_blockers"] == ["more than one worktree (2), no pull"]
+
+
+def test_more_than_one_worktree_records_pull_blocker_when_behind(repos, tmp_path):
+    _, seed, clone = repos
+    git(clone, "worktree", "add", "-q", "--detach", str(tmp_path / "second"))
+    head = git(clone, "rev-parse", "HEAD")
+    advance_remote(seed)
+    dry = run(clone)
+    assert_refused(clone, dry, head, "more than one worktree (2), no pull")
+    assert not dry.would_pull
+    assert dry.pull_blockers == ["more than one worktree (2), no pull"]
+    applied = run(clone, apply=True)
+    assert_refused(clone, applied, head, "more than one worktree (2), no pull")
+    assert applied.pull_blockers == ["more than one worktree (2), no pull"]
+
+
+def test_worktree_list_failure_fails_closed_when_up_to_date(repos, monkeypatch):
+    _, _, clone = repos
+    head = git(clone, "rev-parse", "HEAD")
+    real = selfcheck._git
+
+    def fail_worktree_list(cwd, *args, **kwargs):
+        if args[:2] == ("worktree", "list"):
+            return False, "worktree list broken"
+        return real(cwd, *args, **kwargs)
+
+    monkeypatch.setattr(selfcheck, "_git", fail_worktree_list)
+    result = run(clone, apply=True)
+    assert_refused(clone, result, head, "more than one worktree (unknown), no pull")
+    assert result.pull_blockers == []
+
+
 def test_ignored_local_file_is_not_overwritten_by_the_fast_forward(repos):
     _, seed, clone = repos
     commit(seed, ".gitignore", "local.cfg\n", "ignore local.cfg")
