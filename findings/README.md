@@ -12,6 +12,13 @@ Laufbericht ist kein aktueller Readback. Fehlt der Readback, bleibt der Befund
 dupliziert verworfen. Der Readback muss den geprüften Ort, den aktuellen Wert
 und — soweit relevant — den Lock-/Ownership-Zustand erkennen lassen.
 
+### Abschlussregel für `SOLVED` und Zweitakteur-Stichprobe
+
+Jedes nach `SOLVED` geschlossene Ticket braucht einen gemessenen Readback mit
+Wert und Fundort (keine Formelzeile). Ein zweiter Akteur misst nicht jedes Ticket
+nach, sondern prüft stichprobenartig über den `system-auditor`; bei einer
+Wiederöffnung wird vollständig nachgemessen.
+
 Historical findings remain at their original location. A changed conclusion is
 recorded as a dated `NACHTRAG`/`SUPERSEDED` block with actor, ticket or measure
 reference, and evidence.

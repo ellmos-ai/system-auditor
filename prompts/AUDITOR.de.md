@@ -300,7 +300,11 @@ aktuelles Duplikat, wenn sie einen datierten Readback mit `akteur@host`, geprüf
 Ort, beobachtetem Wert und — soweit relevant — Lock-/Ownership-Zustand trägt
 (`findings/README.md`). Plan, Commit, Push, Ticketstatus oder alter Bericht sind
 kein Readback. Fehlt der aktuelle Beleg, bleibt der Befund `needs_readback` bzw.
-eine Beobachtung; er wird weder still geschlossen noch unterdrückt.
+eine Beobachtung; er wird weder still geschlossen noch unterdrückt. Für
+`SOLVED`-Abschlüsse gilt: Jedes `SOLVED` braucht einen gemessenen Readback mit
+Wert und Fundort (keine Formelzeile); ein zweiter Akteur misst nicht jedes Ticket,
+sondern stichprobenartig über den `system-auditor`, und bei Wiederöffnung wird
+nachgemessen.
 
 ### (f) Ausgabe
 
