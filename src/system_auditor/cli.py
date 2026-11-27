@@ -24,6 +24,7 @@ from .meta import due_aggregations, plan_all, stale_windows
 from .pages_drift import PagesDriftError, audit_pages_drift
 from .report import UnreadableReport, list_reports, next_domain
 from .selfcheck import clone_root, pinned_remote, run_self_check
+from .terminology import TerminologyAuditError, audit_terminology, resolve_repo_targets
 from .tokens import AGGREGATIONS, TimeGrid, utcnow
 
 
@@ -343,6 +344,26 @@ def cmd_installer_design(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_terminology(args: argparse.Namespace) -> int:
+    targets = resolve_repo_targets(
+        args.repo or [],
+        repos_root=args.repos_root,
+        repo_names_csv=args.repos,
+    )
+    try:
+        result = audit_terminology(
+            Path(args.spec),
+            targets,
+            include_tests=args.include_tests,
+            prefer_doc_keeper=not args.builtin_only,
+        )
+    except TerminologyAuditError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 2
+    _print(result.as_dict(), args.json)
+    return 0 if result.ok else 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="system-auditor",
@@ -436,6 +457,26 @@ def build_parser() -> argparse.ArgumentParser:
         p_design.add_argument("--" + name, required=True)
     p_design.add_argument("--timeout", type=float, default=60)
     p_design.set_defaults(func=cmd_installer_design)
+
+    p_term = sub.add_parser(
+        "terminology",
+        help="multi-repo terminology congruence audit against a canonical glossary spec",
+    )
+    p_term.add_argument("--spec", required=True, help="path to terminology-congruence.v1.json")
+    p_term.add_argument(
+        "--repo", action="append", default=[], help="target repository path (repeatable)"
+    )
+    p_term.add_argument("--repos-root", default=None, help="parent directory for --repos names")
+    p_term.add_argument(
+        "--repos", default=None, help="comma-separated repository names under --repos-root"
+    )
+    p_term.add_argument("--include-tests", action="store_true", help="also scan test files")
+    p_term.add_argument(
+        "--builtin-only",
+        action="store_true",
+        help="use built-in zero-dependency scanner instead of delegating to doc-keeper",
+    )
+    p_term.set_defaults(func=cmd_terminology)
 
     return parser
 
