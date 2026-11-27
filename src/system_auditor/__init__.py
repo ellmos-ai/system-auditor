@@ -77,6 +77,12 @@ from .report import (
     write_report,
 )
 from .sinks import Sink, emit
+from .terminology import (
+    TerminologyAuditError,
+    TerminologyAuditResult,
+    audit_terminology,
+    resolve_repo_targets,
+)
 from .timeseries import (
     NEW,
     PERSISTENT,
@@ -186,6 +192,10 @@ __all__ = [
     "audit_pages_drift",
     "PagesDriftResult",
     "PagesDriftError",
+    "audit_terminology",
+    "resolve_repo_targets",
+    "TerminologyAuditResult",
+    "TerminologyAuditError",
     # discovery + sinks
     "discover",
     "DiscoveryResult",
