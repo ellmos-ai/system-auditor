@@ -9,6 +9,7 @@ contract (``engine="builtin"``).
 from __future__ import annotations
 
 import json
+import os
 import re
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
@@ -216,22 +217,22 @@ def _builtin_audit(
     total_legacy = 0
 
     for repo_name, root in repos:
-        files = []
-        for path in root.rglob("*"):
-            if not path.is_file() or path.suffix.lower() not in _DEFAULT_SCAN_EXTENSIONS:
-                continue
-            rel = path.relative_to(root)
-            if any(part in ex_dirs for part in rel.parts[:-1]):
-                continue
-            if path.name in _DEFAULT_EXCLUDED_FILES:
-                continue
-            if not include_tests and (
-                path.name.startswith("test_")
-                or path.name.endswith((".test.mjs", ".test.js", ".test.ts", ".spec.ts", ".spec.js"))
-            ):
-                continue
-            files.append(path)
-        files.sort()
+        files: list[Path] = []
+        for dirpath, dirnames, filenames in os.walk(root, topdown=True):
+            dirnames[:] = sorted(d for d in dirnames if d not in ex_dirs)
+            base = Path(dirpath)
+            for fname in sorted(filenames):
+                if fname in _DEFAULT_EXCLUDED_FILES:
+                    continue
+                path = base / fname
+                if path.suffix.lower() not in _DEFAULT_SCAN_EXTENSIONS:
+                    continue
+                if not include_tests and (
+                    fname.startswith("test_")
+                    or fname.endswith((".test.mjs", ".test.js", ".test.ts", ".spec.ts", ".spec.js"))
+                ):
+                    continue
+                files.append(path)
 
         violations: list[dict] = []
         legacy_count = 0
